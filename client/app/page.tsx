@@ -1,4 +1,4 @@
-import FarmerCard from "@/components/landingpage/Services"
+
 import Navbar from "@/components/landingpage/NavBar";
 import HeroSection from "@/components/landingpage/HeroSection";
 import BenefitsSection from "@/components/landingpage/whatweProvide";
