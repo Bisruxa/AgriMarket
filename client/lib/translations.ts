@@ -1,0 +1,344 @@
+export type Language = 'en' | 'am';
+
+export interface Translations {
+  nav: {
+    about: string;
+    signup: string;
+    login: string;
+  };
+  hero: {
+    title: string;
+    titleHighlight: string;
+    subtitle: string;
+    description: string;
+    features: string[];
+    buttons: {
+      getStarted: string;
+      learnMore: string;
+    };
+    testimonial: string;
+    testimonialName: string;
+    testimonialRole: string;
+    altText: string;
+  };
+  benefits: {
+    title: string;
+    description: string;
+    items: {
+      ai: string;
+      market: string;
+      traders: string;
+      secure: string;
+      userFriendly: string;
+      weather: string;
+      alerts: string;
+      dataDriven: string;
+    };
+  };
+  howItWorks: {
+    title: string;
+    description: string;
+    steps: {
+      signup: string;
+      addFarm: string;
+      getInsights: string;
+      connectGrow: string;
+    };
+    stepDescriptions: {
+      signup: string;
+      addFarm: string;
+      getInsights: string;
+      connectGrow: string;
+    };
+    cta: string;
+    ctaDescription: string;
+  };
+  farmingBasics: {
+    title: string;
+    description: string;
+    items: {
+      cropSelection: string;
+      weatherAwareness: string;
+      marketTiming: string;
+      profitOptimization: string;
+    };
+    itemDescriptions: {
+      cropSelection: string;
+      weatherAwareness: string;
+      marketTiming: string;
+      profitOptimization: string;
+    };
+    cta: string;
+    ctaDescription: string;
+  };
+  faq: {
+    title: string;
+    description: string;
+    questions: string[];
+    answers: string[];
+    contact: {
+      title: string;
+      description: string;
+      button: string;
+    };
+  };
+  footer: {
+    description: string;
+    quickLinks: string[];
+    contact: {
+      email: string;
+      phone: string;
+      address: string;
+    };
+    social: string;
+    projectInfo: string;
+    teamMembers: string;
+    copyright: string;
+    acknowledgement: string;
+    academicDisclaimer: string;
+  };
+}
+
+// English translations
+const en: Translations = {
+  nav: {
+    about: "About",
+    signup: "Signup",
+    login: "Login"
+  },
+  hero: {
+    title: "Smart Farming for a",
+    titleHighlight: "Sustainable",
+    subtitle: "Future",
+    description: "Revolutionizing Ethiopian agriculture with AI-driven solutions. Join thousands of farmers making data-driven decisions for better profits and sustainable farming practices.",
+    features: ["Fast", "Secure", "Insightful", "User-Friendly"],
+    buttons: {
+      getStarted: "Get Started Free",
+      learnMore: "Learn More"
+    },
+    testimonial: "AgriMarket helped increase my profits by 40% with smart crop recommendations!",
+    testimonialName: "Tesfaye K.",
+    testimonialRole: "Teff Farmer, Amhara",
+    altText: "Ethiopian farmers using AgriMarket app"
+  },
+  benefits: {
+    title: "Why Choose AgriMarket?",
+    description: "Empowering Ethiopian farmers with technology-driven solutions for smarter farming, better profits, and sustainable agriculture.",
+    items: {
+      ai: "AI-Powered Insights",
+      market: "Market Trend Analysis",
+      traders: "Direct Trader Connections",
+      secure: "Secure & Reliable",
+      userFriendly: "User-Friendly Platform",
+      weather: "Weather & Soil Analysis",
+      alerts: "Real-Time Alerts",
+      dataDriven: "Data-Driven Decisions"
+    }
+  },
+  howItWorks: {
+    title: "How AgriMarket Works",
+    description: "Join thousands of Ethiopian farmers who are transforming their agriculture with data-driven decisions.",
+    steps: {
+      signup: "Sign Up",
+      addFarm: "Add Your Farm",
+      getInsights: "Get AI Insights",
+      connectGrow: "Connect & Grow"
+    },
+    stepDescriptions: {
+      signup: "Create your free account in minutes. Register as a farmer or trader and get access.",
+      addFarm: "Enter your farm details, location, soil type, and crops. Our AI starts analyzing your data immediately.",
+      getInsights: "Receive personalized crop recommendations, price forecasts, and market alerts for your farm.",
+      connectGrow: "Sell directly to verified traders, optimize your sales timing, and maximize your profits."
+    },
+    cta: "Start Your Journey Today",
+    ctaDescription: "Ready to transform your farming with data-driven insights?"
+  },
+  farmingBasics: {
+    title: "Smart Farming Basics",
+    description: "Master these fundamentals and take your farming to the next level with AgriMarket's data-driven insights.",
+    items: {
+      cropSelection: "Smart Crop Selection",
+      weatherAwareness: "Weather & Climate Awareness",
+      marketTiming: "Market Timing",
+      profitOptimization: "Profit Optimization"
+    },
+    itemDescriptions: {
+      cropSelection: "Choosing the right crops based on soil type, climate, and market demand is key to maximizing your farm's profitability and sustainability.",
+      weatherAwareness: "Understanding local weather patterns and seasonal changes helps you plan planting and harvesting times for optimal crop yields.",
+      marketTiming: "Knowing when to sell your produce based on market trends, demand cycles, and price fluctuations can significantly increase your income.",
+      profitOptimization: "Balancing input costs with expected returns and implementing efficient farming practices leads to sustainable profit growth over time."
+    },
+    cta: "Learn More About Smart Farming",
+    ctaDescription: "Master these fundamentals and take your farming to the next level with AgriMarket's data-driven insights."
+  },
+  faq: {
+    title: "Frequently Asked Questions",
+    description: "Find answers to common questions about AgriMarket and how it helps Ethiopian farmers.",
+    questions: [
+      "Is AgriMarket free for farmers?",
+      "Do I need internet access to use AgriMarket?",
+      "How accurate are the crop recommendations?",
+      "Is my farm data secure?",
+      "Can I use AgriMarket on my mobile phone?",
+      "How do I connect with traders?",
+      "What crops does AgriMarket support?",
+    
+    ],
+    answers: [
+      "Yes! Our basic platform is completely free for farmers. You can access crop recommendations, market trends, and price forecasts at no cost. Premium features are available with optional subscriptions.",
+      "While real-time features require internet, you can download market reports and recommendations for offline use. Our platform is optimized for low-bandwidth areas common in rural Ethiopia.",
+      "Our AI models are trained on Ethiopian agricultural data and achieve over 85% accuracy. Recommendations consider soil type, local climate, historical yields, and current market demand specific to your region.",
+      "Absolutely. We use military-grade encryption and never share your personal or farm data with third parties without your consent. Your information is stored securely on Ethiopian servers.",
+      "Yes! AgriMarket is fully optimized for mobile devices. You can access all features through our mobile-friendly website.",
+      "Once registered, you can list your available crops on our marketplace. Verified traders can view your listings and contact you directly through the platform's messaging system.",
+      "We support all major Ethiopian crops including teff, wheat, maize, coffee, pulses, oilseeds, and horticultural products. New crops are added regularly based on regional demand.",
+   
+    ],
+    contact: {
+      title: "Still have questions?",
+      description: "Our agricultural experts are here to help you.",
+      button: "Contact Support"
+    }
+  },
+  footer: {
+    description: "An AI-powered decision support platform helping Ethiopian farmers choose profitable crops, forecast market prices, and connect directly with traders.",
+    quickLinks: ["Home", "About Project", "Features", "How It Works", "FAQ"],
+    contact: {
+      email: "agrimarket@edu.et",
+      phone: "+251 911******",
+      address: "Addis Ababa University"
+    },
+    social: "Connect With Us",
+    projectInfo: "Academic Project",
+    teamMembers: "Biruk Demissie · Bisart Alemayehu · Kaletsidik Ayalew · Khalid Abdifetah",
+    copyright: `© ${new Date().getFullYear()} AgriMarket AI Decision Support System. • Final Year Project`,
+    acknowledgement: "Special thanks to Ethiopian Institute of Agricultural Research (EIAR)",
+    academicDisclaimer: "This project is developed for academic purposes as part of the Computer Science curriculum."
+  }
+};
+
+// Amharic translations
+const am: Translations = {
+  nav: {
+    about: "ስለኛ",
+    signup: "ተመዝገብ",
+    login: "ግባ"
+  },
+  hero: {
+    title: "ዘመናዊ ግብርና ለ",
+    titleHighlight: "ዘላቂ",
+    subtitle: "ትርፋማ ምርት ",
+    description: "የኢትዮጵያን ግብርና በአዲስ የቴክኖሎጂ መፍትሄዎች እየለወጥን ነው። በሺዎች የሚቆጠሩ ገበሬዎች ለተሻለ ትርፍና ዘላቂ ግብርና በመረጃ የተመሰረተ ውሳኔ በመስጠት እየተቀላቀሉን ነው።",
+    features: ["ፈጣን", "ደህንነቱ የተጠበቀ", "ዕውቀት የሚሰጥ", "ቀላል አጠቃቀም"],
+    buttons: {
+      getStarted: "ነፃ ጀምር",
+      learnMore: "ተጨማሪ ለመማር"
+    },
+    testimonial: "አግሪማርኬት በብቃት ባለው የምርት ምክር ትርፌን በ40% አሳድጎኛል!",
+    testimonialName: "ተስፋዬ ከ.",
+    testimonialRole: "ጤፍ ገበሬ፣ አማራ",
+    altText: "አግሪማርኬት መተግበሪያ እየተጠቀሙ ያሉ የኢትዮጵያ ገበሬዎች"
+  },
+  benefits: {
+    title: "ለምን አግሪማርኬትን መምረጥ ይጠቅማል?",
+    description: "የኢትዮጵያ ገበሬዎችን በቴክኖሎጂ አማካኝነት ለዘመናዊ፣ ትርፋማ እና ዘላቂ ግብርና እናበረታታለን።",
+    items: {
+      ai: "የሰው አስተውሎት ማሳያ",
+      market: "የገበያ አዝማሚያ ትንተና",
+      traders: "ቀጥተኛ ነጋዴ ግንኙነት",
+      secure: "ደህንነቱ የተጠበቀ እና አስተማማኝ",
+      userFriendly: "ቀላል የሆነ መጠቀሚያ",
+      weather: "የአየር ሁኔታና የበለስ ምርመራ",
+      alerts: "ቅጽበታዊ ማሳወቂያዎች",
+      dataDriven: "በመረጃ የተመሰረተ ውሳኔ"
+    }
+  },
+  howItWorks: {
+    title: "አግሪማርኬት እንዴት ይሰራል",
+    description: "በሺዎች የሚቆጠሩ ገበሬዎች በመረጃ የተመሰረተ ውሳኔ በመስጠት ግብርናቸውን እየለወጡ ነው።",
+    steps: {
+      signup: "ተመዝገብ",
+      addFarm: "እርሻህን አክል",
+      getInsights: "የሰው አስተውሎት ማሳያ ያግኙ",
+      connectGrow: "ይገናኙና ያድጉ"
+    },
+    stepDescriptions: {
+      signup: "በጥቂት ደቂቃዎች ውስጥ ነፃ መለያ ይፍጠሩ። እንደ ገበሬ ወይም ነጋዴ ይመዝገቡና ግላዊ መዳረሻ ያግኙ።",
+      addFarm: "የእርሻዎን ዝርዝሮች፣ አካባቢ፣ የበለስ አይነት እና የሚተከሉ አዝፍሮች ያስገቡ። የሰው አስተውሎት ስርዓታችን መረጃዎን ወዲያውኑ ለመተንተን ይጀምራል።",
+      getInsights: "ለእርሻዎ ብጁ የተደረጉ የአዝፍሮ ምክሮች፣ የዋጋ ትንበያዎችና የገበያ ማሳወቂያዎችን ይቀበሉ።",
+      connectGrow: "በቀጥታ ለተረጋገጡ ነጋዴዎች ይሽጡ፣ የሽያጭ ጊዜዎን ያሻሽሉ እና ትርፍዎን ያሳድጉ።"
+    },
+    cta: "ጉዞህን ዛሬ ጀምር",
+    ctaDescription: "በመረጃ ላይ የተመሰረተ ዕውቀት እርሻህን ለመለወጥ ዝግጁ ነህ?"
+  },
+  farmingBasics: {
+    title: "ዘመናዊ ግብርና መሰረታዊ ነገሮች",
+    description: "እነዚህን መሰረታዊ ነገሮች በመቆጣጠር እርሻህን ወደ ቀጣይ ደረጃ በአግሪማርኬት በመረጃ የተመሰረተ ዕውቀት አምጣ።",
+    items: {
+      cropSelection: "ብቃት ያለው የአዝፍሮ ምርጫ",
+      weatherAwareness: "የአየር ሁኔታ እውቀት",
+      marketTiming: "የገበያ ጊዜ ምርጫ",
+      profitOptimization: "ትርፍ ማሳደግ"
+    },
+    itemDescriptions: {
+      cropSelection: "ትክክለኛውን አዝፍሮች በበለስ አይነት፣ አየር ጠባይ እና የገበያ ፍላጎት መሰረት መምረጥ የእርሻዎን ትርፋማነት እና ዘላቂነት ለማሳደግ ቁልፍ ነው።",
+      weatherAwareness: "የአካባቢ የአየር ሁኔታን እና የወቅት ለውጦችን መረዳት ለተመቻቸ ምርት የመትከል እና የማጨድ ጊዜዎችን ለመወሰን ይረዳዎታል።",
+      marketTiming: "የገበያ አዝማሚያዎችን፣ የፍላጎት ዑደቶችን እና የዋጋ ለውጦችን በመከታተል የምርትዎን የመሸጥ ጊዜ መምረጥ ገቢዎን በከፍተኛ ሁኔታ ማሳደግ ይችላል።",
+      profitOptimization: "የግብዓት ወጪዎችን ከተጠበቀ ገቢ ጋር ማመጣጠን እና ውጤታማ የግብርና ዘዴዎችን መተግበር በጊዜ ሂደት ወደ ዘላቂ የትርፍ እድገት ይመራል።"
+    },
+    cta: "ስለ ዘመናዊ ግብርና ተጨማሪ ይወቁ",
+    ctaDescription: "እነዚህን መሰረታዊ ነገሮች በመቆጣጠር እርሻህን ወደ ቀጣይ ደረጃ በአግሪማርኬት በመረጃ የተመሰረተ ዕውቀት አምጣ።"
+  },
+  faq: {
+    title: "በተደጋጋሚ የሚጠየቁ ጥያቄዎች",
+    description: "ስለ አግሪማርኬት እና እንዴት የኢትዮጵያ ገበሬዎችን እንደሚረዳ የተለመዱ ጥያቄዎችን መልስ ያግኙ።",
+    questions: [
+      "አግሪማርኬት ለገበሬዎች ነፃ ነው?",
+      "አግሪማርኬትን ለመጠቀም በኢንተርኔት መዳረሻ ያስፈልገኛል?",
+      "የአዝፍሮ ምክሮች ምን ያህል ትክክለኛ ናቸው?",
+      "የእርሻዬ መረጃ ደህንነቱ ተጠብቋል?",
+      "አግሪማርኬትን በሞባይል ስልኬ ላይ መጠቀም እችላለሁ?",
+      "ከነጋዴዎች ጋር እንዴት እገናኛለሁ?",
+      "አግሪማርኬት ምን አይነት አዝፍሮችን ይደግፋል?",
+      
+    ],
+    answers: [
+      "አዎ! መሰረታዊው መድረኳችን ለገበሬዎች ሙሉ በሙሉ ነፃ ነው። የአዝፍሮ ምክር፣ የገበያ አዝማሚያ እና የዋጋ ትንበያ ያለ ክፍያ መዳረሻ አለዎት። ተጨማሪ ባህሪያት በአመቻችት በሚደረጉ የደንበኝነት አገልግሎቶች ይገኛሉ።",
+      "ቅጽበታዊ ባህሪያት በኢንተርኔት ይፈልጋሉ፣ ነገር ግን የገበያ ሪፖርቶችን እና ምክሮችን ለመስመር ውጭ አጠቃቀም ማውረድ ይችላሉ። መድረኳችን ለበርካታ የኢትዮጵያ ገጠር አካባቢዎች በጣም ጥቂት የይዘት አቅም ባለው ቦታ እንዲሠራ ተዘጋጅቷል።",
+      "የኛ የሰው አስተውሎት ሞዴሎች በኢትዮጵያ ግብርና መረጃ ላይ ተሰልፈው ከ85% በላይ ትክክለኛነት ያሳያሉ። ምክሮቹ የበለስ አይነት፣ የአካባቢ አየር ጠባይ፣ ታሪካዊ ምርት እና የአካባቢዎ የአሁኑ የገበያ ፍላጎት ያስባሉ።",
+      "በእርግጠኝነት። ሰራዊታዊ ደረጃ ኢንክሪፕሽን እንጠቀማለን እና ፈቃድዎ ካልተሰጠ የግል ወይም የግብርና መረጃዎን ከሶስተኛ ወገን ጋር አንጋራም። መረጃዎችዎ በኢትዮጵያ ውስጥ ባሉ ሰርቨሮች ላይ በደህንነት ይከማቻሉ።",
+      "አዎ! አግሪማርኬት ሙሉ በሙሉ ለሞባይል መሣሪያዎች ተገቢ ተደርጎ ተዘጋጅቷል። ሁሉንም ባህሪያት በሞባይል ድር ጣቢያችን በመጠቀም ማግኘት ይችላሉ።",
+      "አንዴ ከተመዘገቡ በኋላ፣ ለሽያጭ የሚዘጋጁትን አዝፍሮችዎን በገበያ ቦታችን ላይ ማሰባሰብ ይችላሉ። ተረጋግጠው የተመዘገቡ ነጋዴዎች ዝርዝሮችዎን ማየት እና በቀጥታ በመድረኩ የመልእክት ስርዓት ማነጋገር ይችላሉ።",
+      "ሁሉንም ዋና ዋና የኢትዮጵያ አዝፍሮችን እንደ ጤፍ፣ ስንዴ፣ በቆሎ፣ ቡና፣ እንጆሬ፣ ዘይትኛ ፍሬዎች እና የአትክልት ምርቶች እንደገና እናደርጋለን። አዲስ አዝፍሮች በክልላዊ ፍላጎት መሰረት በየጊዜው ይጨመራሉ።",
+     
+    ],
+    contact: {
+      title: "አሁንም ጥያቄዎች አሉዎት?",
+      description: "የኛ የግብርና ባለሙያዎች ለመርዳት እዚህ አሉ።",
+      button: "ደጋፍ ያግኙ"
+    }
+  },
+  footer: {
+    description: "የሰው አስተውሎት ማሳያ መድረክ የኢትዮጵያ ገበሬዎች ትርፋማ አዝፍሮችን እንዲመርጡ፣ የገበያ ዋጋ እንዲተነብዩ እና በቀጥታ ከነጋዴዎች ጋር እንዲገናኙ ይረዳቸዋል።",
+    quickLinks: ["መነሻ ገጽ", "ስለ ፕሮጀክቱ", "ባህሪያት", "እንዴት እንደሚሰራ", "ጥያቄዎች"],
+    contact: {
+      email: "agrimarket@edu.et",
+      phone: "+251 911******",
+      address: "አዲስ አበባ ዩኒቨርሲቲ"
+    },
+    social: "ከእኛ ጋር ይገናኙ",
+    projectInfo: "የትምህርት ፕሮጀክት",
+    teamMembers: "ብሩክ ደምሴ · ብሳርት አለማየሁ · ቃለጽድቅ አያሌው · ኻሊድ አብዲፌታህ",
+    copyright: `© ${new Date().getFullYear()} አግሪማርኬት AI ውሳኔ ድጋፍ ስርዓት • የመጨረሻ አመት ፕሮጀክት`,
+    acknowledgement: "ለኢትዮጵያ የግብርና ምርምር ኢንስቲትዩት (EIAR) ልዩ እናመሰግናለን",
+    academicDisclaimer: "ይህ ፕሮጀክት የኮምፒዩተር ሳይንስ ሥርዓተ ትምህርት አካል ሆኖ ለትምህርታዊ ዓላማዎች ተዘጋጅቷል።"
+  }
+};
+
+// Export translation function
+export const translations: Record<Language, Translations> = { en, am };
+
+// Helper function to get translations
+export function getTranslations(lang: Language): Translations {
+  return translations[lang];
+}
