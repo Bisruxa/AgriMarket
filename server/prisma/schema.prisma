@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  BUYER
+  FARMER
+  ADMIN
+}
+
+enum ProductUnit {
+  KG
+  LB
+  PIECE
+  DOZEN
+  BUNCH
+  BAG
+  CRATE
+}
+
+enum ProductCategory {
+  VEGETABLES
+  FRUITS
+  GRAINS
+  DAIRY
+  POULTRY
+  MEAT
+  SEEDS
+  FERTILIZERS
+  EQUIPMENT
+  OTHER
+}
+
+model User {
+  id          String    @id @default(cuid())
+  name        String
+  email       String    @unique
+  password    String
+  role        UserRole  @default(BUYER)
+  phone       String?
+  avatar      String?
+  isVerified  Boolean   @default(false)
+  
+  // Address fields
+  street      String?
+  city        String?
+  state       String?
+  country     String?
+  zipCode     String?
+  
+  // Location fields (Ethiopia specific)
+  region      String?
+  woreda      String?
+  
+  // Farmer specific fields
+  farmSize    String?
+  crops       String?
+  experience  String?
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relations
+  products    Product[]
+  
+  @@map("users")
+}
+
+model Product {
+  id            String          @id @default(cuid())
+  name          String
+  description   String
+  price         Decimal         @db.Decimal(10, 2)
+  unit          ProductUnit     @default(KG)
+  category      ProductCategory
+  stock         Int             @default(0)
+  images        String[]
+  location      String
+  isOrganic     Boolean         @default(false)
+  harvestDate   DateTime?
+  expiryDate    DateTime?
+  isAvailable   Boolean         @default(true)
+  
+  // Ratings
+  ratingsAverage Float          @default(0)
+  ratingsCount   Int            @default(0)
+  
+  // Relations
+  farmer        User            @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  farmerId      String
+  
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  
+  @@index([farmerId])
+  @@index([category])
+  @@index([isAvailable])
+  @@map("products")
+}
