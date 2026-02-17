@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { FormData } from '@/types/FormTypes';
 import { useFormValidation } from './useFormValidation';
 import { formStepsConfig } from '@/lib/formStepsConfig';
+import { authApi } from '@/lib/api';
 
 export const useSignupForm = () => {
   const [role, setRole] = useState<'farmer' | 'trader'>('farmer');
@@ -60,8 +61,43 @@ export const useSignupForm = () => {
   const handleSubmit = async () => {
     setIsLoading(true);
     try {
-      console.log('Signing up:', { ...formData, role });
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Map frontend role to backend role
+      const backendRole = role === 'farmer' ? 'FARMER' : 'BUYER';
+      
+      // Send registration request to backend
+      const response = await authApi.register({
+        name: formData.fullName,
+        email: formData.email,
+        password: formData.password,
+        role: backendRole,
+        region: formData.region,
+        woreda: formData.woreda,
+        farmSize: formData.farmSize,
+        crops: formData.crops,
+        experience: formData.experience,
+      });
+
+      if (!response.success) {
+        // Handle validation errors from backend
+        if (response.errors) {
+          setErrors(response.errors.map(err => err.message));
+        } else {
+          setErrors([response.message || 'Registration failed. Please try again.']);
+        }
+        return;
+      }
+
+      // Store token in localStorage
+      if (response.token) {
+        localStorage.setItem('token', response.token);
+      }
+
+      // Store user info
+      if (response.user) {
+        localStorage.setItem('user', JSON.stringify(response.user));
+      }
+
+      // Redirect to dashboard
       const redirectPath = role === 'farmer' ? '/farmer/dashboard' : '/trader/dashboard';
       window.location.href = redirectPath;
     } catch (error) {
