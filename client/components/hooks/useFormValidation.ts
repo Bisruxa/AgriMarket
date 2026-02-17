@@ -53,14 +53,14 @@ export const useFormValidation = (formData: FormData) => {
     },
     step3: {
       checkAllEmpty: () => {
-        const requiredFields: (keyof FormData)[] = ['farmName'];
+        const requiredFields: (keyof FormData)[] = ['farmSize'];
         const allEmpty = requiredFields.every(field => !formData[field]?.toString().trim());
         return allEmpty ? ['All fields are required'] : [];
       },
       validations: [
         { 
-          field: 'farmName' as keyof FormData, 
-          message: 'Farm name is required', 
+          field: 'farmSize' as keyof FormData, 
+          message: 'Farm size is required', 
         },
       ] as ValidationRule[]
     }
