@@ -102,16 +102,8 @@ export interface Translations {
     subtitle: string;
   };
   signup: {
-    title: {
-      step1: string;
-      step2: string;
-      step3: string;
-    };
-    subtitle: {
-      step1: string;
-      step2: string;
-      step3: string;
-    };
+    title: string;
+    subtitle:string;
     fields: {
       fullName: string;
       email: string;
@@ -330,16 +322,8 @@ const en: Translations = {
     subtitle: "Get AI-powered insights on crops, prices and markets - all in one place."
   },
   signup: {
-    title: {
-      step1: "Create Your Account",
-      step2: "Farm Information",
-      step3: "Complete Registration"
-    },
-    subtitle: {
-      step1: "Join AgriMarket and start your smart farming journey",
-      step2: "Tell us about your farm for personalized insights",
-      step3: "You're almost there! Set up your preferences"
-    },
+    title: "Welcome",
+    subtitle:"SignUp",
     fields: {
       fullName: "Full Name",
       email: "Email Address",
@@ -558,16 +542,8 @@ const am: Translations = {
     subtitle: "ለሰብሎች፣ ዋጋዎች እና ገበያዎች በ AI የተመረቱ ግንዛቤዎችን ያግኙ - ሁሉም በአንድ ቦታ"
   },
   signup: {
-    title: {
-      step1: "መለያ ይፍጠሩ",
-      step2: "የእርሻ መረጃ",
-      step3: "ምዝገባ ያጠናቅቁ"
-    },
-    subtitle: {
-      step1: "አግሪማርኬትን ይቀላቀሉ እና ዘመናዊ ግብርና ይጀምሩ",
-      step2: "ለግል የተበጁ ምክሮች ስለ እርሻዎ ይንገሩን",
-      step3: "ሊጠናቀቅ ተቃርቧል! ምርጫዎችዎን ያዘጋጁ"
-    },
+    title: "እንኳን በደህና መጡ",
+    subtitle:"ተመዝገብ",
     fields: {
       fullName: "ሙሉ ስም",
       email: "ኢሜይል አድራሻ",

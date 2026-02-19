@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import AuthPage from '@/components/common/AuthForm';
-import { MapPin, Globe, Info, Loader2 } from 'lucide-react';
+import { MapPin, Globe, Info } from 'lucide-react';
 import { useState } from 'react';
 import { ETHIOPIAN_REGIONS } from '@/lib/regon_n_woreda';
 import { WOREDAS_BY_REGION } from '@/lib/regon_n_woreda';
@@ -25,11 +25,9 @@ export default function SignUpPage() {
     formData,
     formSteps,
     totalSteps,
-    currentStep,
     handleInputChange,
     handleNextStep,
     handlePrevStep,
-    emailStatus
   } = useSignupForm();
   
   const [selectedRegion, setSelectedRegion] = useState<string>('');
@@ -191,8 +189,8 @@ export default function SignUpPage() {
 
   return (
     <AuthPage
-      title={currentStep.title}
-      subtitle={currentStep.subtitle}
+      title={t.signup.title}
+      subtitle={t.signup.subtitle}
       errors={errors}
       step={step}
       totalSteps={totalSteps}

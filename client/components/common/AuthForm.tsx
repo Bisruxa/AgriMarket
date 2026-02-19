@@ -144,8 +144,8 @@ function FormContent({
 }: FormContentProps & { t:Translations, language: string }) {
 
   const roleButtons = [
-    { role: 'farmer' as const, icon: Leaf, label: language === 'en' ? 'Farmer' : 'ገበሬ' },
-    { role: 'trader' as const, icon: SproutIcon, label: language === 'en' ? 'Trader' : 'ነጋዴ' },
+    { role: 'FARMER' as const, icon: Leaf, label: language === 'en' ? 'FARMER' : 'ገበሬ' },
+    { role: 'BUYER' as const, icon: SproutIcon, label: language === 'en' ? 'BUYER' : 'ነጋዴ' },
   ];
 
   return (
@@ -155,7 +155,7 @@ function FormContent({
         <div className="mb-3 mt-20 md:mt-4">
           <Tabs
             value={role}
-            onValueChange={(value) => onRoleChange(value as 'farmer' | 'trader')}
+            onValueChange={(value) => onRoleChange(value as 'FARMER' | 'BUYER')}
             className=""
           >
             <div className="flex gap-4 justify-center text-center">

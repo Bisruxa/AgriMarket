@@ -14,7 +14,6 @@ export default function SignInPage() {
   const { language } = useLanguage();
   const t = useTranslations() as Translations;
   
-  const [role, setRole] = useState<'farmer' | 'trader'>('farmer');
   const [role, setRole] = useState<'FARMER' | 'BUYER'>('FARMER');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -40,7 +39,7 @@ export default function SignInPage() {
     setIsLoading(true);
     try {
       // Sign in logic here
-      const redirectPath = role === 'FARMER' ? '/farmer/dashboard' : '/trader/dashboard';
+      const redirectPath = role === 'FARMER' ? '/FARMER/dashboard' : '/BUYER/dashboard';
       window.location.href = redirectPath;
     } catch {
       setError(t.signin.errors.invalidCredentials);
