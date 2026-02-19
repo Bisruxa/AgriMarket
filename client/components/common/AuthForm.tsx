@@ -4,10 +4,10 @@ import Image,{StaticImageData} from 'next/image';
 import firstpage from '@/public/images/firstpage.png';
 import secondpage from '@/public/images/secondpage.png';
 import thirdpage from '@/public/images/thirdpage.png';
-import { Tabs, } from '@/components/ui/tabs';
 import { Leaf , SproutIcon } from 'lucide-react';
 import { AuthPageProps, FormContentProps  } from '@/types/auth-page';
- const LogoComponent = ({ isImageOnLeft }: { isImageOnLeft: boolean }) => (
+
+const LogoComponent = ({ isImageOnLeft }: { isImageOnLeft: boolean }) => (
     <div className={`absolute top-6 ${isImageOnLeft ? 'left-8' : 'left-8 '} z-10`}>
       <h1 className={`text-[25px] font-extrabold ${isImageOnLeft ? 'text-white':'text-[#2F5632] pb-5'}`}>AgriMarket</h1>
     </div>
@@ -20,7 +20,7 @@ export default function AuthPage({
   errors = [],
   step = 1,
   isSignUp = false,
-  role = 'farmer',
+  role = 'FARMER',  
   onRoleChange,
   showRoleTabs = false,
 }: AuthPageProps) {
@@ -87,7 +87,7 @@ function ImageSection({ image ,step}: { image: StaticImageData,step?:number}) {
       {
         step === 1 && (
         <>
-         <div className="absolute inset-0 bg-gradient-to-r from-black/30 via-black/20 to-transparent" />
+         <div className="absolute inset-0 bg-linear-to-r from-black/30 via-black/20 to-transparent" />
       <div className="absolute inset-0 items-center p-12 flex">
         <div className='flex flex-col pl-18'>
           <h1 className="text-5xl font-bold text-white mb-4">
@@ -124,37 +124,33 @@ function FormContent({
   onRoleChange
 }: FormContentProps) {
    
-const roleButtons=[
-  {role:'farmer' as const ,icon:Leaf,label:'Farmer'},
-  {role:'trader' as const,icon:SproutIcon,label:'Trader'},
+const roleButtons = [
+  { role: 'FARMER' as const, icon: Leaf, label: 'FARMER' },
+  { role: 'BUYER' as const, icon: SproutIcon, label: 'BUYER' },
 ];
+
   return (
     
     <div className="w-full max-w-md">
       {/* Role Tabs - Above title */}
      {showRoleTabs && onRoleChange && (
   <div className="mb-3 mt-4">
-    <Tabs 
-      value={role} 
-      onValueChange={(value) => onRoleChange(value as 'farmer' | 'trader')}
-      className="" 
-    >
-      <div className="flex gap-4 justify-center text-center">
-        {roleButtons.map(({role:btnRole,icon:Icon,label})=>(
- <button key={btnRole}
-          onClick={() => onRoleChange!(btnRole)}
-          className={`rounded-2xl text-xs font-medium transition-all w-32 h-6  text-center flex 
+    {/* Remove Tabs component - just use buttons directly */}
+    <div className="flex gap-4 justify-center text-center">
+      {roleButtons.map(({role:btnRole, icon:Icon, label}) => (
+        <button 
+          key={btnRole}
+          onClick={() => onRoleChange(btnRole)}  // Remove ! since we check onRoleChange exists above
+          className={`rounded-2xl text-xs font-medium transition-all w-32 h-8 text-center flex items-center justify-center gap-1
             ${role === btnRole
               ? 'bg-[#5B8C51]/50 text-[#404A3D]'
               : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
         >
-           <div className='flex align-center justify-center gap-1 ml-8 mt-1 '>  <Icon size={16} />     
-          {label}</div>    
-
+          <Icon size={16} />     
+          {label}
         </button>
-        ))}
-      </div>
-    </Tabs>
+      ))}
+    </div>
   </div>
 )}
       {/* Title */}
@@ -181,4 +177,4 @@ const roleButtons=[
       </div>
     </div>
   );
-  }
+}

@@ -8,7 +8,7 @@ import Link from 'next/link';
 import AuthPage from '@/components/common/AuthForm';
 
 export default function SignInPage() {
-  const [role, setRole] = useState<'farmer' | 'trader'>('farmer');
+  const [role, setRole] = useState<'FARMER' | 'BUYER'>('FARMER');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -26,7 +26,7 @@ export default function SignInPage() {
     setIsLoading(true);
     try {
       // Sign in logic here
-      const redirectPath = role === 'farmer' ? '/farmer/dashboard' : '/trader/dashboard';
+      const redirectPath = role === 'FARMER' ? '/farmer/dashboard' : '/trader/dashboard';
       window.location.href = redirectPath;
     } catch {
       setError('Invalid email or password');
