@@ -1,6 +1,5 @@
-// Create a new file: utils/formStepsConfig.ts
 export const formStepsConfig = {
-  farmer: [
+  FARMER: [
     {
       title: 'Welcome',
       subtitle: 'SignUp',
@@ -29,7 +28,7 @@ export const formStepsConfig = {
       ]
     }
   ],
-  trader: [
+  BUYER: [
     {
       title: 'Welcome',
       subtitle: 'SignUp',

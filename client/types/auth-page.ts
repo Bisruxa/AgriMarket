@@ -10,8 +10,8 @@ export interface AuthPageProps {
   totalSteps?: number;
   isSignUp?: boolean;
   showStepIndicator?: boolean;
-  role?: 'farmer' | 'trader';
-  onRoleChange?: (role: 'farmer' | 'trader') => void;
+  role?: 'FARMER' | 'BUYER';
+  onRoleChange?: (role: 'FARMER' | 'BUYER') => void;
   showRoleTabs?: boolean;
 }
 
@@ -29,10 +29,21 @@ export interface FormContentProps {
   subtitle?: string;
   errors: string[];
   showRoleTabs?: boolean;
-  role?: 'farmer' | 'trader';
-  onRoleChange?: (role: 'farmer' | 'trader') => void;
+  role?: 'FARMER' | 'BUYER';
+  onRoleChange?: (role: 'FARMER' | 'BUYER') => void;
 }
 
 export interface LogoComponentProps {
   isImageOnLeft: boolean;
+}
+export interface RegistrationData {
+  name: string;
+  email: string;
+  password: string;
+  role: 'FARMER' | 'BUYER';
+  region?: string;  
+  woreda?: string;  
+  farmSize?: string;
+  crops?:  string;  
+  experience?: string;
 }
