@@ -139,6 +139,33 @@ exports.logout = async (req, res, next) => {
   });
 };
 
+// @desc    Check if email is available
+// @route   POST /api/auth/check-email
+// @access  Public
+exports.checkEmail = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required'
+      });
+    }
+
+    // Check if user exists
+    const existingUser = await prisma.user.findUnique({
+      where: { email }
+    });
+
+    res.status(200).json({
+      success: true,
+      available: !existingUser  // true if email is not in use
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 // Helper function to send token response
 const sendTokenResponse = (user, statusCode, res) => {
   const token = generateToken(user);
