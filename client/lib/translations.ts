@@ -117,6 +117,7 @@ export interface Translations {
       region: string;
       woreda: string;
       preferredCrops: string;
+      
       experience: string;
     };
     placeholders: {
@@ -201,6 +202,28 @@ export interface Translations {
       invalidCredentials: string;
     };
   };
+  sidebar:{
+dashboard:string;
+market:string;
+trends:string;
+portfolio:string;
+chats:string;
+logout:string;
+general:string;
+accountPages:string;
+support:string;
+
+  };
+  welcomeCard:{
+    title:string;
+    name:string;
+    message:string
+  };
+  weatherCard:{
+    date:string,
+    location:string,
+    month:string
+  }
 }
 
 // English translations
@@ -337,6 +360,7 @@ const en: Translations = {
       region: "Region",
       woreda: "Woreda",
       preferredCrops: "Preferred Crops",
+      
       experience: "Farming Experience"
     },
     placeholders: {
@@ -420,6 +444,28 @@ const en: Translations = {
     errors: {
       invalidCredentials: "Invalid email or password"
     }
+  },
+  sidebar: {
+    dashboard: "Dashboard",
+    market: "Companies/Market",
+    trends: "Trends",
+    portfolio: "My Portfolio",
+    chats: "Chats",
+    logout: "Log out",
+    general: "General",
+    accountPages: "Account Pages",
+    support: "Support"
+  },
+  welcomeCard:{
+    title:"Welcome to AgriMarket",
+    name:"Bisrat Alemayehu",
+    message:"Glad to see you!"
+
+  },
+  weatherCard:{
+    date:"",
+    month:"",
+    location:""
   }
 };
 
@@ -640,7 +686,28 @@ const am: Translations = {
     errors: {
       invalidCredentials: "ልክ ያልሆነ ኢሜይል ወይም የይለፍ ቃል"
     }
-  }
+  },
+  sidebar: {
+    dashboard: "ዳሽቦርድ",
+    market: "ገበያ",
+    trends: "አዝማሚያዎች",
+    portfolio: "ፖርትፎሊዮዬ",
+    chats: "ውይይቶች",
+    logout: "ውጣ",
+    general: "አጠቃላይ",
+    accountPages: "መለያ ገጾች",
+    support: "ድጋፍ"
+  },
+ welcomeCard: {
+  title: "እንኳን ወደ አግሪማርኬት በደህና መጡ",
+  name: "ብስራት አለማየሁ",
+  message: "ስለተመለሱ ደስ ብሎናል!"
+},
+weatherCard:{
+  location:"",
+  date:"",
+  month:""
+}
 };
 
 // Export translation function
