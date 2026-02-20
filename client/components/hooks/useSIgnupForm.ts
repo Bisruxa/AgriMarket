@@ -3,7 +3,7 @@ import { useState, useCallback, useEffect, useRef } from 'react'; // Add these i
 import { FormData } from '@/types/FormTypes';
 import { useFormValidation } from './useFormValidation';
 import { formStepsConfig } from '@/lib/formStepsConfig';
-import { authApi} from '@/lib/api';
+import { authApi,API_URL} from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import { RegistrationData } from '@/types/auth-page';
 // Define API error response type
@@ -16,18 +16,14 @@ interface ApiError {
   };
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'; // Add this
-
 export const useSignupForm = () => {
   const router = useRouter();
   const [role, setRole] = useState<'FARMER' | 'BUYER'>('FARMER');
   const [step, setStep] = useState(1);
   const [errors, setErrors] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  
-  // Add email status state here
   const [emailStatus, setEmailStatus] = useState<'idle' | 'checking' | 'available' | 'unavailable'>('idle');
-  const debounceTimeout = useRef<NodeJS.Timeout>(null); // Add debounce ref here
+  const debounceTimeout = useRef<NodeJS.Timeout>(null); 
   
   const [formData, setFormData] = useState<FormData>({
     fullName: '',

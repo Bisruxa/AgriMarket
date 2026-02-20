@@ -7,11 +7,11 @@ import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 import AuthPage from '@/components/common/AuthForm';
 import { useTranslations } from '../../../components/hooks/useTranlations';
-import { useLanguage } from '@/app/context/LanguageContext';
 import { Translations } from '@/lib/translations';
-
+import { authApi } from '@/lib/api';
+import {useRouter} from 'next/navigation';
 export default function SignInPage() {
-  const { language } = useLanguage();
+
   const t = useTranslations() as Translations;
   
   const [role, setRole] = useState<'FARMER' | 'BUYER'>('FARMER');
@@ -19,7 +19,7 @@ export default function SignInPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-
+ const router = useRouter();
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -38,9 +38,25 @@ export default function SignInPage() {
 
     setIsLoading(true);
     try {
-      // Sign in logic here
-      const redirectPath = role === 'FARMER' ? '/FARMER/dashboard' : '/BUYER/dashboard';
-      window.location.href = redirectPath;
+      const response = await authApi.login({email,password});
+      if(!response.success){
+        if(response.message){
+          setError(response.message);
+        }
+        else{
+          setError(t.signin.errors.invalidCredentials);
+        }
+        return;
+      }
+      if(response.token
+      ){
+        localStorage.setItem('token',response.token);
+      }
+      if(response.user){
+        localStorage.setItem('user',JSON.stringify(response.user))
+      }
+      const redirectPath = role === 'FARMER' ? '/farmer/dashboard' : '/buyer/dashboard';
+      router.push(redirectPath)
     } catch {
       setError(t.signin.errors.invalidCredentials);
     } finally {
