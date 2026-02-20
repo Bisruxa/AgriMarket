@@ -4,6 +4,7 @@ import { Menu, X, Globe } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/app/context/LanguageContext";
 import { useTranslations } from "../hooks/useTranlations";
+import { LanguageButton } from "../ui/languageButton";
 
 
 const LogoComponent = () => (
@@ -44,16 +45,9 @@ const Navbar = () => {
         ))}
         
         {/* Language Toggle Button */}
-        <button
-          onClick={toggleLanguage}
-          className="flex items-center gap-2 px-3 py-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors duration-300 ml-4"
-          aria-label={language === 'en' ? 'Switch to Amharic' : 'Switch to English'}
-        >
-          <Globe size={18} />
-          <span className="text-sm font-medium">
-            {language === 'en' ? 'አማ' : 'ENG'}
-          </span>
-        </button>
+        <div className="flex items-center">
+                    <LanguageButton  />
+                  </div>
       </div>
 
       {/* Mobile Menu */}

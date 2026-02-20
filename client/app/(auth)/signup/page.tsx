@@ -11,11 +11,11 @@ import { useState } from 'react';
 import { ETHIOPIAN_REGIONS } from '@/lib/regon_n_woreda';
 import { WOREDAS_BY_REGION } from '@/lib/regon_n_woreda';
 import { useTranslations } from '@/components/hooks/useTranlations';
-import { useLanguage } from '@/app/context/LanguageContext';
+
 
 export default function SignUpPage() {
   const t = useTranslations(); 
-  const {language } = useLanguage();
+  
   const {
     role,
     setRole,
@@ -154,7 +154,7 @@ export default function SignUpPage() {
     return (
       <div className="space-y-3 sm:space-y-4">
         {stepConfig.fields.map(field => {
-          // Type-safe field access
+
           type FieldKey = keyof typeof t.signup.fields;
           type PlaceholderKey = keyof typeof t.signup.placeholders;
           
@@ -189,8 +189,8 @@ export default function SignUpPage() {
 
   return (
     <AuthPage
-      title={t.signup.title}
-      subtitle={t.signup.subtitle}
+      title={step === 1 ? t.signup.title: " "}
+      subtitle={step === 1 ? t.signup.subtitle:" "}
       errors={errors}
       step={step}
       totalSteps={totalSteps}
@@ -226,7 +226,7 @@ export default function SignUpPage() {
             step > 1 
               ? 'w-full sm:flex-2 bg-[#5B8C51] rounded-xl sm:rounded-2xl py-5 sm:py-2' 
               : 'w-full bg-[#5B8C51] rounded-xl sm:rounded-2xl py-5 sm:py-2'
-          } text-sm`}
+          } text-sm hover:bg-green-900`}
           disabled={isLoading}
         >
           {isLoading 
