@@ -9,7 +9,7 @@ import { usePathname } from "next/navigation";
 const Sidebar = () => {
   const pathname = usePathname();
   return (
-    <>
+    <div className="fixed">
       <div className="space-y-5 text-center">
         <h1 className="text-[25px] font-extrabold text-[#2A5A2A]">
           AgriMarket
@@ -40,7 +40,7 @@ const Sidebar = () => {
           </Link>
         </div>
       </div>
-      <div className="mb-30">
+      <div className="mb-10">
         <h1 className="text-xs text-black/30 my-3 font-semibold">Support</h1>
         <div
           className="flex h-10 border border-[#2A5A2A]/60 text-[14px] items-center  px-2 rounded-lg transition-colors duration-200 ease-in-out"
@@ -56,7 +56,7 @@ const Sidebar = () => {
         </div>
       </div>
       <LogOutSection />
-    </>
+    </div>
   );
 };
 
