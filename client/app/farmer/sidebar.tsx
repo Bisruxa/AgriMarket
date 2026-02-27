@@ -10,7 +10,7 @@ const Sidebar = () => {
   const pathname = usePathname();
   return (
     <div className="fixed">
-      <div className="space-y-5 text-center">
+      {/* <div className="space-y-5 text-center">
         <h1 className="text-[25px] font-extrabold text-[#2A5A2A]">
           AgriMarket
         </h1>
@@ -22,7 +22,7 @@ const Sidebar = () => {
             placeholder="Search"
           />
         </div>
-      </div>
+      </div> */}
       <NavigationLink />
       <div>
         <h1 className="text-xs text-black/30 my-3 font-semibold">My Space</h1>
@@ -59,5 +59,6 @@ const Sidebar = () => {
     </div>
   );
 };
+
 
 export default Sidebar;

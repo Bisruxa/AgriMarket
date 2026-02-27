@@ -23,7 +23,7 @@ export const formStepsConfig = {
       subtitle: 'Tell us about your farm',
       fields: [
         { id: 'farmSize', label: 'Farm Size (acres)', type: 'number', required: true },
-        { id: 'preferredCrops', label: 'Preferred Crops', type: 'text', required: false, placeholder: 'e.g., Wheat, Corn, Soybeans' },
+        { id: 'crops', label: 'Preferred Crops', type: 'text', required: false, placeholder: 'e.g., Wheat, Corn, Soybeans' },
         { id: 'experience', label: 'Farming Experience (years)', type: 'number', required: false },
       ]
     }
