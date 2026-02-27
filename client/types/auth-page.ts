@@ -47,3 +47,42 @@ export interface RegistrationData {
   crops?:  string;  
   experience?: string;
 }
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+}
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  status?: string;
+  farmSize?: string;
+  crops?: string[];
+  company?: string;
+  phone?:string;
+}
+
+export interface AuthContextType {
+  user: User | null;
+  login: (userData: User) => void;
+  logout: () => void;
+  loading: boolean;
+}
+export interface Trader {
+  id:string;
+  businessName: string;
+  businessType: string;
+  businessRegNumber: string;
+  taxId: string;
+  description: string;
+  ownerName: string;
+  email: string;
+  phone: string;
+  alternatePhone?: string;
+  address: string;
+  status: 'pending' | 'approved' | 'rejected';
+  registrationDate: string;
+}

@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import AuthPage from '@/components/common/AuthForm';
+import AuthPage from '@/components/common/AuthForm/AuthForm';
 import { MapPin, Globe, Info } from 'lucide-react';
 import { useState } from 'react';
 import { ETHIOPIAN_REGIONS } from '@/lib/regon_n_woreda';

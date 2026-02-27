@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import Link from 'next/link';
-import AuthPage from '@/components/common/AuthForm';
+import AuthPage from '@/components/common/AuthForm/AuthForm';
 import { useTranslations } from '../../../components/hooks/useTranlations';
 import { Translations } from '@/lib/translations';
 import { authApi } from '@/lib/api';
