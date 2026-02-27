@@ -10,7 +10,7 @@ function Footer() {
       <div className="container mx-auto px-4">
         {/* Using flex with justify-between */}
         <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
-          
+        
           {/* Left side */}
           <div className="flex items-center gap-2">
             <Sprout size={18} className="text-[#5B8C51]" />

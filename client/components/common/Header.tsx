@@ -1,10 +1,12 @@
 'use client'
 import  { useState, useEffect } from 'react'
 import { LanguageButton } from '@/components/ui/languageButton'
-
+import { usePathname } from 'next/navigation'
+import { useTranslations } from '../hooks/useTranlations'
 function Header() {
   const [isScrolled, setIsScrolled] = useState(false)
-
+const pathname = usePathname()
+const t= useTranslations();
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10)
@@ -13,7 +15,24 @@ function Header() {
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
+const getPageTranslationKey = (path: string): string => {
+    const pathMap: Record<string, string> = {
+      '/': 'home',
+      '/dashboard': 'dashboard',
+      '/admin/traderApproval': 'traderApproval',
+      '/farmer': 'farmer',
+      '/admin': 'admin',
+      '/farmer/portfolio': 'portfolio',
+      '/farmer/chat': 'chat',
+      '/admin/chat': 'chat',
+      '/farmer/market': 'market',
+    };
 
+    return pathMap[path] || path.split('/').pop() || 'home';
+  };
+
+  const pageKey = getPageTranslationKey(pathname);
+  const pageName = t.header?.[pageKey as keyof typeof t.header] || pageKey
   return (
     <header 
       className={` top-0 z-50 transition-all duration-300 `
@@ -34,7 +53,7 @@ function Header() {
                 isScrolled ? 'text-gray-600' : 'text-gray-600 -ml-6'
               }`}
             >
-              Pages / Dashboard
+                {t.header?.pages || 'Pages'} / {pageName}
             </span>
           </div>
 

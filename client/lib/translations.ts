@@ -116,7 +116,7 @@ export interface Translations {
       soilType: string;
       region: string;
       woreda: string;
-      preferredCrops: string;
+      crops: string;
       
       experience: string;
     };
@@ -131,7 +131,7 @@ export interface Translations {
       soilType: string;
       region: string;
       woreda: string;
-      preferredCrops: string;
+      crops: string;
       experience: string;
     };
     soilTypes: {
@@ -223,7 +223,128 @@ support:string;
     date:string,
     location:string,
     month:string
+  };
+  statusCard:{
+stats:{
+  farmers:string,
+  traders:string,
+  totalUsers:string
+}
+  };
+  common: {
+    search: string;
+    filter: string;
+    all: string;
+    pending: string;
+    approved: string;
+    rejected: string;
+    noResults :string;
+    cancel: string;
+    save: string;
+
+  };
+  filters?: {
+    status?: {
+      all: string;
+      pending: string;
+      approved: string;
+      rejected: string;
+    };
+    role?: {
+      all: string;
+      farmer: string;
+      trader: string;
+    };
+  };
+  table: {
+  headers: {
+    name: string,
+    email: string, 
+    phone: string,
+    role: string,
+    action:string
   }
+},
+traderStats?: {
+    totalRequests: string;
+    pending: string;
+    approved: string;
+    rejected: string;
+  };
+  businessInfo?: {
+    businessInfo: string;
+    registrationNumber: string;
+    taxId: string;
+    ownerInfo: string;
+    fullName: string;
+    email: string;
+    phone: string;
+    address: string;
+  };
+  additionalInfo?: {
+    applicationStatus: string;
+    currentStatus: string;
+    registrationDate: string;
+    pending: string;
+    approved: string;
+    rejected: string;
+  };
+traderApproval?: {
+    title: string;
+    subtitle: string;
+    searchPlaceholder: string;
+    review: string;
+  };
+  traderDetail?: {
+    notFound: string;
+    backToApprovals: string;
+    reviewApplication: string;
+    reject: string;
+    approveApplication: string;
+  };
+  traderTable?: {
+    businessName: string;
+    owner: string;
+    contact: string;
+    registrationDate: string;
+    status: string;
+    action: string;
+  };
+  status?: {
+    pending: string;
+    approved: string;
+    rejected: string;
+  };
+ roles: {
+    farmer: string;
+    trader: string;
+  };
+  modals: {
+    editUser: {
+      title: string;
+      namePlaceholder: string;
+      emailPlaceholder: string;
+      phonePlaceholder: string;
+    };
+    rejection: {
+      title: string;
+      description: string;
+      placeholder: string;
+      rejecting: string;
+      confirm: string;
+    };
+  };
+   header?: {
+    pages: string;
+    home: string;
+    dashboard: string;
+    traderApproval: string;
+    farmer: string;
+    admin: string;
+    portfolio: string;
+    chat: string;
+    market: string;
+  };
 }
 
 // English translations
@@ -359,7 +480,7 @@ const en: Translations = {
       soilType: "Soil Type",
       region: "Region",
       woreda: "Woreda",
-      preferredCrops: "Preferred Crops",
+      crops: "Preferred Crops",
       
       experience: "Farming Experience"
     },
@@ -374,7 +495,7 @@ const en: Translations = {
       soilType: "Select soil type",
       region: "Enter your region",
       woreda: "Enter your woreda",
-      preferredCrops: "e.g., Teff, Wheat, Maize",
+      crops: "e.g., Teff, Wheat, Maize",
       experience: "Select your experience level"
     },
     soilTypes: {
@@ -466,7 +587,127 @@ const en: Translations = {
     date:"",
     month:"",
     location:""
+  },
+  statusCard:{
+    stats:{
+       farmers: "Farmers",
+      traders: "Traders",
+      totalUsers: "Total Users"
+    }
+  },
+  common: {
+  search: "Search...",
+  filter: "Filter",
+  all: "All",
+  pending: "Pending",
+  approved: "Approved", 
+  rejected: "Rejected",
+  noResults :"No results found",
+  cancel: "Cancel",
+  save: "Save",
+},
+filters: {
+  status: {
+    all: "All Status",
+    pending: "Pending",
+    approved: "Approved",
+    rejected: "Rejected"
+  },
+  role: {
+    all: "All Roles",
+    farmer: "Farmers",
+    trader: "Traders"
   }
+},
+table: {
+  headers: {
+    name: "Name",
+    email: "Email", 
+    phone: "Phone",
+    role: "Role",
+    action: "Action"
+  }
+},
+traderStats: {
+  totalRequests: "Total Requests",
+  pending: "Pending",
+  approved: "Approved",
+  rejected: "Rejected"
+},
+businessInfo: {
+  businessInfo: "Business Information",
+  registrationNumber: "Registration Number",
+  taxId: "Tax ID",
+  ownerInfo: "Owner Information",
+  fullName: "Full Name",
+  email: "Email",
+  phone: "Phone",
+  address: "Address"
+},
+additionalInfo: {
+  applicationStatus: "Application Status",
+  currentStatus: "Current Status",
+  registrationDate: "Registration Date",
+  pending: "Pending",
+  approved: "Approved",
+  rejected: "Rejected"
+},
+traderApproval: {
+  title: "Trader Approvals",
+  subtitle: "Review and manage trader registration requests",
+  searchPlaceholder: "Search by business name, owner, or email...",
+  review: "Review"
+},
+traderDetail: {
+  notFound: "Trader not found",
+  backToApprovals: "Back to Approvals",
+  reviewApplication: "Review trader application",
+  reject: "Reject",
+  approveApplication: "Approve Application"
+},
+traderTable: {
+  businessName: "Business Name",
+  owner: "Owner",
+  contact: "Contact",
+  registrationDate: "Registration Date",
+  status: "Status",
+  action: "Action"
+},
+status: {
+  pending: "Pending",
+  approved: "Approved",
+  rejected: "Rejected"
+},
+roles: {
+  farmer: "Farmer",
+  trader: "Trader"
+},
+modals: {
+  editUser: {
+    title: "Edit User",
+    namePlaceholder: "Name",
+    emailPlaceholder: "Email",
+    phonePlaceholder: "Phone"
+  },
+  rejection: {
+    title: "Reject Application",
+    description: "Please provide a reason for rejecting this trader application. This will be shared with the applicant.",
+    placeholder: "Enter rejection reason...",
+    rejecting: "Rejecting...",
+    confirm: "Confirm Reject"
+  }
+},
+header: {
+  pages: "Pages",
+  home: "Home",
+  dashboard: "Dashboard",
+  traderApproval: "Trader Approvals",
+  farmer: "Farmer",
+  admin: "Admin",
+  portfolio: "Portfolio",
+  chat: "Chat",
+  market: "Market"
+}
 };
 
 // Amharic translations
@@ -602,7 +843,7 @@ const am: Translations = {
       soilType: "የበለስ አይነት",
       region: "ክልል",
       woreda: "ወረዳ",
-      preferredCrops: "የሚመረጡ አዝፍሮች",
+      crops: "የሚመረጡ አዝፍሮች",
       experience: "የግብርና ልምድ"
     },
     placeholders: {
@@ -616,7 +857,7 @@ const am: Translations = {
       soilType: "የበለስ አይነት ይምረጡ",
       region: "ክልልዎን ያስገቡ",
       woreda: "ወረዳዎን ያስገቡ",
-      preferredCrops: "ለምሳሌ ጤፍ፣ ስንዴ፣ በቆሎ",
+      crops: "ለምሳሌ ጤፍ፣ ስንዴ፣ በቆሎ",
       experience: "የልምድ ደረጃዎን ይምረጡ"
     },
     soilTypes: {
@@ -707,6 +948,125 @@ weatherCard:{
   location:"",
   date:"",
   month:""
+},
+statusCard:{
+  stats:{
+     farmers: "ገበሬዎች",
+      traders: "ነጋዴዎች",
+      totalUsers: "አጠቃላይ ተጠቃሚዎች"
+  }
+},
+common: {
+  search: "ፈልግ...",
+  filter: "አጣራ",
+  all: "ሁሉም",
+  pending: "በመጠባበቅ ላይ",
+  approved: "ጸድቋል",
+  rejected: "ውድቅ ተደርጓል",
+  noResults:"ምንም ውጤት አልተገኘም",
+  cancel: "ሰርዝ",
+  save: "አስቀምጥ",
+},
+filters: {
+  status: {
+    all: "ሁሉም ሁኔታ",
+    pending: "በመጠባበቅ ላይ",
+    approved: "ጸድቋል",
+    rejected: "ውድቅ ተደርጓል"
+  },
+  role: {
+    all: "ሁሉም ሚናዎች",
+    farmer: "ገበሬዎች",
+    trader: "ነጋዴዎች"
+  }},
+  table: {
+  headers: {
+    name: "ስም",
+    email: "ኢሜይል",
+    phone: "ስልክ",
+    role: "ሚና",
+    action: "ተግባር"
+  }
+},
+traderStats: {
+  totalRequests: "ጠቅላላ ጥያቄዎች",
+  pending: "በመጠባበቅ ላይ",
+  approved: "ጸድቋል",
+  rejected: "ውድቅ ተደርጓል"
+},
+businessInfo: {
+  businessInfo: "የንግድ መረጃ",
+  registrationNumber: "የምዝገባ ቁጥር",
+  taxId: "ግብር ቁጥር",
+  ownerInfo: "የባለቤት መረጃ",
+  fullName: "ሙሉ ስም",
+  email: "ኢሜይል",
+  phone: "ስልክ",
+  address: "አድራሻ"
+},
+additionalInfo: {
+  applicationStatus: "የማመልከቻ ሁኔታ",
+  currentStatus: "አሁን ያለበት ሁኔታ",
+  registrationDate: "የምዝገብ ቀን",
+  pending: "በመጠባበቅ ላይ",
+  approved: "ጸድቋል",
+  rejected: "ውድቅ ተደርጓል"
+},
+traderApproval: {
+  title: "የነጋዴ ማረጋገጫዎች",
+  subtitle: "የነጋዴ ምዝገባ ጥያቄዎችን ይገምግሙ እና ያስተዳድሩ",
+  searchPlaceholder: "በንግድ ስም፣ በባለቤት ወይም በኢሜይል ይፈልጉ...",
+  review: "ገምግም"
+},
+traderDetail: {
+  notFound: "ነጋዴ አልተገኘም",
+  backToApprovals: "ወደ ማረጋገጫዎች ተመለስ",
+  reviewApplication: "የነጋዴ ማመልከቻ ይገምግሙ",
+  reject: "ውድቅ አድርግ",
+  approveApplication: "ማመልከቻውን ይቀበሉ"
+},
+traderTable: {
+  businessName: "የንግድ ስም",
+  owner: "ባለቤት",
+  contact: "መገናኛ",
+  registrationDate: "የምዝገብ ቀን",
+  status: "ሁኔታ",
+  action: "ተግባር"
+},
+status: {
+  pending: "በመጠባበቅ ላይ",
+  approved: "ጸድቋል",
+  rejected: "ውድቅ ተደርጓል"
+},
+roles: {
+  farmer: "ገበሬ",
+  trader: "ነጋዴ"
+},
+modals: {
+  editUser: {
+    title: "ተጠቃሚ አርትዕ",
+    namePlaceholder: "ስም",
+    emailPlaceholder: "ኢሜይል",
+    phonePlaceholder: "ስልክ"
+  },
+  rejection: {
+    title: "ማመልከቻ ውድቅ አድርግ",
+    description: "እባክዎ ይህን የነጋዴ ማመልከቻ ውድቅ ለማድረግ ምክንያት ያቅርቡ። ይህ ለአመልካቹ ይተላለፋል።",
+    placeholder: "ውድቅ የማድረጊያ ምክንያት ያስገቡ...",
+    rejecting: "እየተደመጠ ነው...",
+    confirm: "ውድቅ መሆኑን አረጋግጥ"
+  }
+},
+header: {
+  pages: "ገጾች",
+  home: "መነሻ",
+  dashboard: "ዳሽቦርድ",
+  traderApproval: "የነጋዴ ማረጋገጫ",
+  farmer: "ገበሬ",
+  admin: "አስተዳዳሪ",
+  portfolio: "ፖርትፎሊዮ",
+  chat: "ውይይት",
+  market: "ገበያ"
 }
 };
 

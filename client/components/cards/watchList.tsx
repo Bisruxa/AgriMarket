@@ -24,7 +24,7 @@ function WatchList() {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-[#5B8C51]/30 flex flex-col hover:shadow-sm transition-all overflow-hidden md:w-183 max-w-full w-full">
+    <div className="bg-white rounded-lg shadow-sm border border-[#5B8C51]/30 flex flex-col hover:shadow-sm transition-all overflow-hidden  max-w-full w-full">
       {/* Header - Fixed on mobile */}
       <div className="p-3 sm:p-4 border-b border-gray-100 bg-white sticky top-0 z-10">
         <div className="flex items-center gap-2">
