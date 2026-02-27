@@ -1,12 +1,13 @@
 "use client"
-import { useState, useCallback, useEffect, useRef } from 'react'; // Add these imports
+import { useState, useCallback, useEffect } from 'react';
 import { FormData } from '@/types/FormTypes';
 import { useFormValidation } from './useFormValidation';
 import { formStepsConfig } from '@/lib/formStepsConfig';
-import { authApi,API_URL} from '@/lib/api';
+import { authApi, API_URL } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import { RegistrationData } from '@/types/auth-page';
-// Define API error response type
+import { useDebounce } from './useDebounce';
+
 interface ApiError {
   message: string;
   response?: {
@@ -23,7 +24,6 @@ export const useSignupForm = () => {
   const [errors, setErrors] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [emailStatus, setEmailStatus] = useState<'idle' | 'checking' | 'available' | 'unavailable'>('idle');
-  const debounceTimeout = useRef<NodeJS.Timeout>(null); 
   
   const [formData, setFormData] = useState<FormData>({
     fullName: '',
@@ -43,7 +43,7 @@ export const useSignupForm = () => {
   const totalSteps = formSteps.length;
   const currentStep = formSteps[step - 1];
 
-  // Add checkEmailAvailability function here
+  // Email check function
   const checkEmailAvailability = useCallback(async (email: string) => {
     if (!email || !/\S+@\S+\.\S+/.test(email)) return;
     
@@ -56,29 +56,20 @@ export const useSignupForm = () => {
       });
       const data = await response.json();
       setEmailStatus(data.available ? 'available' : 'unavailable');
-    } catch (error) {
+    } catch {
       setEmailStatus('idle');
     }
   }, []);
 
-  // Add useEffect for debounced email check here
+  // Create debounced version of email check
+  const debouncedCheckEmail = useDebounce(checkEmailAvailability, 500);
+
+  // Use effect to trigger debounced check when email changes
   useEffect(() => {
-    if (debounceTimeout.current) {
-      clearTimeout(debounceTimeout.current);
-    }
-    
     if (formData.email) {
-      debounceTimeout.current = setTimeout(() => {
-        checkEmailAvailability(formData.email);
-      }, 500); // Wait 500ms after user stops typing
+      debouncedCheckEmail(formData.email);
     }
-    
-    return () => {
-      if (debounceTimeout.current) {
-        clearTimeout(debounceTimeout.current);
-      }
-    };
-  }, [formData.email, checkEmailAvailability]);
+  }, [formData.email, debouncedCheckEmail]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -153,7 +144,7 @@ export const useSignupForm = () => {
           registrationData.experience = formData.experience;
         }
       }
-
+  
       const response = await authApi.register(registrationData);
 
       if (!response.success) {
@@ -199,7 +190,6 @@ export const useSignupForm = () => {
     }
   };
 
-  // Add emailStatus to the returned object
   return {
     role,
     setRole,

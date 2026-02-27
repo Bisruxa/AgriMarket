@@ -17,15 +17,15 @@ const HowItWorks = () => {
     },
     {
       icon: <Map className="text-[#5B8C51]" size={48} />,
-      link: "/dashboard"
+      link: "/signup"
     },
     {
       icon: <Brain className="text-[#5B8C51]" size={48} />,
-      link: "/insights"
+      link: "/signup"
     },
     {
       icon: <Handshake className="text-[#5B8C51]" size={48} />,
-      link: "/marketplace"
+      link: "/signup"
     },
   ];
 

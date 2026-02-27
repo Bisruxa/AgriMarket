@@ -6,9 +6,11 @@ import image from "../../public/images/secondpage.png";
 import { useState } from 'react';
 import { useCurrentDateTime } from "../hooks/useCurrentDateTime";
 import { useTranslations } from "../hooks/useTranlations";
+import { useAuth } from "@/app/context/UserContext";
 function WelcomeCard() {
   const { dayName, formattedDate, currentTime } = useCurrentDateTime();
   const t = useTranslations()
+  const {user} = useAuth();
   const [temperatureUnit, setTemperatureUnit] = useState('C');
   const [weatherData] = useState({
     temp: 28,
@@ -55,7 +57,7 @@ function WelcomeCard() {
           <div className="relative z-10 h-full flex flex-col justify-end p-3 sm:p-4 -mt-10">
             <p className=" text-xs sm:text-sm drop-shadow-lg">{t.welcomeCard.title}</p>
             <h2 className=" py-1 sm:py-2 text-base sm:text-lg md:text-xl font-bold drop-shadow-lg">
-              {t.welcomeCard.name}
+              {user?.name}
             </h2>
             <p className=" text-xs sm:text-sm drop-shadow-lg">{t.welcomeCard.message}</p>
             <p className="mt-2 text-xs ">{currentTime}</p>
