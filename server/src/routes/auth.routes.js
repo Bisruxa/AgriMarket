@@ -4,7 +4,8 @@ const {
   register,
   login,
   getMe,
-  logout
+  logout,
+  checkEmail
 } = require('../controllers/auth.controller');
 const { protect } = require('../middleware/auth.middleware');
 const {
@@ -13,6 +14,7 @@ const {
   validate
 } = require('../middleware/validation.middleware');
 
+router.post('/check-email', checkEmail);
 router.post('/register', registerValidation, validate, register);
 router.post('/login', loginValidation, validate, login);
 router.get('/me', protect, getMe);
