@@ -18,7 +18,13 @@ const corsOptions = {
     // Allow requests with no origin (mobile apps, curl, Postman)
     if (!origin) return callback(null, true);
     
-    // List of allowed origins
+    // In production, allow all origins or specify your frontend URLs
+    if (process.env.NODE_ENV === 'production') {
+      // Allow any origin in production (you can restrict this later)
+      return callback(null, true);
+    }
+    
+    // List of allowed origins for development
     const allowedOrigins = [
       'http://localhost:3000',
       'http://localhost:3001',
