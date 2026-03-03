@@ -3,6 +3,51 @@
 import { FormData, ValidationRule } from '@/types/FormTypes';
 
 export const useFormValidation = (formData: FormData) => {
+  // Helper validation functions
+  const validateFullName = (name: string): string | true => {
+    if (!name.trim()) return 'Full name is required';
+    const nameRegex = /^[A-Za-z\s]{2,50}$/;
+    return nameRegex.test(name.trim()) || 'Full name should only contain letters and spaces (2-50 characters)';
+  };
+
+  const validateCrops = (crops: string): string | true => {
+    if (!crops.trim()) return 'Crops are required';
+    
+    const cropList = crops.split(',').map(crop => crop.trim());
+    
+    if (cropList.some(crop => crop.length === 0)) {
+      return 'Invalid format. Use commas to separate crops (e.g., Corn, Wheat)';
+    }
+    
+    const cropRegex = /^[A-Za-z\s]+$/;
+    const invalidCrops = cropList.filter(crop => !cropRegex.test(crop));
+    
+    return invalidCrops.length === 0 || 'Crops should only contain letters (no numbers or special characters)';
+  };
+
+  const validateFarmSize = (size: string): string | true => {
+    if (!size.trim()) return 'Farm size is required';
+    
+    const num = Number(size);
+    if (isNaN(num)) return 'Farm size must be a valid number';
+    if (num <= 0) return 'Farm size must be greater than 0';
+    if (num > 10000) return 'Farm size seems too large (max 10000 hectares)';
+    
+    return true;
+  };
+
+  const validateExperience = (exp: string): string | true => {
+    if (!exp.trim()) return 'Experience is required';
+    
+    const num = Number(exp);
+    if (isNaN(num)) return 'Experience must be a valid number';
+    if (num < 0) return 'Experience cannot be negative';
+    if (num > 100) return 'Experience seems too high (max 100 years)';
+    if (!Number.isInteger(num)) return 'Experience should be a whole number (years)';
+    
+    return true;
+  };
+
   const validationRules = {
     step1: {
       checkAllEmpty: () => {
@@ -13,7 +58,8 @@ export const useFormValidation = (formData: FormData) => {
       validations: [
         { 
           field: 'fullName' as keyof FormData, 
-          message: 'Full name is required', 
+          message: 'Full name is required',
+          validate: (val: string) => validateFullName(val)
         },
         { 
           field: 'email' as keyof FormData, 
@@ -27,11 +73,9 @@ export const useFormValidation = (formData: FormData) => {
         },
         { 
           field: 'confirmPassword' as keyof FormData, 
-          message: 'Confirm password is required', 
+          message: 'Confirm password is required',
+          validate: (val: string) => val === formData.password || 'Passwords do not match'
         },
-        { 
-          custom: () => formData.password === formData.confirmPassword || 'Passwords do not match' 
-        }
       ] as ValidationRule[]
     },
     step2: {
@@ -53,14 +97,25 @@ export const useFormValidation = (formData: FormData) => {
     },
     step3: {
       checkAllEmpty: () => {
-        const requiredFields: (keyof FormData)[] = ['farmSize'];
+        const requiredFields: (keyof FormData)[] = ['farmSize', 'crops', 'experience'];
         const allEmpty = requiredFields.every(field => !formData[field]?.toString().trim());
         return allEmpty ? ['All fields are required'] : [];
       },
       validations: [
         { 
           field: 'farmSize' as keyof FormData, 
-          message: 'Farm size is required', 
+          message: 'Farm size is required',
+          validate: (val: string) => validateFarmSize(val)
+        },
+        { 
+          field: 'crops' as keyof FormData, 
+          message: 'Crops are required',
+          validate: (val: string) => validateCrops(val)
+        },
+        { 
+          field: 'experience' as keyof FormData, 
+          message: 'Experience is required',
+          validate: (val: string) => validateExperience(val)
         },
       ] as ValidationRule[]
     }
@@ -68,6 +123,8 @@ export const useFormValidation = (formData: FormData) => {
 
   const validateStep = (stepNum: number) => {
     const rules = validationRules[`step${stepNum}` as keyof typeof validationRules];
+    if (!rules) return [];
+    
     const newErrors: string[] = [];
     
     const allEmptyError = rules.checkAllEmpty();
@@ -83,12 +140,12 @@ export const useFormValidation = (formData: FormData) => {
         if (!stringValue.trim()) {
           newErrors.push(rule.message);
         } else if (rule.validate) {
-          const error = rule.validate(stringValue);
-          if (typeof error === 'string') newErrors.push(error);
+          const result = rule.validate(stringValue);
+          if (typeof result === 'string') newErrors.push(result);
         }
       } else if ('custom' in rule) {
-        const error = rule.custom();
-        if (typeof error === 'string') newErrors.push(error);
+        const result = rule.custom();
+        if (typeof result === 'string') newErrors.push(result);
       }
     });
     
