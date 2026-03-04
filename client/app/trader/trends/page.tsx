@@ -1,5 +1,4 @@
 "use client"
-
 import * as React from "react"
 import {
   Wheat,
@@ -15,7 +14,6 @@ import {
   Cloud,
   Info,
 } from "lucide-react"
-
 import { LineGraph } from "@/components/common/LineGraph"
 import { BarGraph } from "@/components/common/BarGraph"
 import { DataTable } from "@/components/common/Table"

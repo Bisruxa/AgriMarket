@@ -1,8 +1,7 @@
 import React from "react";
 import Link from "next/link";
-import { Links } from "@/lib/sidebarLinkContent";
 import { usePathname } from "next/navigation";
-const NavigationLink = () => {
+const NavigationLink = ({Links}) => {
   const pathname  = usePathname();
   return (
     <div>
