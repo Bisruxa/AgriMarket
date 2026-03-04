@@ -38,7 +38,7 @@ const farmerField = [
     type: "text",
   },
 ];
-const Farmer_Portfolio = () => {
+const Trader_Portfolio = () => {
   return (
     <>
       <Profile/>
@@ -47,4 +47,4 @@ const Farmer_Portfolio = () => {
   );
 };
 
-export default Farmer_Portfolio;
+export default Trader_Portfolio;
