@@ -1,6 +1,6 @@
 'use client'
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion,Variants } from "framer-motion";
 import { useTranslations } from '../hooks/useTranlations';
 
 const FarmingBasics = () => {
@@ -26,7 +26,7 @@ const FarmingBasics = () => {
   ];
 
   // Animation variants
-  const containerVariants = {
+  const containerVariants:Variants = {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
@@ -37,7 +37,7 @@ const FarmingBasics = () => {
     },
   };
 
-  const itemVariants = {
+  const itemVariants:Variants = {
     hidden: { 
       opacity: 0, 
       x: -50 
@@ -53,7 +53,7 @@ const FarmingBasics = () => {
     },
   };
 
-  const textVariants = {
+  const textVariants : Variants = {
     hidden: { 
       opacity: 0, 
       y: 20 
@@ -68,7 +68,7 @@ const FarmingBasics = () => {
     },
   };
 
-  const imageVariants = {
+  const imageVariants : Variants= {
     hidden: { 
       opacity: 0, 
       x: 100,
@@ -87,7 +87,7 @@ const FarmingBasics = () => {
     },
   };
 
-  const buttonVariants = {
+  const buttonVariants:Variants = {
     hidden: { 
       opacity: 0, 
       scale: 0.8,
@@ -118,7 +118,7 @@ const FarmingBasics = () => {
 
   return (
     <section className="w-full bg-[#E6C49A]">
-      <div className="grid lg:grid-cols-2 min-h-[600px]">
+      <div className="grid lg:grid-cols-2 min-h-150">
 
         {/* Left Content - Slides in from left */}
         <motion.div 
