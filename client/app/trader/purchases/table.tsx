@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { ChevronUp, ChevronDown, Package } from 'lucide-react'
+import { ChevronUp, ChevronDown } from 'lucide-react'
 import {
   Table,
   TableHeader,

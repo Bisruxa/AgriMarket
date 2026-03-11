@@ -6,9 +6,7 @@ import {
   Instagram,
   Mail,
   Phone,
-  MapPin,
-  Heart,
-  GraduationCap,
+  MapPin
 } from "lucide-react";
 import Link from "next/link";
 import { useTranslations } from "../hooks/useTranlations";
