@@ -1,13 +1,8 @@
 "use client";
-import React from "react";
-import { Search, UserPen, MessageCircleMore } from "lucide-react";
-import Link from "next/link";
-import { Input } from "@/components/ui/input";
-import LogOutSection from "@/components/SideBar/LogOut";
-import NavigationLink from "@/components/SideBar/NavigationLink";
-import { usePathname } from "next/navigation";
-const Sidebar = () => {
-  const pathname = usePathname();
+import Sidebar from "@/components/SideBar/sidebar";
+import { Farmer_Links } from "@/lib/sidebarLinkContent";
+
+const FarmerSidebar = () => {
   return (
     <div className="fixed">
       {/* <div className="space-y-5 text-center">
