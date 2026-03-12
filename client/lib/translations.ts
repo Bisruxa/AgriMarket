@@ -97,6 +97,254 @@ export interface Translations {
     acknowledgement: string;
     academicDisclaimer: string;
   };
+  authForm: {
+    quote: string;
+    subtitle: string;
+  };
+  signup: {
+    title: string;
+    subtitle:string;
+    fields: {
+      fullName: string;
+      email: string;
+      phone: string;
+      password: string;
+      confirmPassword: string;
+      farmName: string;
+      farmSize: string;
+      farmSizeUnit: string;
+      soilType: string;
+      region: string;
+      woreda: string;
+      crops: string;
+      
+      experience: string;
+    };
+    placeholders: {
+      fullName: string;
+      email: string;
+      phone: string;
+      password: string;
+      confirmPassword: string;
+      farmName: string;
+      farmSize: string;
+      soilType: string;
+      region: string;
+      woreda: string;
+      crops: string;
+      experience: string;
+    };
+    soilTypes: {
+      clay: string;
+      sandy: string;
+      loamy: string;
+      silt: string;
+      peat: string;
+      chalky: string;
+    };
+    experienceLevels: {
+      beginner: string;
+      intermediate: string;
+      advanced: string;
+      expert: string;
+    };
+    buttons: {
+      back: string;
+      continue: string;
+      complete: string;
+      processing: string;
+    };
+    locationInfo: {
+      title: string;
+      description: string;
+      benefits: {
+        weather: string;
+        crops: string;
+        market: string;
+      };
+    };
+    validation: {
+      required: string;
+      emailInvalid: string;
+      passwordMatch: string;
+      passwordLength: string;
+    };
+    links: {
+      haveAccount: string;
+      signin: string;
+    };
+  };
+  signin: {
+    title: string;
+    subtitle: string;
+    fields: {
+      email: string;
+      password: string;
+    };
+    placeholders: {
+      email: string;
+      password: string;
+    };
+    buttons: {
+      signin: string;
+      processing: string;
+    };
+    links: {
+      forgotPassword: string;
+      noAccount: string;
+      signup: string;
+    };
+    validation: {
+      required: string;
+      emailInvalid: string;
+    };
+    errors: {
+      invalidCredentials: string;
+    };
+  };
+  sidebar:{
+dashboard:string;
+market:string;
+trends:string;
+portfolio:string;
+chats:string;
+logout:string;
+general:string;
+accountPages:string;
+support:string;
+
+  };
+  welcomeCard:{
+    title:string;
+    name:string;
+    message:string
+  };
+  weatherCard:{
+    date:string,
+    location:string,
+    month:string
+  };
+  statusCard:{
+stats:{
+  farmers:string,
+  traders:string,
+  totalUsers:string
+}
+  };
+  common: {
+    search: string;
+    filter: string;
+    all: string;
+    pending: string;
+    approved: string;
+    rejected: string;
+    noResults :string;
+    cancel: string;
+    save: string;
+
+  };
+  filters?: {
+    status?: {
+      all: string;
+      pending: string;
+      approved: string;
+      rejected: string;
+    };
+    role?: {
+      all: string;
+      farmer: string;
+      trader: string;
+    };
+  };
+  table: {
+  headers: {
+    name: string,
+    email: string, 
+    phone: string,
+    role: string,
+    action:string
+  }
+},
+traderStats?: {
+    totalRequests: string;
+    pending: string;
+    approved: string;
+    rejected: string;
+  };
+  businessInfo?: {
+    businessInfo: string;
+    registrationNumber: string;
+    taxId: string;
+    ownerInfo: string;
+    fullName: string;
+    email: string;
+    phone: string;
+    address: string;
+  };
+  additionalInfo?: {
+    applicationStatus: string;
+    currentStatus: string;
+    registrationDate: string;
+    pending: string;
+    approved: string;
+    rejected: string;
+  };
+traderApproval?: {
+    title: string;
+    subtitle: string;
+    searchPlaceholder: string;
+    review: string;
+  };
+  traderDetail?: {
+    notFound: string;
+    backToApprovals: string;
+    reviewApplication: string;
+    reject: string;
+    approveApplication: string;
+  };
+  traderTable?: {
+    businessName: string;
+    owner: string;
+    contact: string;
+    registrationDate: string;
+    status: string;
+    action: string;
+  };
+  status?: {
+    pending: string;
+    approved: string;
+    rejected: string;
+  };
+ roles: {
+    farmer: string;
+    trader: string;
+  };
+  modals: {
+    editUser: {
+      title: string;
+      namePlaceholder: string;
+      emailPlaceholder: string;
+      phonePlaceholder: string;
+    };
+    rejection: {
+      title: string;
+      description: string;
+      placeholder: string;
+      rejecting: string;
+      confirm: string;
+    };
+  };
+   header?: {
+    pages: string;
+    home: string;
+    dashboard: string;
+    traderApproval: string;
+    farmer: string;
+    admin: string;
+    portfolio: string;
+    chat: string;
+    market: string;
+  };
 }
 
 // English translations
@@ -182,7 +430,6 @@ const en: Translations = {
       "Can I use AgriMarket on my mobile phone?",
       "How do I connect with traders?",
       "What crops does AgriMarket support?",
-    
     ],
     answers: [
       "Yes! Our basic platform is completely free for farmers. You can access crop recommendations, market trends, and price forecasts at no cost. Premium features are available with optional subscriptions.",
@@ -192,7 +439,6 @@ const en: Translations = {
       "Yes! AgriMarket is fully optimized for mobile devices. You can access all features through our mobile-friendly website.",
       "Once registered, you can list your available crops on our marketplace. Verified traders can view your listings and contact you directly through the platform's messaging system.",
       "We support all major Ethiopian crops including teff, wheat, maize, coffee, pulses, oilseeds, and horticultural products. New crops are added regularly based on regional demand.",
-   
     ],
     contact: {
       title: "Still have questions?",
@@ -214,7 +460,254 @@ const en: Translations = {
     copyright: `© ${new Date().getFullYear()} AgriMarket AI Decision Support System. • Final Year Project`,
     acknowledgement: "Special thanks to Ethiopian Institute of Agricultural Research (EIAR)",
     academicDisclaimer: "This project is developed for academic purposes as part of the Computer Science curriculum."
+  },
+  authForm: {
+    quote: "Grow Smarter, Trade Better",
+    subtitle: "Get AI-powered insights on crops, prices and markets - all in one place."
+  },
+  signup: {
+    title: "Welcome",
+    subtitle:"SignUp",
+    fields: {
+      fullName: "Full Name",
+      email: "Email Address",
+      phone: "Phone Number",
+      password: "Password",
+      confirmPassword: "Confirm Password",
+      farmName: "Farm Name",
+      farmSize: "Farm Size",
+      farmSizeUnit: "Hectares",
+      soilType: "Soil Type",
+      region: "Region",
+      woreda: "Woreda",
+      crops: "Preferred Crops",
+      
+      experience: "Farming Experience"
+    },
+    placeholders: {
+      fullName: "Enter your full name",
+      email: "Enter your email address",
+      phone: "Enter your phone number",
+      password: "Create a password",
+      confirmPassword: "Confirm your password",
+      farmName: "Enter your farm name",
+      farmSize: "e.g., 5",
+      soilType: "Select soil type",
+      region: "Enter your region",
+      woreda: "Enter your woreda",
+      crops: "e.g., Teff, Wheat, Maize",
+      experience: "Select your experience level"
+    },
+    soilTypes: {
+      clay: "Clay Soil",
+      sandy: "Sandy Soil",
+      loamy: "Loamy Soil",
+      silt: "Silt Soil",
+      peat: "Peat Soil",
+      chalky: "Chalky Soil"
+    },
+    experienceLevels: {
+      beginner: "Beginner (0-2 years)",
+      intermediate: "Intermediate (3-5 years)",
+      advanced: "Advanced (6-10 years)",
+      expert: "Expert (10+ years)"
+    },
+    buttons: {
+      back: "Back",
+      continue: "Continue",
+      complete: "Complete Registration",
+      processing: "Processing..."
+    },
+    locationInfo: {
+      title: "Why we need your location?",
+      description: "Your location helps us provide:",
+      benefits: {
+        weather: "Weather prediction for your specific area",
+        crops: "Crop recommendations based on local climate",
+        market: "Market insights specific to your region"
+      }
+    },
+    validation: {
+      required: "This field is required",
+      emailInvalid: "Please enter a valid email address",
+      passwordMatch: "Passwords do not match",
+      passwordLength: "Password must be at least 8 characters"
+    },
+    links: {
+      haveAccount: "Already have an account?",
+      signin: "Sign in"
+    }
+  },
+  signin: {
+    title: "Welcome Back",
+    subtitle: "Sign in to your account",
+    fields: {
+      email: "Email Address",
+      password: "Password"
+    },
+    placeholders: {
+      email: "Enter your email",
+      password: "Enter your password"
+    },
+    buttons: {
+      signin: "Sign In",
+      processing: "Signing in..."
+    },
+    links: {
+      forgotPassword: "Forgot password?",
+      noAccount: "Don't have an account?",
+      signup: "Sign up"
+    },
+    validation: {
+      required: "This field is required",
+      emailInvalid: "Please enter a valid email address"
+    },
+    errors: {
+      invalidCredentials: "Invalid email or password"
+    }
+  },
+  sidebar: {
+    dashboard: "Dashboard",
+    market: "Companies/Market",
+    trends: "Trends",
+    portfolio: "My Portfolio",
+    chats: "Chats",
+    logout: "Log out",
+    general: "General",
+    accountPages: "Account Pages",
+    support: "Support"
+  },
+  welcomeCard:{
+    title:"Welcome to AgriMarket",
+    name:"Bisrat Alemayehu",
+    message:"Glad to see you!"
+
+  },
+  weatherCard:{
+    date:"",
+    month:"",
+    location:""
+  },
+  statusCard:{
+    stats:{
+       farmers: "Farmers",
+      traders: "Traders",
+      totalUsers: "Total Users"
+    }
+  },
+  common: {
+  search: "Search...",
+  filter: "Filter",
+  all: "All",
+  pending: "Pending",
+  approved: "Approved", 
+  rejected: "Rejected",
+  noResults :"No results found",
+  cancel: "Cancel",
+  save: "Save",
+},
+filters: {
+  status: {
+    all: "All Status",
+    pending: "Pending",
+    approved: "Approved",
+    rejected: "Rejected"
+  },
+  role: {
+    all: "All Roles",
+    farmer: "Farmers",
+    trader: "Traders"
   }
+},
+table: {
+  headers: {
+    name: "Name",
+    email: "Email", 
+    phone: "Phone",
+    role: "Role",
+    action: "Action"
+  }
+},
+traderStats: {
+  totalRequests: "Total Requests",
+  pending: "Pending",
+  approved: "Approved",
+  rejected: "Rejected"
+},
+businessInfo: {
+  businessInfo: "Business Information",
+  registrationNumber: "Registration Number",
+  taxId: "Tax ID",
+  ownerInfo: "Owner Information",
+  fullName: "Full Name",
+  email: "Email",
+  phone: "Phone",
+  address: "Address"
+},
+additionalInfo: {
+  applicationStatus: "Application Status",
+  currentStatus: "Current Status",
+  registrationDate: "Registration Date",
+  pending: "Pending",
+  approved: "Approved",
+  rejected: "Rejected"
+},
+traderApproval: {
+  title: "Trader Approvals",
+  subtitle: "Review and manage trader registration requests",
+  searchPlaceholder: "Search by business name, owner, or email...",
+  review: "Review"
+},
+traderDetail: {
+  notFound: "Trader not found",
+  backToApprovals: "Back to Approvals",
+  reviewApplication: "Review trader application",
+  reject: "Reject",
+  approveApplication: "Approve Application"
+},
+traderTable: {
+  businessName: "Business Name",
+  owner: "Owner",
+  contact: "Contact",
+  registrationDate: "Registration Date",
+  status: "Status",
+  action: "Action"
+},
+status: {
+  pending: "Pending",
+  approved: "Approved",
+  rejected: "Rejected"
+},
+roles: {
+  farmer: "Farmer",
+  trader: "Trader"
+},
+modals: {
+  editUser: {
+    title: "Edit User",
+    namePlaceholder: "Name",
+    emailPlaceholder: "Email",
+    phonePlaceholder: "Phone"
+  },
+  rejection: {
+    title: "Reject Application",
+    description: "Please provide a reason for rejecting this trader application. This will be shared with the applicant.",
+    placeholder: "Enter rejection reason...",
+    rejecting: "Rejecting...",
+    confirm: "Confirm Reject"
+  }
+},
+header: {
+  pages: "Pages",
+  home: "Home",
+  dashboard: "Dashboard",
+  traderApproval: "Trader Approvals",
+  farmer: "Farmer",
+  admin: "Admin",
+  portfolio: "Portfolio",
+  chat: "Chat",
+  market: "Market"
+}
 };
 
 // Amharic translations
@@ -227,7 +720,7 @@ const am: Translations = {
   hero: {
     title: "ዘመናዊ ግብርና ለ",
     titleHighlight: "ዘላቂ",
-    subtitle: "ትርፋማ ምርት ",
+    subtitle: "ትርፋማ ምርት",
     description: "የኢትዮጵያን ግብርና በአዲስ የቴክኖሎጂ መፍትሄዎች እየለወጥን ነው። በሺዎች የሚቆጠሩ ገበሬዎች ለተሻለ ትርፍና ዘላቂ ግብርና በመረጃ የተመሰረተ ውሳኔ በመስጠት እየተቀላቀሉን ነው።",
     features: ["ፈጣን", "ደህንነቱ የተጠበቀ", "ዕውቀት የሚሰጥ", "ቀላል አጠቃቀም"],
     buttons: {
@@ -300,7 +793,6 @@ const am: Translations = {
       "አግሪማርኬትን በሞባይል ስልኬ ላይ መጠቀም እችላለሁ?",
       "ከነጋዴዎች ጋር እንዴት እገናኛለሁ?",
       "አግሪማርኬት ምን አይነት አዝፍሮችን ይደግፋል?",
-      
     ],
     answers: [
       "አዎ! መሰረታዊው መድረኳችን ለገበሬዎች ሙሉ በሙሉ ነፃ ነው። የአዝፍሮ ምክር፣ የገበያ አዝማሚያ እና የዋጋ ትንበያ ያለ ክፍያ መዳረሻ አለዎት። ተጨማሪ ባህሪያት በአመቻችት በሚደረጉ የደንበኝነት አገልግሎቶች ይገኛሉ።",
@@ -310,7 +802,6 @@ const am: Translations = {
       "አዎ! አግሪማርኬት ሙሉ በሙሉ ለሞባይል መሣሪያዎች ተገቢ ተደርጎ ተዘጋጅቷል። ሁሉንም ባህሪያት በሞባይል ድር ጣቢያችን በመጠቀም ማግኘት ይችላሉ።",
       "አንዴ ከተመዘገቡ በኋላ፣ ለሽያጭ የሚዘጋጁትን አዝፍሮችዎን በገበያ ቦታችን ላይ ማሰባሰብ ይችላሉ። ተረጋግጠው የተመዘገቡ ነጋዴዎች ዝርዝሮችዎን ማየት እና በቀጥታ በመድረኩ የመልእክት ስርዓት ማነጋገር ይችላሉ።",
       "ሁሉንም ዋና ዋና የኢትዮጵያ አዝፍሮችን እንደ ጤፍ፣ ስንዴ፣ በቆሎ፣ ቡና፣ እንጆሬ፣ ዘይትኛ ፍሬዎች እና የአትክልት ምርቶች እንደገና እናደርጋለን። አዲስ አዝፍሮች በክልላዊ ፍላጎት መሰረት በየጊዜው ይጨመራሉ።",
-     
     ],
     contact: {
       title: "አሁንም ጥያቄዎች አሉዎት?",
@@ -332,7 +823,251 @@ const am: Translations = {
     copyright: `© ${new Date().getFullYear()} አግሪማርኬት AI ውሳኔ ድጋፍ ስርዓት • የመጨረሻ አመት ፕሮጀክት`,
     acknowledgement: "ለኢትዮጵያ የግብርና ምርምር ኢንስቲትዩት (EIAR) ልዩ እናመሰግናለን",
     academicDisclaimer: "ይህ ፕሮጀክት የኮምፒዩተር ሳይንስ ሥርዓተ ትምህርት አካል ሆኖ ለትምህርታዊ ዓላማዎች ተዘጋጅቷል።"
+  },
+  authForm: {
+    quote: "ብልህ በሆነ መንገድ አብቅል፣ በተሻለ መንገድ ንገድ",
+    subtitle: "ለሰብሎች፣ ዋጋዎች እና ገበያዎች በ AI የተመረቱ ግንዛቤዎችን ያግኙ - ሁሉም በአንድ ቦታ"
+  },
+  signup: {
+    title: "እንኳን በደህና መጡ",
+    subtitle:"ተመዝገብ",
+    fields: {
+      fullName: "ሙሉ ስም",
+      email: "ኢሜይል አድራሻ",
+      phone: "ስልክ ቁጥር",
+      password: "የይለፍ ቃል",
+      confirmPassword: "የይለፍ ቃል ያረጋግጡ",
+      farmName: "የእርሻ ስም",
+      farmSize: "የእርሻ ስፋት",
+      farmSizeUnit: "ሄክታር",
+      soilType: "የበለስ አይነት",
+      region: "ክልል",
+      woreda: "ወረዳ",
+      crops: "የሚመረጡ አዝፍሮች",
+      experience: "የግብርና ልምድ"
+    },
+    placeholders: {
+      fullName: "ሙሉ ስምዎን ያስገቡ",
+      email: "ኢሜይል አድራሻዎን ያስገቡ",
+      phone: "ስልክ ቁጥርዎን ያስገቡ",
+      password: "የይለፍ ቃል ይፍጠሩ",
+      confirmPassword: "የይለፍ ቃልዎን ያረጋግጡ",
+      farmName: "የእርሻዎን ስም ያስገቡ",
+      farmSize: "ለምሳሌ 5",
+      soilType: "የበለስ አይነት ይምረጡ",
+      region: "ክልልዎን ያስገቡ",
+      woreda: "ወረዳዎን ያስገቡ",
+      crops: "ለምሳሌ ጤፍ፣ ስንዴ፣ በቆሎ",
+      experience: "የልምድ ደረጃዎን ይምረጡ"
+    },
+    soilTypes: {
+      clay: "የሸክላ በለስ",
+      sandy: "አሸዋማ በለስ",
+      loamy: "ለም በለስ",
+      silt: "ደለል በለስ",
+      peat: "አተር በለስ",
+      chalky: "ኖራማ በለስ"
+    },
+    experienceLevels: {
+      beginner: "ጀማሪ (0-2 ዓመት)",
+      intermediate: "መካከለኛ (3-5 ዓመት)",
+      advanced: "ላቀ (6-10 ዓመት)",
+      expert: "ባለሙያ (10+ ዓመት)"
+    },
+    buttons: {
+      back: "ተመለስ",
+      continue: "ቀጥል",
+      complete: "ምዝገባ ጨርስ",
+      processing: "በሂደት ላይ..."
+    },
+    locationInfo: {
+      title: "ለምን አካባቢዎን እንፈልጋለን?",
+      description: "የአካባቢዎ መረጃ የሚከተሉትን እንድንሰጥ ይረዳናል፡",
+      benefits: {
+        weather: "ለአካባቢዎ የተዘጋጀ የአየር ሁኔታ ትንበያ",
+        crops: "በአካባቢው የአየር ጠባይ መሰረት የአዝፍሮ ምክሮች",
+        market: "ለክልልዎ የተወሰኑ የገበያ ግንዛቤዎች"
+      }
+    },
+    validation: {
+      required: "ይህ መረጃ ያስፈልጋል",
+      emailInvalid: "እባክዎ ትክክለኛ ኢሜይል አድራሻ ያስገቡ",
+      passwordMatch: "የይለፍ ቃሎች አይዛመዱም",
+      passwordLength: "የይለፍ ቃል ቢያንስ 8 ቁምፊዎች መሆን አለበት"
+    },
+    links: {
+      haveAccount: "መለያ አለዎት?",
+      signin: "ግባ"
+    }
+  },
+  signin: {
+    title: "እንኳን በደህና መጡ",
+    subtitle: "ወደ መለያዎ ይግቡ",
+    fields: {
+      email: "ኢሜይል አድራሻ",
+      password: "የይለፍ ቃል"
+    },
+    placeholders: {
+      email: "ኢሜይልዎን ያስገቡ",
+      password: "የይለፍ ቃልዎን ያስገቡ"
+    },
+    buttons: {
+      signin: "ግባ",
+      processing: "በመግባት ላይ..."
+    },
+    links: {
+      forgotPassword: "የይለፍ ቃል ረስተዋል?",
+      noAccount: "መለያ የለዎትም?",
+      signup: "ተመዝገብ"
+    },
+    validation: {
+      required: "ይህ መረጃ ያስፈልጋል",
+      emailInvalid: "እባክዎ ትክክለኛ ኢሜይል አድራሻ ያስገቡ"
+    },
+    errors: {
+      invalidCredentials: "ልክ ያልሆነ ኢሜይል ወይም የይለፍ ቃል"
+    }
+  },
+  sidebar: {
+    dashboard: "ዳሽቦርድ",
+    market: "ገበያ",
+    trends: "አዝማሚያዎች",
+    portfolio: "ፖርትፎሊዮዬ",
+    chats: "ውይይቶች",
+    logout: "ውጣ",
+    general: "አጠቃላይ",
+    accountPages: "መለያ ገጾች",
+    support: "ድጋፍ"
+  },
+ welcomeCard: {
+  title: "እንኳን ወደ አግሪማርኬት በደህና መጡ",
+  name: "ብስራት አለማየሁ",
+  message: "ስለተመለሱ ደስ ብሎናል!"
+},
+weatherCard:{
+  location:"",
+  date:"",
+  month:""
+},
+statusCard:{
+  stats:{
+     farmers: "ገበሬዎች",
+      traders: "ነጋዴዎች",
+      totalUsers: "አጠቃላይ ተጠቃሚዎች"
   }
+},
+common: {
+  search: "ፈልግ...",
+  filter: "አጣራ",
+  all: "ሁሉም",
+  pending: "በመጠባበቅ ላይ",
+  approved: "ጸድቋል",
+  rejected: "ውድቅ ተደርጓል",
+  noResults:"ምንም ውጤት አልተገኘም",
+  cancel: "ሰርዝ",
+  save: "አስቀምጥ",
+},
+filters: {
+  status: {
+    all: "ሁሉም ሁኔታ",
+    pending: "በመጠባበቅ ላይ",
+    approved: "ጸድቋል",
+    rejected: "ውድቅ ተደርጓል"
+  },
+  role: {
+    all: "ሁሉም ሚናዎች",
+    farmer: "ገበሬዎች",
+    trader: "ነጋዴዎች"
+  }},
+  table: {
+  headers: {
+    name: "ስም",
+    email: "ኢሜይል",
+    phone: "ስልክ",
+    role: "ሚና",
+    action: "ተግባር"
+  }
+},
+traderStats: {
+  totalRequests: "ጠቅላላ ጥያቄዎች",
+  pending: "በመጠባበቅ ላይ",
+  approved: "ጸድቋል",
+  rejected: "ውድቅ ተደርጓል"
+},
+businessInfo: {
+  businessInfo: "የንግድ መረጃ",
+  registrationNumber: "የምዝገባ ቁጥር",
+  taxId: "ግብር ቁጥር",
+  ownerInfo: "የባለቤት መረጃ",
+  fullName: "ሙሉ ስም",
+  email: "ኢሜይል",
+  phone: "ስልክ",
+  address: "አድራሻ"
+},
+additionalInfo: {
+  applicationStatus: "የማመልከቻ ሁኔታ",
+  currentStatus: "አሁን ያለበት ሁኔታ",
+  registrationDate: "የምዝገብ ቀን",
+  pending: "በመጠባበቅ ላይ",
+  approved: "ጸድቋል",
+  rejected: "ውድቅ ተደርጓል"
+},
+traderApproval: {
+  title: "የነጋዴ ማረጋገጫዎች",
+  subtitle: "የነጋዴ ምዝገባ ጥያቄዎችን ይገምግሙ እና ያስተዳድሩ",
+  searchPlaceholder: "በንግድ ስም፣ በባለቤት ወይም በኢሜይል ይፈልጉ...",
+  review: "ገምግም"
+},
+traderDetail: {
+  notFound: "ነጋዴ አልተገኘም",
+  backToApprovals: "ወደ ማረጋገጫዎች ተመለስ",
+  reviewApplication: "የነጋዴ ማመልከቻ ይገምግሙ",
+  reject: "ውድቅ አድርግ",
+  approveApplication: "ማመልከቻውን ይቀበሉ"
+},
+traderTable: {
+  businessName: "የንግድ ስም",
+  owner: "ባለቤት",
+  contact: "መገናኛ",
+  registrationDate: "የምዝገብ ቀን",
+  status: "ሁኔታ",
+  action: "ተግባር"
+},
+status: {
+  pending: "በመጠባበቅ ላይ",
+  approved: "ጸድቋል",
+  rejected: "ውድቅ ተደርጓል"
+},
+roles: {
+  farmer: "ገበሬ",
+  trader: "ነጋዴ"
+},
+modals: {
+  editUser: {
+    title: "ተጠቃሚ አርትዕ",
+    namePlaceholder: "ስም",
+    emailPlaceholder: "ኢሜይል",
+    phonePlaceholder: "ስልክ"
+  },
+  rejection: {
+    title: "ማመልከቻ ውድቅ አድርግ",
+    description: "እባክዎ ይህን የነጋዴ ማመልከቻ ውድቅ ለማድረግ ምክንያት ያቅርቡ። ይህ ለአመልካቹ ይተላለፋል።",
+    placeholder: "ውድቅ የማድረጊያ ምክንያት ያስገቡ...",
+    rejecting: "እየተደመጠ ነው...",
+    confirm: "ውድቅ መሆኑን አረጋግጥ"
+  }
+},
+header: {
+  pages: "ገጾች",
+  home: "መነሻ",
+  dashboard: "ዳሽቦርድ",
+  traderApproval: "የነጋዴ ማረጋገጫ",
+  farmer: "ገበሬ",
+  admin: "አስተዳዳሪ",
+  portfolio: "ፖርትፎሊዮ",
+  chat: "ውይይት",
+  market: "ገበያ"
+}
 };
 
 // Export translation function

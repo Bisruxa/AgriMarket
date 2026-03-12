@@ -34,22 +34,16 @@ const HowItWorks = () => {
       image: "/potato.jpg"
     },
     {
-      title: t.howItWorks.steps.addFarm,
-      description: t.howItWorks.stepDescriptions.addFarm,
-      link: "/dashboard",
-      image: "/field.jpg"
+      icon: <Map className="text-[#5B8C51]" size={48} />,
+      link: "/signup"
     },
     {
-      title: t.howItWorks.steps.getInsights,
-      description: t.howItWorks.stepDescriptions.getInsights,
-      link: "/insights",
-      image: "/onions.jpg"
+      icon: <Brain className="text-[#5B8C51]" size={48} />,
+      link: "/signup"
     },
     {
-      title: t.howItWorks.steps.connectGrow,
-      description: t.howItWorks.stepDescriptions.connectGrow,
-      link: "/marketplace",
-      image: "/corn.jpg"
+      icon: <Handshake className="text-[#5B8C51]" size={48} />,
+      link: "/signup"
     },
   ];
 

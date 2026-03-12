@@ -149,23 +149,14 @@ const Footer = () => {
           </div>
 
           <div className="flex items-center gap-6 text-sm">
-            <Link
-              href="/privacy"
-              className="text-[#e4e5ba] hover:text-[#e33f3e] transition-colors duration-300"
-            >
-              {language === "en" ? "Privacy Policy" : "የግላዊነት ፖሊሲ"}
+            <Link href="/" className="text-gray-400 hover:text-[#5B8C51] transition-colors duration-300">
+              {language === 'en' ? 'Privacy Policy' : 'የግላዊነት ፖሊሲ'}
             </Link>
-            <Link
-              href="/terms"
-              className="text-[#e4e5ba] hover:text-[#e33f3e] transition-colors duration-300"
-            >
-              {language === "en" ? "Terms of Service" : "የአገልግሎት ውሎች"}
+            <Link href="/" className="text-gray-400 hover:text-[#5B8C51] transition-colors duration-300">
+              {language === 'en' ? 'Terms of Service' : 'የአገልግሎት ውሎች'}
             </Link>
-            <Link
-              href="/documentation"
-              className="text-[#e4e5ba] hover:text-[#e33f3e] transition-colors duration-300"
-            >
-              {language === "en" ? "Documentation" : "ሰነድ"}
+            <Link href="/" className="text-gray-400 hover:text-[#5B8C51] transition-colors duration-300">
+              {language === 'en' ? 'Documentation' : 'ሰነድ'}
             </Link>
           </div>
         </div>
