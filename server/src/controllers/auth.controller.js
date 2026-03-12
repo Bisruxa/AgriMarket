@@ -40,7 +40,7 @@ exports.register = async (req, res, next) => {
         name,
         email,
         password: hashedPassword,
-        role: role ? role.toUpperCase() : 'BUYER',
+        role: role ? role.toUpperCase() : 'TRADER',
         phone: phone || null,
         region: region || null,
         woreda: woreda || null,
@@ -73,6 +73,30 @@ exports.login = async (req, res, next) => {
         success: false,
         message: 'Invalid credentials'
       });
+    }
+
+    // Check if user account is deleted
+    if (user.deletedAt) {
+      return res.status(401).json({
+        success: false,
+        message: 'This account has been deleted. Please contact support if you believe this is an error.'
+      });
+    }
+
+    // Check if trader is approved
+    if (user.role === 'TRADER') {
+      if (user.approvalStatus === 'PENDING') {
+        return res.status(403).json({
+          success: false,
+          message: 'Your account is pending approval. Please wait for admin verification.'
+        });
+      }
+      if (user.approvalStatus === 'REJECTED') {
+        return res.status(403).json({
+          success: false,
+          message: 'Your account has been rejected. Please contact support for more information.'
+        });
+      }
     }
 
     // Check password
@@ -129,10 +153,17 @@ exports.getMe = async (req, res, next) => {
   }
 };
 
-// @desc    Logout user
+// @desc    Logout user / clear cookie
 // @route   POST /api/auth/logout
 // @access  Private
 exports.logout = async (req, res, next) => {
+  res.cookie('token', 'none', {
+    expires: new Date(Date.now() + 10 * 1000), // Expires in 10 seconds
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+  });
+
   res.status(200).json({
     success: true,
     message: 'Logged out successfully'
@@ -166,18 +197,30 @@ exports.checkEmail = async (req, res, next) => {
     next(error);
   }
 };
-// Helper function to send token response
+// Helper function to send token response with cookie
 const sendTokenResponse = (user, statusCode, res) => {
   const token = generateToken(user);
 
-  res.status(statusCode).json({
-    success: true,
-    token,
-    user: {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role
-    }
-  });
+  // Cookie options
+  const cookieOptions = {
+    expires: new Date(
+      Date.now() + (parseInt(process.env.JWT_EXPIRE) || 30) * 24 * 60 * 60 * 1000
+    ),
+    httpOnly: true, // Cannot be accessed by JavaScript (XSS protection)
+    secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax' // Cross-site cookie settings
+  };
+
+  res
+    .status(statusCode)
+    .cookie('token', token, cookieOptions)
+    .json({
+      success: true,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role
+      }
+    });
 };

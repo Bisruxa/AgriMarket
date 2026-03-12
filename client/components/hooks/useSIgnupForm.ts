@@ -52,6 +52,7 @@ export const useSignupForm = () => {
       const response = await fetch(`${API_URL}/auth/check-email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // Include cookies
         body: JSON.stringify({ email })
       });
       const data = await response.json();
@@ -161,10 +162,8 @@ export const useSignupForm = () => {
         return;
       }
 
-      if (response.token) {
-        localStorage.setItem('token', response.token);
-      }
-
+      // Token is now stored in HTTP-only cookie (set by server)
+      // Only store user info in localStorage for UI purposes
       if (response.user) {
         localStorage.setItem('user', JSON.stringify(response.user));
       }
