@@ -1,47 +1,93 @@
 const { prisma } = require('../config/db');
 
-// @desc    Get all products
+// @desc    Get all products for traders (with enhanced filters)
 // @route   GET /api/products
-// @access  Public
+// @access  Private/Trader
 exports.getProducts = async (req, res, next) => {
   try {
-    // Build where clause
-    const where = {};
+    const { 
+      category,
+      available,
+      organic,
+      minPrice,
+      maxPrice,
+      minStock,
+      search,
+      region,
+      sortBy,
+      sortOrder,
+      page = 1,
+      limit = 10
+    } = req.query;
+
+    // Build where clause - only show available products by default
+    const where = {
+      isAvailable: available !== undefined ? available === 'true' : true
+    };
 
     // Filter by category
-    if (req.query.category) {
-      where.category = req.query.category.toUpperCase();
-    }
-
-    // Filter by availability
-    if (req.query.available) {
-      where.isAvailable = req.query.available === 'true';
+    if (category) {
+      where.category = category.toUpperCase();
     }
 
     // Filter by organic
-    if (req.query.organic) {
-      where.isOrganic = req.query.organic === 'true';
+    if (organic) {
+      where.isOrganic = organic === 'true';
     }
 
     // Filter by price range
-    if (req.query.minPrice || req.query.maxPrice) {
+    if (minPrice || maxPrice) {
       where.price = {};
-      if (req.query.minPrice) where.price.gte = parseFloat(req.query.minPrice);
-      if (req.query.maxPrice) where.price.lte = parseFloat(req.query.maxPrice);
+      if (minPrice) where.price.gte = parseFloat(minPrice);
+      if (maxPrice) where.price.lte = parseFloat(maxPrice);
     }
 
-    // Search by name/description
-    if (req.query.search) {
+    // Filter by minimum stock (important for traders)
+    if (minStock) {
+      where.stock = { gte: parseInt(minStock) };
+    }
+
+    // Filter by region (farmer's region)
+    if (region) {
+      where.farmer = {
+        region: { contains: region, mode: 'insensitive' }
+      };
+    }
+
+    // Search by name/description/location
+    if (search) {
       where.OR = [
-        { name: { contains: req.query.search, mode: 'insensitive' } },
-        { description: { contains: req.query.search, mode: 'insensitive' } }
+        { name: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+        { location: { contains: search, mode: 'insensitive' } }
       ];
     }
 
+    // Sorting options
+    let orderBy = { createdAt: 'desc' };
+    if (sortBy) {
+      const order = sortOrder === 'asc' ? 'asc' : 'desc';
+      switch (sortBy) {
+        case 'price':
+          orderBy = { price: order };
+          break;
+        case 'stock':
+          orderBy = { stock: order };
+          break;
+        case 'rating':
+          orderBy = { ratingsAverage: order };
+          break;
+        case 'newest':
+          orderBy = { createdAt: 'desc' };
+          break;
+        case 'harvest':
+          orderBy = { harvestDate: order };
+          break;
+      }
+    }
+
     // Pagination
-    const page = parseInt(req.query.page, 10) || 1;
-    const limit = parseInt(req.query.limit, 10) || 10;
-    const skip = (page - 1) * limit;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
 
     const [total, products] = await Promise.all([
       prisma.product.count({ where }),
@@ -53,13 +99,16 @@ exports.getProducts = async (req, res, next) => {
               id: true,
               name: true,
               email: true,
-              phone: true
+              phone: true,
+              region: true,
+              woreda: true,
+              isVerified: true
             }
           }
         },
         skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' }
+        take: parseInt(limit),
+        orderBy
       })
     ]);
 
@@ -68,9 +117,9 @@ exports.getProducts = async (req, res, next) => {
       count: products.length,
       total,
       pagination: {
-        page,
-        limit,
-        totalPages: Math.ceil(total / limit)
+        page: parseInt(page),
+        limit: parseInt(limit),
+        totalPages: Math.ceil(total / parseInt(limit))
       },
       data: products
     });
@@ -294,6 +343,49 @@ exports.getProductsByFarmer = async (req, res, next) => {
     res.status(200).json({
       success: true,
       count: products.length,
+      data: products
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get current farmer's products
+// @route   GET /api/products/my-products
+// @access  Private/Farmer
+exports.getMyProducts = async (req, res, next) => {
+  try {
+    const { category, available, page = 1, limit = 10 } = req.query;
+    
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    
+    // Build filter
+    const where = { farmerId: req.user.id };
+    
+    if (category) {
+      where.category = category.toUpperCase();
+    }
+    
+    if (available !== undefined) {
+      where.isAvailable = available === 'true';
+    }
+
+    const [products, total] = await Promise.all([
+      prisma.product.findMany({
+        where,
+        skip,
+        take: parseInt(limit),
+        orderBy: { createdAt: 'desc' }
+      }),
+      prisma.product.count({ where })
+    ]);
+
+    res.status(200).json({
+      success: true,
+      count: products.length,
+      total,
+      page: parseInt(page),
+      pages: Math.ceil(total / parseInt(limit)),
       data: products
     });
   } catch (error) {

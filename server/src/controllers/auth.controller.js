@@ -40,7 +40,7 @@ exports.register = async (req, res, next) => {
         name,
         email,
         password: hashedPassword,
-        role: role ? role.toUpperCase() : 'BUYER',
+        role: role ? role.toUpperCase() : 'TRADER',
         phone: phone || null,
         region: region || null,
         woreda: woreda || null,
@@ -73,6 +73,30 @@ exports.login = async (req, res, next) => {
         success: false,
         message: 'Invalid credentials'
       });
+    }
+
+    // Check if user account is deleted
+    if (user.deletedAt) {
+      return res.status(401).json({
+        success: false,
+        message: 'This account has been deleted. Please contact support if you believe this is an error.'
+      });
+    }
+
+    // Check if trader is approved
+    if (user.role === 'TRADER') {
+      if (user.approvalStatus === 'PENDING') {
+        return res.status(403).json({
+          success: false,
+          message: 'Your account is pending approval. Please wait for admin verification.'
+        });
+      }
+      if (user.approvalStatus === 'REJECTED') {
+        return res.status(403).json({
+          success: false,
+          message: 'Your account has been rejected. Please contact support for more information.'
+        });
+      }
     }
 
     // Check password
