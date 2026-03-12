@@ -5,12 +5,15 @@ const { prisma } = require('../config/db');
 exports.protect = async (req, res, next) => {
   let token;
 
-  // Check for token in header
-  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+  // Check for token in cookie first, then header
+  if (req.cookies && req.cookies.token) {
+    token = req.cookies.token;
+  } else if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    // Fallback to Authorization header (for mobile apps, Postman, etc.)
     token = req.headers.authorization.split(' ')[1];
   }
 
-  if (!token) {
+  if (!token || token === 'none') {
     return res.status(401).json({
       success: false,
       message: 'Not authorized to access this route'

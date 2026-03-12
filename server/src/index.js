@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const dotenv = require('dotenv');
+const cookieParser = require('cookie-parser');
 const { connectDB } = require('./config/db');
 
 // Load environment variables
@@ -18,7 +19,13 @@ const corsOptions = {
     // Allow requests with no origin (mobile apps, curl, Postman)
     if (!origin) return callback(null, true);
     
-    // List of allowed origins
+    // In production, allow all origins or specify your frontend URLs
+    if (process.env.NODE_ENV === 'production') {
+      // Allow any origin in production (you can restrict this later)
+      return callback(null, true);
+    }
+    
+    // List of allowed origins for development
     const allowedOrigins = [
       'http://localhost:3000',
       'http://localhost:3001',
@@ -37,14 +44,16 @@ const corsOptions = {
 
 // Middleware
 app.use(cors(corsOptions));
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 
 // Routes
 app.use('/api/auth', require('./routes/auth.routes'));
-app.use('/api/users', require('./routes/user.routes'));
+app.use('/api/user', require('./routes/user.routes'));
 app.use('/api/products', require('./routes/product.routes'));
+app.use('/api/admin', require('./routes/admin.routes'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

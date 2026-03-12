@@ -72,11 +72,21 @@ npm start
 - `POST /api/auth/logout` - Logout user
 
 ### Users
-- `GET /api/users` - Get all users (Admin)
-- `GET /api/users/:id` - Get user by ID (Admin)
-- `PUT /api/users/profile` - Update profile
-- `PUT /api/users/password` - Update password
-- `DELETE /api/users/:id` - Delete user (Admin)
+- `GET /api/user` - Get all users (Admin)
+- `GET /api/user/:id` - Get user by ID (Admin)
+- `PUT /api/user/profile` - Update profile
+- `PUT /api/user/password` - Update password
+- `DELETE /api/user/me` - Soft delete own account
+- `DELETE /api/user/:id` - Soft delete user (Admin)
+- `PUT /api/user/:id/restore` - Restore deleted user (Admin)
+
+### Admin
+- `GET /api/admin/stats` - Get dashboard statistics
+- `GET /api/admin/users` - Get all users with filters
+- `GET /api/admin/traders/pending` - Get pending traders
+- `GET /api/admin/traders/:id` - Get trader details
+- `PUT /api/admin/traders/:id/approve` - Approve trader
+- `PUT /api/admin/traders/:id/reject` - Reject trader
 
 ### Products
 - `GET /api/products` - Get all products (with filtering & pagination)
@@ -127,6 +137,14 @@ server/
 
 | Role | Permissions |
 |------|-------------|
-| `BUYER` | Browse products, view farmers |
+| `TRADER` | Browse products, view farmers (requires approval) |
 | `FARMER` | Create/update/delete own products |
 | `ADMIN` | Full access to all resources |
+
+## Trader Approval Status
+
+| Status | Description |
+|--------|-------------|
+| `PENDING` | New traders await admin approval (cannot login) |
+| `APPROVED` | Trader can login and use the platform |
+| `REJECTED` | Trader denied access (cannot login) |

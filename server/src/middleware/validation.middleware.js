@@ -38,8 +38,8 @@ exports.registerValidation = [
   body('role')
     .optional()
     .toUpperCase()
-    .isIn(['BUYER', 'FARMER', 'ADMIN'])
-    .withMessage('Role must be BUYER, FARMER, or ADMIN')
+    .isIn(['TRADER', 'FARMER', 'ADMIN'])
+    .withMessage('Role must be TRADER, FARMER, or ADMIN')
 ];
 
 // Login validation rules
@@ -76,8 +76,14 @@ exports.productValidation = [
   body('category')
     .notEmpty()
     .withMessage('Category is required')
-    .isIn(['vegetables', 'fruits', 'grains', 'dairy', 'poultry', 'meat', 'seeds', 'fertilizers', 'equipment', 'other'])
-    .withMessage('Invalid category'),
+    .toUpperCase()  // Convert to uppercase before validation
+    .isIn(['VEGETABLES', 'FRUITS', 'GRAINS', 'DAIRY', 'POULTRY', 'MEAT', 'SEEDS', 'FERTILIZERS', 'EQUIPMENT', 'OTHER'])
+    .withMessage('Invalid category. Must be one of: VEGETABLES, FRUITS, GRAINS, DAIRY, POULTRY, MEAT, SEEDS, FERTILIZERS, EQUIPMENT, OTHER'),
+  body('unit')
+    .optional()
+    .toUpperCase()
+    .isIn(['KG', 'LB', 'PIECE', 'DOZEN', 'BUNCH', 'BAG', 'CRATE'])
+    .withMessage('Invalid unit. Must be one of: KG, LB, PIECE, DOZEN, BUNCH, BAG, CRATE'),
   body('stock')
     .notEmpty()
     .withMessage('Stock is required')
@@ -86,5 +92,17 @@ exports.productValidation = [
   body('location')
     .trim()
     .notEmpty()
-    .withMessage('Location is required')
+    .withMessage('Location is required'),
+  body('isOrganic')
+    .optional()
+    .isBoolean()
+    .withMessage('isOrganic must be true or false'),
+  body('harvestDate')
+    .optional()
+    .isISO8601()
+    .withMessage('Harvest date must be a valid date'),
+  body('expiryDate')
+    .optional()
+    .isISO8601()
+    .withMessage('Expiry date must be a valid date')
 ];

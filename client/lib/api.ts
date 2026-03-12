@@ -4,7 +4,6 @@ type ApiResponse<T> = {
   success: boolean;
   data?: T;
   message?: string;
-  token?: string;
   user?: {
     id: string;
     name: string;
@@ -29,22 +28,12 @@ class ApiClient {
     
     const config: RequestInit = {
       ...options,
+      credentials: 'include', // Important: This sends cookies with requests
       headers: {
         'Content-Type': 'application/json',
         ...options.headers,
       },
     };
-
-    // Add auth token if available
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('token');
-      if (token) {
-        config.headers = {
-          ...config.headers,
-          Authorization: `Bearer ${token}`,
-        };
-      }
-    }
 
     try {
       const response = await fetch(url, config);
