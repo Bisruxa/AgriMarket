@@ -1,6 +1,5 @@
-// Create a new file: utils/formStepsConfig.ts
 export const formStepsConfig = {
-  farmer: [
+  FARMER: [
     {
       title: 'Welcome',
       subtitle: 'SignUp',
@@ -24,12 +23,12 @@ export const formStepsConfig = {
       subtitle: 'Tell us about your farm',
       fields: [
         { id: 'farmSize', label: 'Farm Size (acres)', type: 'number', required: true },
-        { id: 'crops', label: 'Main Crops', type: 'text', required: false, placeholder: 'e.g., Wheat, Corn, Soybeans' },
+        { id: 'crops', label: 'Preferred Crops', type: 'text', required: false, placeholder: 'e.g., Wheat, Corn, Soybeans' },
         { id: 'experience', label: 'Farming Experience (years)', type: 'number', required: false },
       ]
     }
   ],
-  trader: [
+  BUYER: [
     {
       title: 'Welcome',
       subtitle: 'SignUp',
