@@ -13,19 +13,15 @@ const HowItWorks = () => {
   const containerRef = useRef(null);
   const headingRef = useRef(null);
   
-  // Track scroll progress within this section
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end end"]
   });
-
-  // Smooth spring for all scroll-based animations
   const smoothProgress = useSpring(scrollYProgress, {
     stiffness: 100,
     damping: 30,
     restDelta: 0.001
   });
-
   const steps = [
     {
       title: t.howItWorks.steps.signup,
@@ -53,8 +49,6 @@ const HowItWorks = () => {
       className={`relative py-20 px-6 md:px-12 bg-[#e4e5ba] ${language === 'am' ? 'amharic' : ''}`}
     >
       <div className="max-w-6xl mx-auto">
-
-        {/* Main Heading - simpler entrance animation */}
         <motion.div 
           ref={headingRef}
           className="mb-20"
@@ -70,7 +64,6 @@ const HowItWorks = () => {
           <h2 className="text-4xl md:text-5xl font-extrabold leading-tight text-gray-900">
             How <span className="text-[#e33f3e]">AgriMarket</span> Works.
           </h2>
-
           <motion.p 
             className="mt-6 max-w-2xl text-gray-700 text-lg"
             initial={{ opacity: 0, y: 20 }}
@@ -81,10 +74,7 @@ const HowItWorks = () => {
             {t.howItWorks.description}
           </motion.p>
         </motion.div>
-
-        {/* Steps */}
         <div className="space-y-24 relative">
-          {/* Drawing line SVG with smooth animation */}
           <svg
             className="absolute left-1/2 top-0 w-0.5 h-full transform -translate-x-1/2 hidden md:block"
             style={{ zIndex: 0 }}
@@ -105,31 +95,26 @@ const HowItWorks = () => {
           </svg>
 
           {steps.map((step, index) => {
-            // Calculate step boundaries first
             const stepStart = index / steps.length;
             const stepEnd = (index + 1) / steps.length;
-            const stepRange = 0.15; // Wider range for smoother transitions
+            const stepRange = 0.15;
             
-            // Smoother scroll-based animations with wider ranges
             const rawRotate = useTransform(
               smoothProgress,
               [stepStart, stepStart + stepRange, stepEnd - stepRange, stepEnd],
-              [0, 2, -2, 0] // Gentler rotation of 2 degrees
+              [0, 2, -2, 0]
             );
             
-            // Apply spring smoothing to rotation
             const smoothRotate = useSpring(rawRotate, {
               stiffness: 50,
               damping: 20
             });
 
-            // Subtle scale animation
             const imageScale = useTransform(
               smoothProgress,
               [stepStart, stepStart + stepRange * 1.5],
               [0.95, 1]
             );
-
             return (
               <motion.div
                 key={index}
@@ -138,9 +123,7 @@ const HowItWorks = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.3 }}
                 transition={{ duration: 0.6, delay: index * 0.15, ease: "easeOut" }}
-              >
-                
-                {/* Connecting line dots with smooth scale */}
+              >  
                 {index < steps.length - 1 && (
                   <motion.div
                     className="absolute left-1/2 bottom-0 w-4 h-4 bg-[#e33f3e] rounded-full transform -translate-x-1/2 translate-y-1/2 hidden md:block"
@@ -154,7 +137,6 @@ const HowItWorks = () => {
                   />
                 )}
                 
-                {/* Image with smooth rotation */}
                 <motion.div 
                   className={`${index % 2 !== 0 ? 'md:order-2' : ''}`}
                   style={{
@@ -176,10 +158,8 @@ const HowItWorks = () => {
                   </motion.div>
                 </motion.div>
 
-                {/* Text content */}
                 <div className={`${index % 2 !== 0 ? 'md:order-1' : ''}`}>
                   <div className="relative">
-                    {/* Step number */}
                     <motion.div 
                       className="relative inline-block"
                       initial={{ opacity: 0, x: -15 }}
@@ -208,7 +188,6 @@ const HowItWorks = () => {
                     >
                       {step.title}
                     </motion.h3>
-
                     <motion.p 
                       className="text-gray-700 leading-relaxed mb-6"
                       initial={{ x: -15, opacity: 0 }}
@@ -220,13 +199,10 @@ const HowItWorks = () => {
                     </motion.p>
                   </div>
                 </div>
-
               </motion.div>
             );
           })}
         </div>
-
-        {/* CTA */}
         <motion.div 
           className="mt-24 text-center"
           initial={{ opacity: 0, y: 20 }}
@@ -252,7 +228,6 @@ const HowItWorks = () => {
             </motion.button>
           </Link>
         </motion.div>
-
       </div>
     </section>
   );
