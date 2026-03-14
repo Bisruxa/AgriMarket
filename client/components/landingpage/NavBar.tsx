@@ -19,7 +19,7 @@ const Navbar = () => {
   const t = useTranslations();
   
   const navItems = [
-    {name:t.nav.about,link:"/about"},
+    
     {name:t.nav.signup,link:"/signup"},
     {name:t.nav.login,link:"/signin"}
   ]

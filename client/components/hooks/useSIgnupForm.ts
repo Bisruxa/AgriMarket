@@ -19,7 +19,7 @@ interface ApiError {
 
 export const useSignupForm = () => {
   const router = useRouter();
-  const [role, setRole] = useState<'FARMER' | 'BUYER'>('FARMER');
+  const [role, setRole] = useState<'FARMER' | 'TRADER'>('FARMER');
   const [step, setStep] = useState(1);
   const [errors, setErrors] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -168,7 +168,7 @@ export const useSignupForm = () => {
         localStorage.setItem('user', JSON.stringify(response.user));
       }
 
-      const redirectPath = role === 'FARMER' ? '/farmer/dashboard' : '/buyer/dashboard';
+      const redirectPath = role === 'FARMER' ? '/farmer/dashboard' : '/trader/dashboard';
       router.push(redirectPath);
       
     } catch (error) {

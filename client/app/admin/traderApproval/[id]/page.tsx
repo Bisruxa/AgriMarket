@@ -1,51 +1,95 @@
-// app/admin/traderApproval/[id]/page.tsx
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, CheckCircle, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import Header from '@/components/common/Header';
-import { MOCK_TRADER } from '@/lib/mockUser';
 import RejectionModal from '@/components/popups/rejectionModel';
 import OwnerInfoCard from '@/components/cards/trader/ownerInfo';
 import AdditionalInfoCard from '@/components/cards/trader/AdditionalInfo';
 import { Trader } from '@/types/auth-page';
 import { useTranslations } from '@/components/hooks/useTranlations';
+import { api } from '@/lib/api';
+import * as React from 'react';
 
-const fetchTraderDetails = async (id: string) => { 
-  return MOCK_TRADER;
+type TraderStatus = 'pending' | 'approved' | 'rejected';
+
+const fetchTraderDetails = async (id: string): Promise<Trader | null> => {
+  try {
+    console.log('Fetching trader with ID:', id);
+    
+    const response = await api.get<any>(`/admin/traders/${id}`);
+    
+    if (response.success && response.data) {
+      // Type assertion to tell TypeScript the shape
+      const traderData = response.data as {
+        id: string;
+        name: string;
+        email: string;
+        phone: string | null;
+        region: string;
+        woreda: string;
+        approvalStatus: string;
+        createdAt: string;
+      };
+      
+      return {
+        id: traderData.id,
+        businessName: traderData.name,
+        ownerName: traderData.name,
+        email: traderData.email,
+        phone: traderData.phone ?? 'N/A',
+        region: traderData.region ?? 'N/A',
+        woreda: traderData.woreda ?? 'N/A',
+        status: (traderData.approvalStatus?.toLowerCase() as TraderStatus) || 'pending',
+        registrationDate: traderData.createdAt,
+      };
+    }
+    
+    console.error('Trader not found or API error:', response.message);
+    return null;
+  } catch (err) {
+    console.error('Error fetching trader details:', err);
+    return null;
+  }
 };
 
-export default function TraderDetailPage({ params }: { params: { id: string } }) {
+export default function TraderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const [trader, setTrader] = useState<Trader | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionInProgress, setActionInProgress] = useState(false);
   const [showRejectionModal, setShowRejectionModal] = useState(false);
   const t = useTranslations();
+  const {id} = React.use(params);
 
   useEffect(() => {
     const loadTrader = async () => {
+      setLoading(true);
       try {
-        const data = await fetchTraderDetails(params.id);
-        setTrader(data as Trader);
-      } catch (error) {
-        console.error('Error fetching trader:', error);
+        // Use id here directly
+        const data = await fetchTraderDetails(id);
+        setTrader(data);
+      } catch (err) {
+        console.error('Error fetching trader:', err);
       } finally {
         setLoading(false);
       }
     };
     loadTrader();
-  }, [params.id]);
+  }, [id]);
 
   const handleApprove = async () => {
     setActionInProgress(true);
     try {
-      console.log('Approving trader:', params.id);
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      router.push('/admin/traderApproval?success=approved');
-    } catch (error) {
-      console.error('Error approving trader:', error);
+      const response = await api.put(`/admin/traders/${id}/approve`, {});
+      if (response.success) {
+        router.push('/admin/traderApproval?success=approved');
+      } else {
+        console.error('Approve failed:', response.message);
+      }
+    } catch (err) {
+      console.error('Error approving trader:', err);
     } finally {
       setActionInProgress(false);
     }
@@ -54,11 +98,14 @@ export default function TraderDetailPage({ params }: { params: { id: string } })
   const handleReject = async (reason: string) => {
     setActionInProgress(true);
     try {
-      console.log('Rejecting trader:', params.id, 'Reason:', reason);
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      router.push('/admin/traderApproval?success=rejected');
-    } catch (error) {
-      console.error('Error rejecting trader:', error);
+      const response = await api.put(`/admin/traders/${id}/reject`, { reason });
+      if (response.success) {
+        router.push('/admin/traderApproval?success=rejected');
+      } else {
+        console.error('Reject failed:', response.message);
+      }
+    } catch (err) {
+      console.error('Error rejecting trader:', err);
     } finally {
       setActionInProgress(false);
       setShowRejectionModal(false);
@@ -119,7 +166,7 @@ export default function TraderDetailPage({ params }: { params: { id: string } })
             <div>
               <h1 className="text-2xl font-bold text-gray-900">{trader.businessName}</h1>
               <p className="text-gray-600 mt-1">
-                {t.traderDetail?.reviewApplication || 'Review trader application'} #{trader.id}
+                {t.traderDetail?.reviewApplication || 'Review trader application'} 
               </p>
             </div>
             
