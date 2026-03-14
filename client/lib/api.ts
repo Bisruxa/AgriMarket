@@ -10,6 +10,7 @@ type ApiResponse<T> = {
     email: string;
     role: string;
   };
+  token?:string;
   errors?: { field: string; message: string }[];
 };
 
@@ -28,16 +29,18 @@ class ApiClient {
     
     const config: RequestInit = {
       ...options,
-      credentials: 'include', // Important: This sends cookies with requests
+      credentials: 'include',
       headers: {
-        'Content-Type': 'application/json',
-        ...options.headers,
-      },
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
     };
 
     try {
+      console.log('Using cookies')
       const response = await fetch(url, config);
       const data = await response.json();
+      
 
       if (!response.ok) {
         return {
@@ -49,6 +52,7 @@ class ApiClient {
 
       return data;
     } catch (error) {
+      console.log('error',error);
       return {
         success: false,
         message: 'Network error. Please check your connection.',

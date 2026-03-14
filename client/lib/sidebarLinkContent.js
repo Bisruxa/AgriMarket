@@ -37,3 +37,17 @@ export const adminLinks = [
  
  
 ];
+export const Trader_Links = [
+  {
+    name: "Farmer & Traders",
+    icon: <House className='mr-2' size={20} />,
+    to: "/admin/dashboard"
+  },
+  {
+    name: "Trader Approval",
+    icon: <Clock className='mr-2' size={20} />,
+    to: "/admin/traderApproval"
+  },
+ 
+ 
+];

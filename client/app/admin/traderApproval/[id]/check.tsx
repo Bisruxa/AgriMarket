@@ -1,125 +1,33 @@
 // app/admin/traderApproval/page.tsx
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
-import { ChevronRight, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { ChevronRight } from 'lucide-react';
 import Link from 'next/link';
 import Header from '@/components/common/Header';
 import TraderStats from '@/components/cards/trader/traderStats';
 import CTA from '@/app/farmer/market/CTA';
 import TableFilter from '@/components/filters/TableFilter';
 import { useTranslations } from '@/components/hooks/useTranlations';
-import { StatsData } from '@/types/statsData';
-import { api } from '@/lib/api';
+import { useAdminStats, usePendingTraders } from '../../../../components/hooks/userAdminQueries';
+// import { LoadingState, ErrorState } from '@/components/admin/LoadingState';
+import { getStatusBadge } from '../../../../components/admin/StatusBadge';
 
 type StatusFilter = 'all' | 'pending' | 'approved' | 'rejected';
-
-// Define the trader type from your pending endpoint
-interface TraderFromAPI {
-  id: string;
-  name: string;
-  email: string;
-  phone: string | null;
-  region: string;
-  woreda: string;
-  approvalStatus: 'PENDING' | 'APPROVED' | 'REJECTED';
-  createdAt: string;
-}
-
-interface PendingTradersResponse {
-  success: boolean;
-  count: number;
-  data: TraderFromAPI[];
-  message?: string;
-}
-
-interface StatsApiResponse {
-  success: boolean;
-  data: StatsData;
-  message?: string;
-}
-
-// Define the trader type for your component
-interface TraderForDisplay {
-  id: string;
-  businessName: string;
-  ownerName: string;
-  email: string;
-  phone: string;
-  region: string;
-  woreda: string;
-  approvalStatus: string;
-  status: string;
-  registrationDate: string;
-  businessType: string;
-}
 
 export default function TraderApprovalPage() {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('pending');
-  const [traders, setTraders] = useState<TraderForDisplay[]>([]);
-  const [stats, setStats] = useState<StatsData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 4;
   const t = useTranslations();
 
-  // Fetch both stats and pending traders
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const { data: stats, isLoading: statsLoading, error: statsError, refetch: refetchStats } = useAdminStats();
+  const { data: traders = [], isLoading: tradersLoading, error: tradersError, refetch: refetchTraders } = usePendingTraders();
 
-  const fetchData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      // Fetch stats for the status cards
-      const statsResponse = await api.get<StatsApiResponse>('/admin/stats');
-      console.log('Stats response:', statsResponse);
-      
-      if (statsResponse.success && statsResponse.data) {
-        setStats(statsResponse.data);
-      } else {
-        console.error('Failed to fetch stats:', statsResponse.message);
-      }
+  const isLoading = statsLoading || tradersLoading;
+  const error = statsError || tradersError;
 
-      // Fetch pending traders for the list
-      const tradersResponse = await api.get<PendingTradersResponse>('/admin/traders/pending');
-      console.log('Traders response:', tradersResponse);
-      
-      if (tradersResponse.success && tradersResponse.data) {
-        // Transform the API data to match your component's expected format
-        const transformedTraders = tradersResponse.data.map((trader: TraderFromAPI) => ({
-          id: trader.id,
-          businessName: trader.name,
-          ownerName: trader.name,
-          email: trader.email,
-          phone: trader.phone ?? 'N/A',
-          region: trader.region,
-          woreda: trader.woreda,
-          approvalStatus: trader.approvalStatus.toLowerCase(),
-          status: trader.approvalStatus.toLowerCase(),
-          registrationDate: trader.createdAt,
-          businessType: ''
-        }));
-        
-        setTraders(transformedTraders);
-        console.log('Transformed traders:', transformedTraders);
-      } else {
-        setError(tradersResponse.message || 'Failed to fetch traders');
-      }
-
-    } catch (err) {
-      console.error('Error fetching data:', err);
-      setError('An error occurred while fetching data');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Filter options
   const filterOptions = [
     { value: 'all', label: t.filters?.status?.all || 'All Status' },
     { value: 'pending', label: t.filters?.status?.pending || 'Pending' },
@@ -136,10 +44,8 @@ export default function TraderApprovalPage() {
     { key: 'action', label: t.traderTable?.action || 'Action' }
   ];
 
-  const filteredTraders = useMemo(() => {
-    console.log('Filtering traders. Total:', traders.length, 'Filter:', statusFilter);
-    
-    return traders.filter(trader => {
+  const filteredTraders = useMemo(() => 
+    traders.filter(trader => {
       const matchesStatus = statusFilter === 'all' || trader.status === statusFilter;
       const matchesSearch = search === '' || 
         trader.businessName.toLowerCase().includes(search.toLowerCase()) ||
@@ -147,31 +53,11 @@ export default function TraderApprovalPage() {
         trader.email.toLowerCase().includes(search.toLowerCase());
       
       return matchesStatus && matchesSearch;
-    });
-  }, [traders, search, statusFilter]);
+    }), [traders, search, statusFilter]
+  );
 
-  const getStatusBadge = (status: string) => {
-    switch(status) {
-      case 'approved':
-        return (
-          <span className="flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
-            <CheckCircle className="w-3 h-3" /> {t.status?.approved || 'Approved'}
-          </span>
-        );
-      case 'rejected':
-        return (
-          <span className="flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">
-            <XCircle className="w-3 h-3" /> {t.status?.rejected || 'Rejected'}
-          </span>
-        );
-      default:
-        return (
-          <span className="flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">
-            <Clock className="w-3 h-3" /> {t.status?.pending || 'Pending'}
-          </span>
-        );
-    }
-  };
+  // if (isLoading) return <LoadingState />;
+  // if (error) return <ErrorState error={error.message} onRetry={() => { refetchStats(); refetchTraders(); }} />;
 
   const totalPages = Math.ceil(filteredTraders.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -188,8 +74,7 @@ export default function TraderApprovalPage() {
           <p className="text-gray-600 mt-1">{t.traderApproval?.subtitle || 'Review and manage trader registration requests'}</p>
         </div>
 
-        {/* Pass stats to TraderStats component */}
-        <TraderStats stats={stats} loading={loading} error={error} />
+        <TraderStats stats={stats} loading={statsLoading} error={statsError?.message} />
 
         <TableFilter
           searchPlaceholder={t.traderApproval?.searchPlaceholder || "Search by business name, owner, or email..."}
@@ -223,7 +108,7 @@ export default function TraderApprovalPage() {
                     <div className="text-xs text-gray-500">{trader.phone}</div>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500">{new Date(trader.registrationDate).toLocaleDateString()}</td>
-                  <td className="px-6 py-4">{getStatusBadge(trader.status)}</td>
+                  <td className="px-6 py-4">{getStatusBadge(trader.status, t)}</td>
                   <td className="px-6 py-4">
                     <Link href={`/admin/traderApproval/${trader.id}`} className="inline-flex items-center gap-1 text-sm text-[#5B8C51] hover:text-[#4a7342] font-medium">
                       {t.traderApproval?.review || 'Review'} <ChevronRight className="w-4 h-4" />

@@ -6,6 +6,7 @@ import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 import { useRef } from 'react';
 import { useTranslations } from '@/components/hooks/useTranlations';
 import { useLanguage } from '@/app/context/LanguageContext';
+import {Brain,Map,Handshake,} from 'lucide-react';
 
 const HowItWorks = () => {
   const t = useTranslations();
@@ -167,12 +168,12 @@ const HowItWorks = () => {
                     whileHover={{ scale: 1.02 }}
                     transition={{ type: "spring", stiffness: 300, damping: 20 }}
                   >
-                    <Image
+                    {/* <Image
                       src={step.image}
                       alt={step.title}
                       fill
                       className="object-cover"
-                    />
+                    /> */}
                   </motion.div>
                 </motion.div>
 
