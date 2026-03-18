@@ -10,8 +10,8 @@ export interface AuthPageProps {
   totalSteps?: number;
   isSignUp?: boolean;
   showStepIndicator?: boolean;
-  role?: 'FARMER' | 'BUYER';
-  onRoleChange?: (role: 'FARMER' | 'BUYER') => void;
+  role?: 'FARMER' | 'TRADER';
+  onRoleChange?: (role: 'FARMER' | 'TRADER') => void;
   showRoleTabs?: boolean;
 }
 
@@ -29,8 +29,8 @@ export interface FormContentProps {
   subtitle?: string;
   errors: string[];
   showRoleTabs?: boolean;
-  role?: 'FARMER' | 'BUYER';
-  onRoleChange?: (role: 'FARMER' | 'BUYER') => void;
+  role?: 'FARMER' | 'TRADER';
+  onRoleChange?: (role: 'FARMER' | 'TRADER') => void;
 }
 
 export interface LogoComponentProps {
@@ -40,7 +40,7 @@ export interface RegistrationData {
   name: string;
   email: string;
   password: string;
-  role: 'FARMER' | 'BUYER';
+  role: 'FARMER' | 'TRADER';
   region?: string;  
   woreda?: string;  
   farmSize?: string;
@@ -52,17 +52,12 @@ export interface User {
   name: string;
   email: string;
   role: string;
-}
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
   status?: string;
   farmSize?: string;
   crops?: string[];
   company?: string;
   phone?:string;
+  registrationDate?:string;
 }
 
 export interface AuthContextType {
@@ -72,17 +67,22 @@ export interface AuthContextType {
   loading: boolean;
 }
 export interface Trader {
-  id:string;
+  id: string;
   businessName: string;
-  businessType: string;
-  businessRegNumber: string;
-  taxId: string;
-  description: string;
+  businessType?: string;
+  businessRegNumber?: string;
+  taxId?: string;
+  description?: string;
   ownerName: string;
   email: string;
   phone: string;
   alternatePhone?: string;
-  address: string;
+  address?: string;
   status: 'pending' | 'approved' | 'rejected';
-  registrationDate: string;
+  registrationDate: string; 
+  region: string; 
+  woreda: string; 
+
+  isVerified?: boolean;
+  approvalNote?: string | null;
 }

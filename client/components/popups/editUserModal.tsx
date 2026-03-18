@@ -1,87 +1,124 @@
 'use client';
-import { X } from 'lucide-react';
-import { User } from '@/types/auth-page';
+import { X, User, Mail, Phone, BadgeCheck } from 'lucide-react';
+import { User as UserType } from '@/types/auth-page';
 import { useState } from 'react';
 import { useTranslations } from '@/components/hooks/useTranlations';
 
 interface EditUserModalProps {
-  user: User;
+  user: UserType;
   onClose: () => void;
-  onUpdate: (updatedUser: User) => void;
+  onUpdate: (updatedUser: UserType) => void;
 }
 
 export default function EditUserModal({ user, onClose, onUpdate }: EditUserModalProps) {
-  const [editedUser, setEditedUser] = useState<User>(user);
+  const [editedUser, setEditedUser] = useState<UserType>(user);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const t = useTranslations();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onUpdate(editedUser);
-  };
-
-  const handleCancel = () => {
-    setEditedUser(user); // Reset to original user data
-    onClose();
+    setIsSubmitting(true);
+    try {
+      await onUpdate(editedUser);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg max-w-md w-full">
-        <div className="flex justify-between items-center p-4 border-b">
-          <h3 className="font-bold">{t.modals?.editUser?.title || 'Edit User'}</h3>
-          <button onClick={handleCancel} className="p-1 hover:bg-gray-100 rounded">
-            <X className="w-5 h-5" />
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center p-4 z-50">
+      <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b">
+          <h3 className="font-semibold text-gray-800">{t.modals?.editUser?.title || 'Edit User'}</h3>
+          <button onClick={onClose} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
+            <X size={18} />
           </button>
         </div>
         
         <form onSubmit={handleSubmit} className="p-4 space-y-3">
-          <input
-            name="name"
-            value={editedUser.name}
-            onChange={e => setEditedUser({...editedUser, name: e.target.value})}
-            className="w-full p-2 border rounded focus:ring-2 focus:ring-[#5B8C51] outline-none"
-            placeholder={t.modals?.editUser?.namePlaceholder || 'Name'}
-            required
-          />
-          <input
-            name="email"
-            type="email"
-            value={editedUser.email}
-            onChange={e => setEditedUser({...editedUser, email: e.target.value})}
-            className="w-full p-2 border rounded focus:ring-2 focus:ring-[#5B8C51] outline-none"
-            placeholder={t.modals?.editUser?.emailPlaceholder || 'Email'}
-            required
-          />
-          <input
-            name="phone"
-            value={editedUser.phone}
-            onChange={e => setEditedUser({...editedUser, phone: e.target.value})}
-            className="w-full p-2 border rounded focus:ring-2 focus:ring-[#5B8C51] outline-none"
-            placeholder={t.modals?.editUser?.phonePlaceholder || 'Phone'}
-            required
-          />
-          <select
-            value={editedUser.role}
-            onChange={e => setEditedUser({...editedUser, role: e.target.value as 'FARMER' | 'TRADER'})}
-            className="w-full p-2 border rounded focus:ring-2 focus:ring-[#5B8C51] outline-none"
-          >
-            <option value="FARMER">{t.roles?.farmer || 'Farmer'}</option>
-            <option value="TRADER">{t.roles?.trader || 'Trader'}</option>
-          </select>
+          {/* Name */}
+          <div>
+            <label className="text-xs text-gray-500 flex items-center gap-1 mb-1">
+              <User size={12} className="text-[#5B8C51]" />
+              {t.modals?.editUser?.namePlaceholder || 'Name'}
+            </label>
+            <input
+              value={editedUser.name}
+              onChange={e => setEditedUser({...editedUser, name: e.target.value})}
+              className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-[#5B8C51] outline-none text-sm"
+              required
+            />
+          </div>
+
+          {/* Email */}
+          <div>
+            <label className="text-xs text-gray-500 flex items-center gap-1 mb-1">
+              <Mail size={12} className="text-[#5B8C51]" />
+              Email
+            </label>
+            <input
+              type="email"
+              value={editedUser.email}
+              onChange={e => setEditedUser({...editedUser, email: e.target.value})}
+              className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-[#5B8C51] outline-none text-sm"
+              required
+            />
+          </div>
+
+          {/* Phone */}
+          <div>
+            <label className="text-xs text-gray-500 flex items-center gap-1 mb-1">
+              <Phone size={12} className="text-[#5B8C51]" />
+              Phone
+            </label>
+            <input
+              value={editedUser.phone}
+              onChange={e => setEditedUser({...editedUser, phone: e.target.value})}
+              className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-[#5B8C51] outline-none text-sm"
+              required
+            />
+          </div>
+
+          {/* Role */}
+          <div>
+            <label className="text-xs text-gray-500 flex items-center gap-1 mb-1">
+              <BadgeCheck size={12} className="text-[#5B8C51]" />
+              Role
+            </label>
+            <select
+              value={editedUser.role}
+              onChange={e => setEditedUser({...editedUser, role: e.target.value as 'FARMER' | 'TRADER'})}
+              className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-[#5B8C51] outline-none text-sm bg-white"
+            >
+              <option value="FARMER">Farmer</option>
+              <option value="TRADER">Trader</option>
+            </select>
+          </div>
           
+          {/* Buttons */}
           <div className="flex gap-2 pt-2">
             <button 
               type="button" 
-              onClick={handleCancel} 
-              className="flex-1 p-2 border rounded hover:bg-gray-50 transition-colors"
+              onClick={onClose} 
+              className="flex-1 px-3 py-2 border rounded-lg hover:bg-gray-50 text-sm transition-colors"
+              disabled={isSubmitting}
             >
-              {t.common?.cancel || 'Cancel'}
+              Cancel
             </button>
             <button 
               type="submit" 
-              className="flex-1 p-2 bg-[#5B8C51] text-white rounded hover:bg-[#4a7342] transition-colors"
+              className="flex-1 px-3 py-2 bg-[#5B8C51] text-white rounded-lg hover:bg-[#4A7342] text-sm transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
+              disabled={isSubmitting}
             >
-              {t.common?.save || 'Save'}
+              {isSubmitting ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  Saving
+                </>
+              ) : (
+                'Save'
+              )}
             </button>
           </div>
         </form>

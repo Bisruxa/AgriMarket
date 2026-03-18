@@ -47,7 +47,7 @@ const BenefitsSection = () => {
   const leftSideBenefits = benefits.slice(0, 3);
   const bottomBenefits = benefits.slice(3);
   return (
-    <section className={`bg-[#e33f3e] text-white pt-10 pb-30 px-6 md:px-12 ${language === 'am' ? 'amharic' : ''}`}>
+    <section className={`bg-[#668B57] text-white pt-10 pb-30 px-6 md:px-12 ${language === 'am' ? 'amharic' : ''}`}>
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-start mb-8">
           <div className="relative border-10 border-[#e4e5ba] w-full h-105">
