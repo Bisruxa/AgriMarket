@@ -1,40 +1,25 @@
 'use client';
 import Link from "next/link";
-import { farmerLinks, adminLinks } from "@/lib/sidebarLinkContent";
 import { usePathname } from "next/navigation";
-import { Search } from "lucide-react";
-import { Input } from "../ui/input";
-const NavigationLink = () => {
+
+interface LinkItem {
+  name: string;
+  icon: React.ReactNode;
+  to: string;
+}
+
+interface NavigationLinkProps {
+  Links: LinkItem[];
+}
+
+const NavigationLink = ({ Links }: NavigationLinkProps) => {
   const pathname = usePathname();
-  
-  const getLinks = () => {
-    if (pathname?.startsWith('/admin')) {
-      return adminLinks;
-    } else {
-      return farmerLinks;
-    }
-  };
-  
-  const links = getLinks();
 
   return (
     <div>
-      <div className="space-y-5 text-center">
-              <h1 className="text-[25px] font-extrabold text-[#2A5A2A]">
-                AgriMarket
-              </h1>
-              <div className="flex items-center  relative w-full max-w-sm">
-                <Search className="text-black absolute left-2 top-1.5" size={25} />
-                <Input
-                  className="focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-white w-full text-black/60 text-sm pl-10 py-1 border-none  rounded-md "
-                  type="text"
-                  placeholder="Search"
-                />
-              </div>
-            </div>
       <h1 className="text-xs text-black/30 my-3 font-semibold">General</h1>
       <ul className="text-sm space-y-2">
-        {links.map((one, index) => {
+        {Links.map((one, index) => {
           const isActive = pathname === one.to;
           return (
             <li

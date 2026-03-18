@@ -65,8 +65,8 @@ export default function DashboardPage() {
     setEditingUser(null);
   };
 
-  // if (isLoading) return <LoadingState />;
-  if (error) return <ErrorState error={error.message} onRetry={() => { refetchStats(); refetchUsers(); }} />;
+  // // if (isLoading) return <LoadingState />;
+  // if (error) return <ErrorState error={error.message} onRetry={() => { refetchStats(); refetchUsers(); }} />;
 
   const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;

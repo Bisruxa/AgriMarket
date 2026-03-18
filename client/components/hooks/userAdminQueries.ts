@@ -139,17 +139,100 @@ export const useAllUsers = () => {
   });
 };
 
+// Update your existing usePendingTraders hook with better logging
 export const usePendingTraders = () => {
   return useQuery({
     queryKey: adminKeys.pendingTraders(),
     queryFn: async () => {
-      const response = await api.get<PendingTradersResponse>('/admin/traders/pending');
-      if (!response.success) throw new Error(response.message || 'Failed to fetch pending traders');
+      console.log('Fetching pending traders...');
       
-      return response.data?.data.map(transformTrader);
+      try {
+        const response = await api.get<PendingTradersResponse>('/admin/traders/pending');
+        console.log('Raw API Response:', response);
+        
+        if (!response.success) {
+          console.error('API returned success: false', response.message);
+          throw new Error(response.message || 'Failed to fetch pending traders');
+        }
+        
+        // Log the structure to see what we're getting
+        console.log('Response data structure:', {
+          hasData: !!response.data,
+          dataType: typeof response.data,
+          isArray: Array.isArray(response.data),
+          dataKeys: response.data ? Object.keys(response.data) : [],
+        });
+        
+        // Handle different response structures
+        let tradersData: TraderFromAPI[] = [];
+        
+        if (response.data && Array.isArray(response.data)) {
+          // Case: response.data is directly an array
+          tradersData = response.data;
+          console.log('Case 1: response.data is array');
+        } else if (response.data?.data && Array.isArray(response.data.data)) {
+          // Case: response.data.data is an array
+          tradersData = response.data.data;
+          console.log('Case 2: response.data.data is array');
+        } else if (response.data && typeof response.data === 'object') {
+          // Case: response.data might have other structure
+          console.log('Case 3: response.data is object', response.data);
+          
+          // Try to find any array property
+          const possibleArrays = Object.entries(response.data)
+            .filter(([_, value]) => Array.isArray(value))
+            .map(([key]) => key);
+          
+          console.log('Possible array properties:', possibleArrays);
+          
+          if (possibleArrays.length > 0) {
+            // Use the first array property found
+            tradersData = response.data[possibleArrays[0]] as TraderFromAPI[];
+          }
+        }
+        
+        console.log('Extracted traders data:', tradersData);
+        console.log('Traders count:', tradersData?.length || 0);
+        
+        if (!tradersData || tradersData.length === 0) {
+          console.log('No traders data found');
+          return [];
+        }
+        
+        // Transform the data
+        const transformedTraders = tradersData.map((trader: TraderFromAPI) => {
+          console.log('Transforming trader:', trader);
+          
+          return {
+            id: trader.id,
+            businessName: trader.name || 'Unknown Business',
+            ownerName: trader.name || 'Unknown Owner',
+            email: trader.email || 'No email',
+            phone: trader.phone || 'N/A',
+            region: trader.region || 'N/A',
+            woreda: trader.woreda || 'N/A',
+            status: (trader.approvalStatus || 'pending').toLowerCase(),
+            registrationDate: trader.createdAt || new Date().toISOString(),
+            businessType: '',
+            approvalStatus: (trader.approvalStatus || 'pending').toLowerCase(),
+          };
+        });
+        
+        console.log('Transformed traders:', transformedTraders);
+        return transformedTraders;
+        
+      } catch (error) {
+        console.error('Error in usePendingTraders:', error);
+        throw error;
+      }
     },
+    // Add retry configuration for debugging
+    retry: false,
+    // Add stale time to prevent too many refetches
+    staleTime: 5000,
   });
 };
+
 
 export const useTraderDetail = (id: string) => {
   return useQuery({
@@ -195,19 +278,27 @@ export const useApproveTrader = () => {
   });
 };
 
+
 export const useRejectTrader = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
     mutationFn: async ({ id, reason }: { id: string; reason: string }) => {
-      const response = await api.put(`/admin/traders/${id}/reject`, { reason });
-      if (!response.success) throw new Error(response.message || 'Failed to reject trader');
+      const response = await api.put(`/admin/traders/${id}/reject`, { 
+        note: reason 
+      });
+      
+      if (!response.success) {
+        throw new Error(response.message || 'Failed to reject trader');
+      }
+      
       return response;
     },
     onSuccess: (_, { id }) => {
-      queryClient.invalidateQueries({ queryKey: adminKeys.pendingTraders() });
-      queryClient.invalidateQueries({ queryKey: adminKeys.traderDetail(id) });
-      queryClient.invalidateQueries({ queryKey: adminKeys.stats() });
+      // Invalidate relevant queries
+      queryClient.invalidateQueries({ queryKey: ['admin', 'traders', 'pending'] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'traders', id] });
+      queryClient.invalidateQueries({ queryKey: ['admin', 'stats'] });
     },
   });
 };
@@ -216,6 +307,7 @@ export const useUpdateUser = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
+
     mutationFn: async (user: User) => {
       const response = await api.put(`/admin/users/${user.id}`, user);
       if (!response.success) throw new Error(response.message || 'Failed to update user');

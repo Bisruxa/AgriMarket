@@ -104,7 +104,7 @@ export default function HeroSection() {
         <div className="text-4xl sm:text-4xl md:text-[40px] font-extrabold leading-tight">
           <h1 className="text-[#e4e5ba]">
            {t.hero.title} <br />
-            <span className="text-[#e33f3e]">
+            <span className="text-[#4A7342]">
              {t.hero.titleHighlight}
             </span> {t.hero.subtitle}
           </h1>
@@ -115,7 +115,7 @@ export default function HeroSection() {
         </p>
         <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-6 mb-6">
           <Link href="/signup">
-            <button className="px-8 py-3 text-[14px] bg-[#e33f3e] cursor-pointer  text-[#e4e5ba] font-semibold text-lg transform flex items-center gap-2">
+            <button className="px-8 py-3 text-[14px] bg-[#668B57] cursor-pointer  text-[#e4e5ba] font-semibold text-lg transform flex items-center gap-2">
               {t.hero.buttons.getStarted} 
             </button>
           </Link>
