@@ -17,6 +17,7 @@ const data: string[][] = [
   ["James", "james@gmail.com", "User", "Active"],
   ["Anna", "anna@gmail.com", "Admin", "Inactive"],
 ];
+import Header from "@/components/common/Header";
 
 const ITEMS_PER_PAGE = 4;
 
@@ -61,7 +62,9 @@ const Page = () => {
 
   return (
     <>
+     <Header></Header>
       <div className="flex justify-between mt-8">
+       
         <div>
           <h1 className="font-bold text-2xl mb-2">Agricultural Products</h1>
           <p className="text-sm text-black/60">

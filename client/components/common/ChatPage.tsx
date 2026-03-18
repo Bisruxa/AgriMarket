@@ -124,7 +124,7 @@ export default function ChatPage() {
         currentChatTitle={currentChatTitle}
         messages={messages}
         onSendMessage={handleSendMessage}
-        onSuggestionClick={handleSuggestionClick}
+        // onSuggestionClick={handleSuggestionClick}
       />
     </div>
   );
