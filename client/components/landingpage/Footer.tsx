@@ -7,8 +7,6 @@ import {
   Mail,
   Phone,
   MapPin,
-  Heart,
-  GraduationCap,
 } from "lucide-react";
 import Link from "next/link";
 import { useTranslations } from "../hooks/useTranlations";
@@ -42,7 +40,7 @@ const Footer = () => {
           </div>
 
           <div>
-            <h4 className="text-lg font-semibold mb-4 text-[#e33f3e]">
+            <h4 className="text-lg font-semibold mb-4 text-gray-400">
               {language === "en" ? "Quick Links" : "ፈጣን አገናኞች"}
             </h4>
             <ul className="space-y-2">
@@ -54,9 +52,9 @@ const Footer = () => {
                         ? "/"
                         : `/#${link.toLowerCase().replace(/\s+/g, "-")}`
                     }
-                    className="text-[#e4e5ba] hover:text-[#e33f3e] transition-colors duration-300 text-sm flex items-center gap-2"
+                    className="text-[#e4e5ba] hover:text-[#5B8C51] transition-colors duration-300 text-sm flex items-center gap-2"
                   >
-                    <span className="w-1 h-1 bg-[#e33f3e] rounded-full"></span>
+                    <span className="w-1 h-1  bg-[#668B57] rounded-full"></span>
                     {link}
                   </Link>
                 </li>
@@ -65,26 +63,26 @@ const Footer = () => {
           </div>
 
           <div>
-            <h4 className="text-lg font-semibold mb-4 text-[#e33f3e]">
+            <h4 className="text-lg font-semibold mb-4 text-gray-400">
               {language === "en" ? "Contact" : "አግኙን"}
             </h4>
             <div className="space-y-3">
               <div className="flex items-center gap-3 text-[#e4e5ba] text-sm">
-                <Mail size={16} className="text-[#e33f3e]" />
+                <Mail size={16} className="text-white" />
                 <span>{t.footer.contact.email}</span>
               </div>
               <div className="flex items-center gap-3 text-[#e4e5ba] text-sm">
-                <Phone size={16} className="text-[#e33f3e]" />
+                <Phone size={16} className="text-white" />
                 <span>{t.footer.contact.phone}</span>
               </div>
               <div className="flex items-center gap-3 text-[#e4e5ba] text-sm">
-                <MapPin size={16} className="text-[#e33f3e]" />
+                <MapPin size={16} className="text-white" />
                 <span>{t.footer.contact.address}</span>
               </div>
             </div>
 
             <div className="mt-6">
-              <h5 className="text-sm font-semibold mb-2 text-[#e33f3e]">
+              <h5 className="text-sm font-semibold mb-2 text-gray-400">
                 {language === "en" ? "Project Team:" : "የፕሮጀክት ቡድን:"}
               </h5>
               <p className="text-xs text-[#e4e5ba]">{t.footer.teamMembers}</p>
@@ -92,7 +90,7 @@ const Footer = () => {
           </div>
 
           <div>
-            <h4 className="text-lg font-semibold mb-4 text-[#e33f3e]">
+            <h4 className="text-lg font-semibold mb-4 text-gray-400">
               {t.footer.social}
             </h4>
             <div className="flex gap-4 mb-6">
@@ -130,7 +128,7 @@ const Footer = () => {
               ))}
             </div>
 
-            <h5 className="text-sm font-semibold mb-2 text-[#e33f3e]">
+            <h5 className="text-sm font-semibold mb-2 text-gray-400">
               {t.footer.projectInfo}
             </h5>
             <p className="text-xs text-[#e4e5ba]">

@@ -132,7 +132,7 @@ export default function SignInPage() {
 
         <Button 
           type="submit" 
-          className="w-full bg-[#5B8C51] rounded-xl sm:rounded-2xl py-5 sm:py-2 text-sm mt-4 sm:mt-6 hover:bg-[#4a7342] transition-colors" 
+          className="w-full bg-[#5B8C51] rounded-xl sm:rounded-2xl py-5 sm:py-2 text-sm mt-4 sm:mt-6 hover:bg-[#668B57] transition-colors" 
           disabled={isLoading}
         >
           {isLoading ? t.signin.buttons.processing : t.signin.buttons.signin}

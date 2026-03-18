@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, CheckCircle, XCircle } from 'lucide-react';
 import Link from 'next/link';
@@ -7,112 +7,45 @@ import Header from '@/components/common/Header';
 import RejectionModal from '@/components/popups/rejectionModel';
 import OwnerInfoCard from '@/components/cards/trader/ownerInfo';
 import AdditionalInfoCard from '@/components/cards/trader/AdditionalInfo';
-import { Trader } from '@/types/auth-page';
 import { useTranslations } from '@/components/hooks/useTranlations';
-import { api } from '@/lib/api';
+// import { useTraderDetail, useApproveTrader, useRejectTrader } from '@/components/hooks/admin/useAdminQueries';
+import { useTraderDetail,useApproveTrader,useRejectTrader } from '@/components/hooks/userAdminQueries';
 import * as React from 'react';
-
-type TraderStatus = 'pending' | 'approved' | 'rejected';
-
-const fetchTraderDetails = async (id: string): Promise<Trader | null> => {
-  try {
-    console.log('Fetching trader with ID:', id);
-    
-    const response = await api.get<any>(`/admin/traders/${id}`);
-    
-    if (response.success && response.data) {
-      // Type assertion to tell TypeScript the shape
-      const traderData = response.data as {
-        id: string;
-        name: string;
-        email: string;
-        phone: string | null;
-        region: string;
-        woreda: string;
-        approvalStatus: string;
-        createdAt: string;
-      };
-      
-      return {
-        id: traderData.id,
-        businessName: traderData.name,
-        ownerName: traderData.name,
-        email: traderData.email,
-        phone: traderData.phone ?? 'N/A',
-        region: traderData.region ?? 'N/A',
-        woreda: traderData.woreda ?? 'N/A',
-        status: (traderData.approvalStatus?.toLowerCase() as TraderStatus) || 'pending',
-        registrationDate: traderData.createdAt,
-      };
-    }
-    
-    console.error('Trader not found or API error:', response.message);
-    return null;
-  } catch (err) {
-    console.error('Error fetching trader details:', err);
-    return null;
-  }
-};
 
 export default function TraderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
-  const [trader, setTrader] = useState<Trader | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [actionInProgress, setActionInProgress] = useState(false);
   const [showRejectionModal, setShowRejectionModal] = useState(false);
   const t = useTranslations();
-  const {id} = React.use(params);
-
-  useEffect(() => {
-    const loadTrader = async () => {
-      setLoading(true);
-      try {
-        // Use id here directly
-        const data = await fetchTraderDetails(id);
-        setTrader(data);
-      } catch (err) {
-        console.error('Error fetching trader:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadTrader();
-  }, [id]);
+  const { id } = React.use(params);
+  
+  // Use the custom hooks
+  const { data: trader, isLoading, error } = useTraderDetail(id);
+  const approveMutation = useApproveTrader();
+  const rejectMutation = useRejectTrader();
 
   const handleApprove = async () => {
-    setActionInProgress(true);
     try {
-      const response = await api.put(`/admin/traders/${id}/approve`, {});
-      if (response.success) {
-        router.push('/admin/traderApproval?success=approved');
-      } else {
-        console.error('Approve failed:', response.message);
-      }
+      await approveMutation.mutateAsync(id);
+      router.push('/admin/traderApproval?success=approved');
     } catch (err) {
       console.error('Error approving trader:', err);
-    } finally {
-      setActionInProgress(false);
     }
   };
 
   const handleReject = async (reason: string) => {
-    setActionInProgress(true);
     try {
-      const response = await api.put(`/admin/traders/${id}/reject`, { reason });
-      if (response.success) {
-        router.push('/admin/traderApproval?success=rejected');
-      } else {
-        console.error('Reject failed:', response.message);
-      }
+      await rejectMutation.mutateAsync({ id, reason });
+      setShowRejectionModal(false);
+      router.push('/admin/traderApproval?success=rejected');
     } catch (err) {
       console.error('Error rejecting trader:', err);
-    } finally {
-      setActionInProgress(false);
-      setShowRejectionModal(false);
     }
   };
 
-  if (loading) {
+  // Determine if any action is in progress
+  const actionInProgress = approveMutation.isPending || rejectMutation.isPending;
+
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
@@ -126,14 +59,14 @@ export default function TraderDetailPage({ params }: { params: Promise<{ id: str
     );
   }
 
-  if (!trader) {
+  if (error || !trader) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
         <div className="max-w-7xl mx-auto py-8">
           <div className="text-center">
             <h2 className="text-xl font-semibold text-gray-900">
-              {t.traderDetail?.notFound || 'Trader not found'}
+              {error?.message || (t.traderDetail?.notFound || 'Trader not found')}
             </h2>
             <Link href="/admin/traderApproval" className="text-[#5B8C51] hover:text-[#4a7342] mt-2 inline-block">
               {t.traderDetail?.backToApprovals || 'Back to Approvals'}
@@ -182,10 +115,12 @@ export default function TraderDetailPage({ params }: { params: Promise<{ id: str
               <button
                 onClick={handleApprove}
                 disabled={actionInProgress}
-                className="px-4 py-2 bg-[#5B8C51] text-white rounded-lg hover:bg-[#4a7342] transition-colors disabled:opacity-50 flex items-center gap-2"
+                className="px-4 py-2 bg-[#5B8C51] text-white rounded-lg hover:bg-[#668B57] transition-colors disabled:opacity-50 flex items-center gap-2"
               >
                 <CheckCircle className="w-4 h-4" />
-                {t.traderDetail?.approveApplication || 'Approve Application'}
+                {approveMutation.isPending 
+                  ? (t.traderDetail?.approving || 'Approving...') 
+                  : (t.traderDetail?.approveApplication || 'Approve Application')}
               </button>
             </div>
           </div>
@@ -207,7 +142,7 @@ export default function TraderDetailPage({ params }: { params: Promise<{ id: str
         isOpen={showRejectionModal}
         onClose={() => setShowRejectionModal(false)}
         onConfirm={handleReject}
-        isProcessing={actionInProgress}
+        isProcessing={rejectMutation.isPending}
       />
     </div>
   );

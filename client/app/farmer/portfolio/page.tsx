@@ -1,6 +1,7 @@
 import React from "react";
 import Profile from "@/components/common/Profile";
 import EditForm from "@/components/common/EditForm";
+import Header from "@/components/common/Header";
 const farmerField = [
   {
     id: "firstname",
@@ -41,6 +42,7 @@ const farmerField = [
 const Farmer_Portfolio = () => {
   return (
     <>
+    <Header></Header>
       <Profile/>
       <EditForm Fields={farmerField}/>
     </>

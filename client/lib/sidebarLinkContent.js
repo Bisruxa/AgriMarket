@@ -23,7 +23,7 @@ export const farmerLinks = [
     to:"/farmer/market"
   }
 ];
-export const adminLinks = [
+export const Admin_Links = [
   {
     name: "Farmer & Traders",
     icon: <House className='mr-2' size={20} />,
@@ -39,15 +39,19 @@ export const adminLinks = [
 ];
 export const Trader_Links = [
   {
-    name: "Farmer & Traders",
+    name: "Dashboard",
     icon: <House className='mr-2' size={20} />,
-    to: "/admin/dashboard"
+    to: "/trader/dashboard"
   },
   {
-    name: "Trader Approval",
-    icon: <Clock className='mr-2' size={20} />,
-    to: "/admin/traderApproval"
+    name: "Trends and Forcast",
+    icon: <ChartNoAxesCombined className='mr-2' size={20} />,
+    to: "/trader/trends"
   },
- 
+  {
+    name: "Purchases",
+    icon: <Clock className='mr-2' size={20} />,
+    to: "/trader/purchases"
+  },
  
 ];

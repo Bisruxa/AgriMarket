@@ -51,7 +51,7 @@ const FarmingBasics = () => {
         damping: 12,
       },
     },
-  };
+  } as const;
 
   const textVariants = {
     hidden: { 
@@ -66,7 +66,7 @@ const FarmingBasics = () => {
         ease: "easeOut",
       },
     },
-  };
+  } as const;
 
   const imageVariants = {
     hidden: { 
@@ -85,7 +85,7 @@ const FarmingBasics = () => {
         delay: 0.4,
       },
     },
-  };
+  } as const ;
 
   const buttonVariants = {
     hidden: { 
@@ -116,9 +116,10 @@ const FarmingBasics = () => {
     },
   };
 
+  
   return (
-    <section className="w-full bg-[#E6C49A]">
-      <div className="grid lg:grid-cols-2 min-h-[600px]">
+    <section className="w-full bg-gray-200">
+      <div className="grid lg:grid-cols-2 min-h-150">
 
         {/* Left Content - Slides in from left */}
         <motion.div 
