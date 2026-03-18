@@ -44,7 +44,6 @@ const BenefitsSection = () => {
         : "በማስረጃ ላይ የተመሰረቱ ግንዛቤዎችን ይጠቀሙ።"
     }
   ];
-
   const leftSideBenefits = benefits.slice(0, 3);
   const bottomBenefits = benefits.slice(3);
   return (
@@ -58,6 +57,7 @@ const BenefitsSection = () => {
               alt="Why Choose AgriMarket"
               fill
               className="object-cover"
+              
             />
           </div>
           <div className="space-y-1">

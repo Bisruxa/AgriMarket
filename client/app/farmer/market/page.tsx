@@ -1,19 +1,12 @@
 "use client";
-
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Table,
-  TableHeader,
-  TableBody,
-  TableRow,
-  TableHead,
-  TableCell,
-} from "@/components/ui/table";
+import { useContext } from "react";
+import {Table,TableHeader,TableBody,TableRow,TableHead,TableCell,} from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { CirclePlus, Pencil, Trash2 } from "lucide-react";
 import CTA from "./CTA";
-
+import { Context } from "@/app/context/Context";
 const data: string[][] = [
   ["John", "john@gmail.com", "Admin", "Active"],
   ["Sarah", "sarah@gmail.com", "User", "Inactive"],
@@ -29,6 +22,7 @@ import Header from "@/components/common/Header";
 const ITEMS_PER_PAGE = 4;
 
 const Page = () => {
+  const {setShow} = useContext(Context)!;
   const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const [tableData, setTableData] = useState(data);
@@ -52,7 +46,6 @@ const Page = () => {
   const handleEdit = (rowIndex: number) => {
     const actualIndex = startIndex + rowIndex;
     const item = tableData[actualIndex];
-    // Navigate to edit page with the item data
     router.push(`/edit_crop?name=${encodeURIComponent(item[0])}&email=${encodeURIComponent(item[1])}&role=${encodeURIComponent(item[2])}&status=${encodeURIComponent(item[3])}`);
   };
 
@@ -61,7 +54,6 @@ const Page = () => {
     const newData = tableData.filter((_, index) => index !== actualIndex);
     setTableData(newData);
     
-    // Adjust current page if needed
     const newTotalPages = Math.ceil(newData.length / ITEMS_PER_PAGE);
     if (currentPage > newTotalPages) {
       setCurrentPage(newTotalPages);
@@ -80,7 +72,7 @@ const Page = () => {
           </p>
         </div>
         <Button
-          onClick={() => router.push("/add_crop")}
+          onClick={() =>setShow(true)}
           className="bg-[#2A5A2A] hover:bg-[#2A5A2A]/90 cursor-pointer"
         >
           <CirclePlus className="mr-2 h-4 w-4" />
