@@ -38,7 +38,6 @@ const Footer = () => {
               </span>
             </div>
           </div>
-
           <div>
             <h4 className="text-lg font-semibold mb-4 text-gray-400">
               {language === "en" ? "Quick Links" : "ፈጣን አገናኞች"}
@@ -61,7 +60,6 @@ const Footer = () => {
               ))}
             </ul>
           </div>
-
           <div>
             <h4 className="text-lg font-semibold mb-4 text-gray-400">
               {language === "en" ? "Contact" : "አግኙን"}

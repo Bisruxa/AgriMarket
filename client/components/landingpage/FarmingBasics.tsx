@@ -25,7 +25,6 @@ const FarmingBasics = () => {
     },
   ];
 
-  // Animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -121,7 +120,6 @@ const FarmingBasics = () => {
     <section className="w-full bg-gray-200">
       <div className="grid lg:grid-cols-2 min-h-150">
 
-        {/* Left Content - Slides in from left */}
         <motion.div 
           className="px-6 md:px-16 py-16 flex flex-col justify-center"
           variants={containerVariants}
@@ -183,7 +181,6 @@ const FarmingBasics = () => {
 
         </motion.div>
 
-        {/* Right Image - EXACT original classes, just wrapped with motion */}
         <motion.div 
           className="relative flex items-start justify-center -mt-20 p-10 lg:p-0"
           variants={imageVariants}
