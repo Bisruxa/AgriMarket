@@ -3,8 +3,9 @@ import React, { useState } from "react";
 import Image from "next/image";
 import { Context } from "../context/Context";
 import { ReactNode } from "react";
-import FarmerSidebar from "./sidebar";
 import AddCrop from "@/components/Farmer/AddCrop";
+import Sidebar from "@/components/SideBar/sidebar";
+
 interface NodeProp {
   children: ReactNode;
 }
@@ -14,7 +15,7 @@ const Framerlayout = ({ children }: NodeProp) => {
     <>
       <div className=" relative flex px-5 bg-black/1.5">
         <div className="flex-1 fixed top-0 left-0 border-r border-black/6  px-5 ">
-          <FarmerSidebar />
+                <Sidebar role={"farmer"} />
         </div>
         <div className="flex-[4.5] ml-65 min-h-screen px-3 py-2 flex flex-col">
           <div className="flex-1">

@@ -1,30 +1,16 @@
 "use client";
 import React from "react";
-import { Search, UserPen, MessageCircleMore } from "lucide-react";
+import { UserPen,MessageCircleMore } from "lucide-react";
 import Link from "next/link";
-import { Input } from "@/components/ui/input";
 import LogOutSection from "@/components/SideBar/LogOut";
 import NavigationLink from "@/components/SideBar/NavigationLink";
 import { usePathname } from "next/navigation";
-const Sidebar = ({ arr, role }) => {
+const Sidebar = ({role }: { role: string }) => {
   const pathname = usePathname();
   return (
     <div className="flex flex-col min-h-screen py-3">
       <div className="flex-1">
-        <div className="space-y-5 text-center">
-          <h1 className="text-[25px] font-extrabold text-[#2A5A2A]">
-            AgriMarket
-          </h1>
-          <div className="flex items-center  relative w-full max-w-sm">
-            <Search className="text-black absolute left-2 top-1.5" size={25} />
-            <Input
-              className="focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-white w-full text-black/60 text-sm pl-10 py-1 border-none  rounded-md "
-              type="text"
-              placeholder="Search"
-            />
-          </div>
-        </div>
-        <NavigationLink Links={arr} />
+        <NavigationLink />
         <div>
           <h1 className="text-xs text-black/30 my-3 font-semibold">My Space</h1>
           <div

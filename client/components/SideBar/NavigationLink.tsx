@@ -1,6 +1,6 @@
 'use client';
 import Link from "next/link";
-import { farmerLinks, adminLinks } from "@/lib/sidebarLinkContent";
+import { farmerLinks, adminLinks ,traderLinks} from "@/lib/sidebarLinkContent";
 import { usePathname } from "next/navigation";
 import { Search } from "lucide-react";
 import { Input } from "../ui/input";
@@ -10,8 +10,11 @@ const NavigationLink = () => {
   const getLinks = () => {
     if (pathname?.startsWith('/admin')) {
       return adminLinks;
-    } else {
+    } else if (pathname?.startsWith('/farmer')) {
       return farmerLinks;
+    }
+    else{
+      return traderLinks;
     }
   };
   
