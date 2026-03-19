@@ -68,7 +68,7 @@ export default function BusinessInfoCard({ trader }: BusinessInfoCardProps) {
           <MapPin className="w-5 h-5 text-gray-500" />
           {t.businessInfo?.address || "Address"}
         </h2>
-        <p className="text-gray-700">{trader.address}</p>
+        <p className="text-gray-700">{trader.region},{trader.woreda}</p>
       </div>
     </div>
   );

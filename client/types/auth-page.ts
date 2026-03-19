@@ -52,17 +52,12 @@ export interface User {
   name: string;
   email: string;
   role: string;
-}
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
   status?: string;
   farmSize?: string;
   crops?: string[];
   company?: string;
   phone?:string;
+  registrationDate?:string;
 }
 
 export interface AuthContextType {
@@ -72,17 +67,22 @@ export interface AuthContextType {
   loading: boolean;
 }
 export interface Trader {
-  id:string;
+  id: string;
   businessName: string;
-  businessType: string;
-  businessRegNumber: string;
-  taxId: string;
-  description: string;
+  businessType?: string;
+  businessRegNumber?: string;
+  taxId?: string;
+  description?: string;
   ownerName: string;
   email: string;
   phone: string;
   alternatePhone?: string;
-  address: string;
+  address?: string;
   status: 'pending' | 'approved' | 'rejected';
-  registrationDate: string;
+  registrationDate: string; 
+  region: string; 
+  woreda: string; 
+
+  isVerified?: boolean;
+  approvalNote?: string | null;
 }

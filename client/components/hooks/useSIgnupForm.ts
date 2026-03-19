@@ -166,21 +166,10 @@ export const useSignupForm = () => {
       // Only store user info in localStorage for UI purposes
       if (response.user) {
         localStorage.setItem('user', JSON.stringify(response.user));
-        
-        // Redirect based on actual user role from API response
-        const userRole = response.user.role;
-        let redirectPath = '/';
-        
-        if (userRole === 'FARMER') {
-          redirectPath = '/farmer/dashboard';
-        } else if (userRole === 'TRADER') {
-          redirectPath = '/trader/dashboard';
-        } else if (userRole === 'ADMIN') {
-          redirectPath = '/admin/dashboard';
-        }
-        
-        router.push(redirectPath);
       }
+
+      const redirectPath = role === 'FARMER' ? '/farmer/dashboard' : '/trader/dashboard';
+      router.push(redirectPath);
       
     } catch (error) {
       const apiError = error as ApiError;
