@@ -1,0 +1,79 @@
+# ----------------------------
+# Core Python ML Stack
+# ----------------------------
+numpy
+pandas
+scikit-learn
+matplotlib
+seaborn
+
+# ----------------------------
+# Deep Learning (PyTorch)
+# ----------------------------
+torch
+torchvision
+torchaudio
+
+# ----------------------------
+# Time-Series Forecasting
+# ----------------------------
+statsmodels
+python-dateutil
+
+# ----------------------------
+# Gradient Boosting Models
+# ----------------------------
+xgboost
+# lightgbm
+
+# ----------------------------
+# NLP + Transformers
+# ----------------------------
+transformers
+sentencepiece
+accelerate
+huggingface_hub
+
+# ----------------------------
+# Amharic NLP Models
+# (AmharicBERT, AfriBERTa)
+# ----------------------------
+tokenizers
+
+# ----------------------------
+# Google Gemini API
+# ----------------------------
+google-generativeai
+
+# ----------------------------
+# Whisper Speech-to-Text (STT)
+# ----------------------------
+openai-whisper
+tiktoken
+
+# ----------------------------
+# Text-to-Speech (TTS)
+# ----------------------------
+TTS              # Coqui TTS – Windows friendly
+pyttsx3          # Built-in system voice fallback
+
+
+# ----------------------------
+# ML API Service
+# ----------------------------
+fastapi
+uvicorn
+
+# ----------------------------
+# Tools & Utilities
+# ----------------------------
+requests
+python-dotenv
+joblib
+tqdm
+
+# ----------------------------
+# # Notebook / Development Tools
+# # ----------------------------
+# jupyter
+# notebook
