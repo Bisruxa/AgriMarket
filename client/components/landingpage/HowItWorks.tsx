@@ -6,7 +6,7 @@ import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 import { useRef } from 'react';
 import { useTranslations } from '@/components/hooks/useTranlations';
 import { useLanguage } from '@/app/context/LanguageContext';
-
+import { Handshake,Brain , Map} from 'lucide-react';
 const HowItWorks = () => {
   const t = useTranslations();
   const { language } = useLanguage();
@@ -34,16 +34,25 @@ const HowItWorks = () => {
       image: "/potato.jpg"
     },
     {
+      title: t.howItWorks.steps.addFarm,
+      description: t.howItWorks.stepDescriptions.addFarm,
       icon: <Map className="text-[#5B8C51]" size={48} />,
-      link: "/signup"
+      link: "/signup",
+      image: "/Crop.jpg"
     },
     {
+      title: t.howItWorks.steps.getInsights,
+      description: t.howItWorks.stepDescriptions.getInsights,
       icon: <Brain className="text-[#5B8C51]" size={48} />,
-      link: "/signup"
+      link: "/signup",
+      image: "/onions.jpg"
     },
     {
+      title: t.howItWorks.steps.connectGrow,
+      description: t.howItWorks.stepDescriptions.connectGrow,
       icon: <Handshake className="text-[#5B8C51]" size={48} />,
-      link: "/signup"
+      link: "/signup",
+      image: "/total_items.jpg"
     },
   ];
 

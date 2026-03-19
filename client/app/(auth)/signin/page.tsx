@@ -14,7 +14,7 @@ export default function SignInPage() {
 
   const t = useTranslations() as Translations;
   
-  const [role, setRole] = useState<'FARMER' | 'BUYER'>('FARMER');
+  const [role, setRole] = useState<'FARMER' | 'TRADER'>('FARMER');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -48,15 +48,26 @@ export default function SignInPage() {
         }
         return;
       }
-      if(response.token
-      ){
+      if(response.token){
         localStorage.setItem('token',response.token);
       }
       if(response.user){
-        localStorage.setItem('user',JSON.stringify(response.user))
+        localStorage.setItem('user',JSON.stringify(response.user));
+        
+        // Redirect based on actual user role from API response
+        const userRole = response.user.role;
+        let redirectPath = '/';
+        
+        if (userRole === 'FARMER') {
+          redirectPath = '/farmer/dashboard';
+        } else if (userRole === 'TRADER') {
+          redirectPath = '/trader/dashboard';
+        } else if (userRole === 'ADMIN') {
+          redirectPath = '/admin/dashboard';
+        }
+        
+        router.push(redirectPath);
       }
-      const redirectPath = role === 'FARMER' ? '/farmer/dashboard' : '/buyer/dashboard';
-      router.push(redirectPath)
     } catch {
       setError(t.signin.errors.invalidCredentials);
     } finally {
