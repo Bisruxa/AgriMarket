@@ -28,7 +28,7 @@ class ApiClient {
     
     const config: RequestInit = {
       ...options,
-      credentials: 'include', // Important: This sends cookies with requests
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
         ...options.headers,
@@ -81,7 +81,6 @@ class ApiClient {
 
 export const api = new ApiClient(API_URL);
 
-// Auth API functions
 export const authApi = {
   register: (data: {
     name: string;
@@ -104,7 +103,6 @@ export const authApi = {
   logout: () => api.post('/auth/logout', {}),
 };
 
-// Products API functions
 export const productsApi = {
   getAll: (params?: Record<string, string>) => {
     const query = params ? '?' + new URLSearchParams(params).toString() : '';
