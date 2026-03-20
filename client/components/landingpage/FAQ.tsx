@@ -51,8 +51,7 @@ const FAQ = () => {
                     <ChevronDown size={24} />
                   )}
                 </div>
-              </button>
-              
+              </button>              
               <div className={`px-6 transition-all duration-300 overflow-hidden ${
                 openIndex === index ? 'pb-6 max-h-96' : 'max-h-0'
               }`}>
@@ -72,11 +71,10 @@ const FAQ = () => {
                           : 'ጥራት ባህሪያት የላቀ ትንተና እና ቅድሚያ ነጋዴ ግንኙነቶችን ያካትታሉ።'}
                       </p>
                     </div>
-                  )}
-                  
+                  )}                  
                   {index === 2 && (
-                    <div className="mt-4 flex items-center gap-2 text-sm text-[#e4e5ba]/80">
-                      <div className="w-2 h-2 rounded-full bg-[#e4e5ba]"></div>
+                    <div className="mt-4 flex items-center gap-2 text-sm text-[#e4e5ba]">
+                      <div className="w-2 h-2 rounded-full bg-[#e23f3e]"></div>
                       {language === 'en' 
                         ? 'Based on data from Ethiopian Institute of Agricultural Research' 
                         : 'ከኢትዮጵያ የግብርና ምርምር ኢንስቲትዩት ውሂብ ላይ የተመሰረተ'}
