@@ -3,12 +3,16 @@ import { useTranslations } from '@/components/hooks/useTranlations';
 import { StatsData } from '@/types/statsData';
 
 interface StatusCardProps {
-  stats?: StatsData | null;
+  stats?: StatsData | { success: boolean; data: StatsData } | null;
   isLoading?: boolean; 
 }
 
 const StatusCard = ({ stats, isLoading }: StatusCardProps) => {
   const t = useTranslations();
+  
+  // Extract the actual data if it's wrapped
+  const actualStats = stats && 'data' in stats ? stats.data : stats;
+  
   const statConfigs = [
     {
       title: 'Farmers',
@@ -32,13 +36,14 @@ const StatusCard = ({ stats, isLoading }: StatusCardProps) => {
       borderColor: 'border-purple-200'
     }
   ];
+  
   const getValue = (index: number) => {
-    if (!stats) return 0;
+    if (!actualStats) return 0;
     
     switch(index) {
-      case 0: return stats.users?.farmers ?? 0;
-      case 1: return stats.users?.traders ?? 0;
-      case 2: return stats.users?.total ?? 0;
+      case 0: return actualStats.users?.farmers ?? 0;
+      case 1: return actualStats.users?.traders ?? 0;
+      case 2: return actualStats.users?.total ?? 0;
       default: return 0;
     }
   };
@@ -56,7 +61,6 @@ const StatusCard = ({ stats, isLoading }: StatusCardProps) => {
         >
           <div className='flex items-center justify-between'>
             <div>
-              {/* Title - always visible */}
               <p className='text-sm font-medium text-gray-600 mb-1'>
                 {t?.statusCard?.stats?.farmers && index === 0 
                   ? t.statusCard.stats.farmers 
@@ -67,7 +71,6 @@ const StatusCard = ({ stats, isLoading }: StatusCardProps) => {
                   : stat.title}
               </p>
               
-              {/* Number or Loading Skeleton */}
               {isLoading ? (
                 <NumberSkeleton />
               ) : (
