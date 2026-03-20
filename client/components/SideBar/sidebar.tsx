@@ -29,14 +29,14 @@ const Sidebar = ({ arr, role }: SidebarProps) => {
          <div className="space-y-5 text-center">
          <h1 className="text-[25px] font-extrabold text-[#2A5A2A]">
              AgriMarket           </h1>
-           <div className="flex items-center  relative w-full max-w-sm">
+           {/* <div className="flex items-center  relative w-full max-w-sm">
              <Search className="text-black absolute left-2 top-1.5" size={25} />
             <Input
                className="focus:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 bg-white w-full text-black/60 text-sm pl-10 py-1 border-none  rounded-md "
                type="text"
                placeholder="Search"
              />
-           </div>
+           </div> */}
            </div>
         {/* NavigationLink now contains header, search, and general links */}
         <NavigationLink Links={arr} />
@@ -83,7 +83,26 @@ const Sidebar = ({ arr, role }: SidebarProps) => {
               My Portfolio
             </Link>
           </div>
-          
+           <div className="">
+          <h1 className="text-xs text-black/30 my-3 font-semibold">Support</h1>
+          <div
+            className="flex h-10 border border-[#2A5A2A]/60 text-[14px] items-center px-2 rounded-lg transition-colors duration-200 ease-in-out"
+            style={{
+              color:
+                pathname.split("/").pop() === "chat"
+                  ? "white"
+                  : "rgba(0, 0, 0, 0.7)",
+              backgroundColor:
+                pathname.split("/").pop() === "chat" ? "#2A5A2A" : "",
+            }}
+          >
+            <MessageCircleMore className="mr-2" size={20} />
+            <Link className="w-full py-2.5" href={`/chat`}>
+              Chat
+            </Link>
+          </div>
+        </div>
+        
     </div>
   )
           }
