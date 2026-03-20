@@ -1,7 +1,7 @@
 import React from "react";
 import { useState } from "react";
 interface MessageProps {
-  status: 200 | 500;
+  status: number | string;
   message:string;
 }
 const Message = ({ status, message }:MessageProps) => {
