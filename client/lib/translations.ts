@@ -301,6 +301,7 @@ traderApproval?: {
     reviewApplication: string;
     reject: string;
     approveApplication: string;
+    approving:string;
   };
   traderTable?: {
     businessName: string;
@@ -632,7 +633,7 @@ traderStats: {
   totalRequests: "Total Requests",
   pending: "Pending",
   approved: "Approved",
-  rejected: "Rejected"
+  rejected: "Rejected",
 },
 businessInfo: {
   businessInfo: "Business Information",
@@ -663,7 +664,8 @@ traderDetail: {
   backToApprovals: "Back to Approvals",
   reviewApplication: "Review trader application",
   reject: "Reject",
-  approveApplication: "Approve Application"
+  approveApplication: "Approve Application",
+  approving:"Approving..."
 },
 traderTable: {
   businessName: "Business Name",
@@ -1023,7 +1025,8 @@ traderDetail: {
   backToApprovals: "ወደ ማረጋገጫዎች ተመለስ",
   reviewApplication: "የነጋዴ ማመልከቻ ይገምግሙ",
   reject: "ውድቅ አድርግ",
-  approveApplication: "ማመልከቻውን ይቀበሉ"
+  approveApplication: "ማመልከቻውን ይቀበሉ",
+  approving:" ማረጋገጫዎች... "
 },
 traderTable: {
   businessName: "የንግድ ስም",

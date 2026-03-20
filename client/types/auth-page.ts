@@ -78,7 +78,7 @@ export interface Trader {
   phone: string;
   alternatePhone?: string;
   address?: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'pending' | 'approved' | 'rejected' | string;
   registrationDate: string; 
   region: string; 
   woreda: string; 
