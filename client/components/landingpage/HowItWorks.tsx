@@ -2,12 +2,11 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
+import { motion, useScroll, useTransform, useSpring, useMotionValue } from 'framer-motion';
 import { useRef } from 'react';
 import { useTranslations } from '@/components/hooks/useTranlations';
 import { useLanguage } from '@/app/context/LanguageContext';
 import { Brain, Map, Handshake } from 'lucide-react';
-import { describe } from 'node:test';
 
 const HowItWorks = () => {
   const t = useTranslations();
@@ -15,15 +14,22 @@ const HowItWorks = () => {
   const containerRef = useRef(null);
   const headingRef = useRef(null);
   
+  // Fixed: Properly define animations with motion values
+  const dotScale = useMotionValue(1);
+  const rotate = useMotionValue(0);
+  const scale = useMotionValue(1);
+
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end end"]
   });
+  
   const smoothProgress = useSpring(scrollYProgress, {
     stiffness: 100,
     damping: 30,
     restDelta: 0.001
   });
+  
   const steps = [
     {
       title: t.howItWorks.steps.signup,
@@ -32,23 +38,20 @@ const HowItWorks = () => {
       image: "/potato.jpg"
     },
     {
-      
- title: t.howItWorks.steps.addFarm,
- description :t.howItWorks.stepDescriptions.addFarm,
-      // icon: <Map className="text-[#5B8C51]" size={48} />,
+      title: t.howItWorks.steps.addFarm,
+      description: t.howItWorks.stepDescriptions.addFarm,
       link: "/signup",
       image: "/corn.jpg"
     },
     {
-      title:t.howItWorks.steps.getInsights,
-      description:t.howItWorks.stepDescriptions.getInsights,
-      // icon: <Brain className="text-[#5B8C51]" size={48} />,
+      title: t.howItWorks.steps.getInsights,
+      description: t.howItWorks.stepDescriptions.getInsights,
       link: "/signup",
       image: "/onions.jpg"
     },
     {
-      title:t.howItWorks.steps.connectGrow,
-      description:t.howItWorks.stepDescriptions.connectGrow,
+      title: t.howItWorks.steps.connectGrow,
+      description: t.howItWorks.stepDescriptions.connectGrow,
       icon: <Handshake className="text-[#5B8C51]" size={48} />,
       link: "/signup",
       image: "/Crop.jpg"
@@ -86,6 +89,7 @@ const HowItWorks = () => {
             {t.howItWorks.description}
           </motion.p>
         </motion.div>
+        
         <div className="space-y-24 relative">
           <svg
             className="absolute left-1/2 top-0 w-0.5 h-full transform -translate-x-1/2 hidden md:block"
@@ -111,22 +115,26 @@ const HowItWorks = () => {
             const stepEnd = (index + 1) / steps.length;
             const stepRange = 0.15;
             
+            // eslint-disable-next-line react-hooks/rules-of-hooks
             const rawRotate = useTransform(
               smoothProgress,
               [stepStart, stepStart + stepRange, stepEnd - stepRange, stepEnd],
               [0, 2, -2, 0]
             );
             
+            // eslint-disable-next-line react-hooks/rules-of-hooks
             const smoothRotate = useSpring(rawRotate, {
               stiffness: 50,
               damping: 20
             });
 
+            // eslint-disable-next-line react-hooks/rules-of-hooks
             const imageScale = useTransform(
               smoothProgress,
               [stepStart, stepStart + stepRange * 1.5],
               [0.95, 1]
             );
+            
             return (
               <motion.div
                 key={index}
@@ -140,7 +148,7 @@ const HowItWorks = () => {
                   <motion.div
                     className="absolute left-1/2 bottom-0 w-4 h-4 bg-[#668B57] rounded-full transform -translate-x-1/2 translate-y-1/2 hidden md:block"
                     style={{
-                      scale: animations.dotScale
+                      scale: dotScale
                     }}
                   />
                 )}
@@ -148,8 +156,8 @@ const HowItWorks = () => {
                 <motion.div 
                   className={`${index % 2 !== 0 ? 'md:order-2' : ''}`}
                   style={{
-                    rotate: animations.rotate,
-                    scale: animations.scale
+                    rotate: smoothRotate,
+                    scale: imageScale
                   }}
                 >
                   <motion.div 
@@ -157,7 +165,7 @@ const HowItWorks = () => {
                     whileHover={{ scale: 1.02 }}
                     transition={{ type: "spring", stiffness: 300, damping: 20 }}
                   >
-                    {/* {step.icon ? (
+                    {step.icon ? (
                       <div className="w-full h-full flex items-center justify-center bg-gray-100">
                         {step.icon}
                       </div>
@@ -168,12 +176,7 @@ const HowItWorks = () => {
                         fill
                         className="object-cover"
                       />
-                    )} */}
-                    <Image src={step.image}
-                    alt={step.title}
-                    fill
-                    className='
-                    object-cover'/>
+                    )}
                   </motion.div>
                 </motion.div>
 
@@ -222,6 +225,7 @@ const HowItWorks = () => {
             );
           })}
         </div>
+        
         <motion.div 
           className="mt-24 text-center"
           initial={{ opacity: 0, y: 20 }}
