@@ -4,4 +4,5 @@
   // ),
   // httpOnly: true,
   // secure: true,      // REQUIRED for cross-site cookies
-  // sameSite: 'none'   // REQUIRED for cross-site cookies}
+  // sameSite: 'none'   // REQUIRED for cross-site cookies
+ }
