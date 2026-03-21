@@ -8,7 +8,7 @@ export const farmerLinks = [
     to:"/farmer/dashboard"
   },
   {
-    name: "Crop Details / Insight",
+    name: "Crop Recommendations",
     icon: <ReceiptText className='mr-2' size={20} />,
     to:"/farmer/cropdetail"
   },

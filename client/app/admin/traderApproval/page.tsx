@@ -94,6 +94,7 @@ export default function TraderApprovalPage() {
 
   // Reset to first page when filters change
   useMemo(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-render
     setCurrentPage(1);
   }, [search, statusFilter]);
 
@@ -109,7 +110,7 @@ export default function TraderApprovalPage() {
 
         {/* Pass stats to TraderStats component */}
         <TraderStats 
-          stats={stats || null} 
+          stats={stats} 
           loading={statsLoading} 
           error={statsError?.message || null} 
         />
