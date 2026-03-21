@@ -42,26 +42,9 @@ const Sidebar = ({ arr, role }: SidebarProps) => {
         <NavigationLink Links={arr} />
         
         <div>
-          <h1 className="text-xs text-black/30 my-3 font-semibold">My Space</h1>
-          <div
-            className="flex text-[14px] border border-[#2A5A2A]/60 items-center px-2 rounded-lg transition-colors duration-200 ease-in-out"
-            style={{
-              color:
-                pathname.split("/").pop() === "portfolio"
-                  ? "white"
-                  : "rgba(0, 0, 0, 0.7)",
-              backgroundColor:
-                pathname.split("/").pop() === "portfolio" ? "#2A5A2A" : "",
-            }}
-          >
-            <UserPen className="mr-2" size={20} />
-            <Link className="w-full py-2.5" href={`/${role}/portfolio`}>
-              My Portfolio
-            </Link>
-          </div>
-        </div>
-        
-        <div className="mb-30">
+          {
+  (role=="Admin")?(
+    <div className="mb-30">
           <h1 className="text-xs text-black/30 my-3 font-semibold">Support</h1>
           <div
             className="flex h-10 border border-[#2A5A2A]/60 text-[14px] items-center px-2 rounded-lg transition-colors duration-200 ease-in-out"
@@ -80,11 +63,39 @@ const Sidebar = ({ arr, role }: SidebarProps) => {
             </Link>
           </div>
         </div>
+  ):(
+    <div>
+
+          <h1 className="text-xs text-black/30 my-3 font-semibold">My Space</h1>
+          <div
+            className="flex text-[14px] border border-[#2A5A2A]/60 items-center px-2 rounded-lg transition-colors duration-200 ease-in-out"
+            style={{
+              color:
+                pathname.split("/").pop() === "portfolio"
+                  ? "white"
+                  : "rgba(0, 0, 0, 0.7)",
+              backgroundColor:
+                pathname.split("/").pop() === "portfolio" ? "#2A5A2A" : "",
+            }}
+          >
+            <UserPen className="mr-2" size={20} />
+            <Link className="w-full py-2.5" href={`/${role}/portfolio`}>
+              My Portfolio
+            </Link>
+          </div>
+          
+    </div>
+  )
+          }
+       
+        </div>
+        
+       
       </div>
       
-      {/* <div className="flex">
+      <div className="flex">
         <LogOutSection />
-      </div> */}
+      </div>
     </div>
   );
 };
