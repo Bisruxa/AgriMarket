@@ -186,6 +186,7 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({ isOpen, onClose }) 
                   label="Name" 
                   value={name} 
                   onChange={(e) => setName(e.target.value)} 
+                  
                 />
                 <InputField 
                   label="Email" 

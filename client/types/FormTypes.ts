@@ -11,6 +11,7 @@ export type FormData = {
   farmSize: string;
   crops: string;
   experience: string;
+  phone:string;
 };
 
 export type ValidationRule =  | { field: keyof FormData; message: string; validate?: (val: string) => string | boolean }

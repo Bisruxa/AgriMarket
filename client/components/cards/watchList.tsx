@@ -1,17 +1,17 @@
 'use client'
 import { useState } from "react";
-import { TrendingUp, TrendingDown, Sprout, ChevronRight, ChevronLeft } from 'lucide-react';
+import {  Sprout, ChevronRight, ChevronLeft } from 'lucide-react';
 
 function WatchList() {
   const [crops] = useState([
-    { name: 'Maize', price: '32', change: '+24', demand: 'High', yield: '50', icon: '🌽' },
-    { name: 'Teff', price: '85', change: '+14', demand: 'Medium', yield: '40', icon: '🌾' },
-    { name: 'Cabbage', price: '12', change: '-4', demand: 'Low', yield: '10', icon: '🥬' },
-    { name: 'Potato', price: '25', change: '+9', demand: 'High', yield: '45', icon: '🥔' },
-    { name: 'Tomato', price: '18', change: '-3', demand: 'Low', yield: '5', icon: '🍅' },
-    { name: 'Onion', price: '22', change: '+5', demand: 'Medium', yield: '15', icon: '🧅' },
-    { name: 'Carrot', price: '28', change: '+7', demand: 'High', yield: '20', icon: '🥕' },
-    { name: 'Lentil', price: '45', change: '-2', demand: 'Medium', yield: '12', icon: '🫘' },
+    { name: 'Maize', price: '32',  demand: 'High', yield: '50', icon: '🌽' },
+    { name: 'Teff', price: '85', demand: 'Medium', yield: '40', icon: '🌾' },
+    { name: 'Cabbage', price: '12',  demand: 'Low', yield: '10', icon: '🥬' },
+    { name: 'Potato', price: '25',  demand: 'High', yield: '45', icon: '🥔' },
+    { name: 'Tomato', price: '18', demand: 'Low', yield: '5', icon: '🍅' },
+    { name: 'Onion', price: '22', demand: 'Medium', yield: '15', icon: '🧅' },
+    { name: 'Carrot', price: '28',  demand: 'High', yield: '20', icon: '🥕' },
+    { name: 'Lentil', price: '45',  demand: 'Medium', yield: '12', icon: '🫘' },
   ]);
 
   const getDemandColor = (demand: string) => {
@@ -45,7 +45,6 @@ function WatchList() {
         <div className="hidden sm:grid grid-cols-5 gap-2 mt-4 text-xs font-medium text-gray-500 px-1">
           <div className="col-span-1">Crop</div>
           <div className="col-span-1 text-right">Price (Birr)</div>
-          <div className="col-span-1 text-right">24h Change</div>
           <div className="col-span-1 text-right">Demand</div>
           <div className="col-span-1 text-right">Yield/ha</div>
         </div>
@@ -91,22 +90,7 @@ function WatchList() {
                     <span className="text-xs text-gray-500">Current Price</span>
                     <span className="font-semibold text-gray-800">{crop.price} Br</span>
                   </div>
-                  
-                  {/* Change */}
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-gray-500">24h Change</span>
-                    <span className={`flex items-center gap-1 font-semibold ${
-                      crop.change.startsWith('+') ? 'text-emerald-600' : 'text-rose-600'
-                    }`}>
-                      {crop.change.startsWith('+') ? (
-                        <TrendingUp size={14} />
-                      ) : (
-                        <TrendingDown size={14} />
-                      )}
-                      {crop.change}%
-                    </span>
-                  </div>
-                  
+                 
                   {/* Demand */}
                   <div className="flex justify-between items-center">
                     <span className="text-xs text-gray-500">Demand</span>
@@ -145,19 +129,6 @@ function WatchList() {
                 <span className="text-xs text-gray-400 ml-1">Br</span>
               </div>
 
-              {/* Change */}
-              <div className="col-span-1 text-right">
-                <span className={`inline-flex items-center justify-end gap-1 font-semibold
-                  ${crop.change.startsWith('+') ? 'text-emerald-600' : 'text-rose-600'}`}
-                >
-                  {crop.change.startsWith('+') ? (
-                    <TrendingUp size={14} />
-                  ) : (
-                    <TrendingDown size={14} />
-                  )}
-                  {crop.change}%
-                </span>
-              </div>
 
               {/* Demand Badge */}
               <div className="col-span-1 text-right">
