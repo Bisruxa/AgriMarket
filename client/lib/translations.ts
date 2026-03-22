@@ -212,7 +212,9 @@ logout:string;
 general:string;
 accountPages:string;
 support:string;
-
+cropRecommendations:string;
+purchases:string;
+myspace:string;
   };
   welcomeCard:{
     title:string;
@@ -576,7 +578,10 @@ const en: Translations = {
     logout: "Log out",
     general: "General",
     accountPages: "Account Pages",
-    support: "Support"
+    support: "Support",
+     cropRecommendations: "Crop Recommendations", 
+  purchases: "Purchases",
+  myspace:"My Space"
   },
   welcomeCard:{
     title:"Welcome to AgriMarket",
@@ -939,7 +944,10 @@ const am: Translations = {
     logout: "ውጣ",
     general: "አጠቃላይ",
     accountPages: "መለያ ገጾች",
-    support: "ድጋፍ"
+    support: "ድጋፍ",
+     cropRecommendations: "የሰብል ምክሮች", 
+  purchases: "ግዢዎች",
+  myspace:"ፖርትፎሊዮዬ"
   },
  welcomeCard: {
   title: "እንኳን ወደ አግሪማርኬት በደህና መጡ",
