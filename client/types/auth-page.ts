@@ -46,6 +46,7 @@ export interface RegistrationData {
   farmSize?: string;
   crops?:  string;  
   experience?: string;
+  phone:string;
 }
 export interface User {
   id: string;
