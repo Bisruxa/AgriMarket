@@ -14,7 +14,6 @@ const AddCrop = ({ productId, onSuccess }: AddCropProps) => {
   const [initialData, setInitialData] = useState<CropFormData | undefined>()
   const [isLoading, setIsLoading] = useState(false)
   const [isFetching, setIsFetching] = useState(false)
-
   useEffect(() => {
     const fetchProductData = async () => {
       if (productId) {
@@ -50,14 +49,12 @@ const AddCrop = ({ productId, onSuccess }: AddCropProps) => {
       let response
       
       if (productId) {
-        // Update existing product
         response = await api.put(`/api/api/products/${productId}`, {
           name: data.crop,
           amount: parseFloat(data.amount),
           pricePerQuantal: parseFloat(data.price)
         })
       } else {
-        // Create new product
         response = await api.post('/api/products', {
           name: data.crop,
           amount: parseFloat(data.amount),
@@ -71,7 +68,7 @@ const AddCrop = ({ productId, onSuccess }: AddCropProps) => {
       if (response.success) {
         alert(productId ? "Product updated successfully!" : "Product created successfully!")
         onSuccess?.()
-        setShow(false) // Close popup on success
+        setShow(false)
       } else {
         alert(response.message || "Operation failed")
       }
