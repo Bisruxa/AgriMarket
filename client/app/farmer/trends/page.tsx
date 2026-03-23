@@ -21,7 +21,7 @@ import { BarGraph } from "@/components/common/BarGraph"
 import { DataTable } from "@/components/common/Table"
 import { InfoCards } from "@/components/common/Info"
 import type { ChartConfig } from "@/components/ui/chart"
-
+import Header from "@/components/common/Header"
 export default function FarmsteadDashboard() {
   const priceData = [
     { label: 'Jan', value: 1890 },
@@ -85,7 +85,10 @@ export default function FarmsteadDashboard() {
   ]
 
   return (
+    <div>
+      <Header></Header>
     <div className="mx-auto w-full max-w-7xl rounded-[40px] border border-[#d4e6dc] bg-white p-8">
+      
       <div className="mb-5 inline-flex rounded-full border border-[#bfdfce] bg-[#f3faf6] p-1">
         <span className="inline-flex cursor-default items-center gap-2 rounded-full bg-[#1f543c] px-6 py-2 text-sm font-medium text-white">
           <Wheat className="h-4 w-4" />
@@ -152,6 +155,7 @@ export default function FarmsteadDashboard() {
           <Info className="h-3 w-3" /> sources: local mandi, FICCI, AgMarket
         </span>
       </div>
+    </div>
     </div>
   )
 }

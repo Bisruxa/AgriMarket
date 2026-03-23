@@ -3,6 +3,7 @@ import  { useState, useEffect } from 'react'
 import { LanguageButton } from '@/components/ui/languageButton'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from '../hooks/useTranlations'
+import LogOutSection from '../SideBar/LogOut'
 function Header() {
   const [isScrolled, setIsScrolled] = useState(false)
 const pathname = usePathname()
@@ -59,7 +60,9 @@ const getPageTranslationKey = (path: string): string => {
 
           {/* Right - Language */}
           <div className="flex items-center">
-            <LanguageButton />
+             <LanguageButton />
+            <LogOutSection/>
+           
           </div>
         </div>
       </div>

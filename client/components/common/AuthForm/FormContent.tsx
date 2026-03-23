@@ -10,8 +10,8 @@ interface FormContentProps {
   subtitle?: string;
   errors: string[];
   showRoleTabs?: boolean;
-  role?: 'FARMER' | 'BUYER';
-  onRoleChange?: (role: 'FARMER' | 'BUYER') => void;
+  role?: 'FARMER' | 'TRADER';
+  onRoleChange?: (role: 'FARMER' | 'TRADER') => void;
   t: Translations;
   language: string;
 }
@@ -30,7 +30,7 @@ export function FormContent({
 
   const roleButtons = [
     { role: 'FARMER' as const, icon: Leaf, label: language === 'en' ? 'FARMER' : 'ገበሬ' },
-    { role: 'BUYER' as const, icon: SproutIcon, label: language === 'en' ? 'BUYER' : 'ነጋዴ' },
+    { role: 'TRADER' as const, icon: SproutIcon, label: language === 'en' ? 'TRADER' : 'ነጋዴ' },
   ];
 
   return (
@@ -40,7 +40,7 @@ export function FormContent({
         <div className="mb-3 mt-20 md:mt-4">
           <Tabs
             value={role}
-            onValueChange={(value) => onRoleChange(value as 'FARMER' | 'BUYER')}
+            onValueChange={(value) => onRoleChange(value as 'FARMER' | 'TRADER')}
             className=""
           >
             <div className="flex gap-4 justify-center text-center">

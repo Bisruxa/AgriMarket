@@ -2,10 +2,12 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
+import { motion, useScroll, useTransform, useSpring, animations } from 'framer-motion';
 import { useRef } from 'react';
 import { useTranslations } from '@/components/hooks/useTranlations';
 import { useLanguage } from '@/app/context/LanguageContext';
+import { Brain, Map, Handshake } from 'lucide-react';
+import { describe } from 'node:test';
 
 const HowItWorks = () => {
   const t = useTranslations();
@@ -30,29 +32,33 @@ const HowItWorks = () => {
       image: "/potato.jpg"
     },
     {
-      title: t.howItWorks.steps.addFarm,
-      description: t.howItWorks.stepDescriptions.addFarm,
-      link: "/dashboard",
-      image: "/field.jpg"
+      
+ title: t.howItWorks.steps.addFarm,
+ description :t.howItWorks.stepDescriptions.addFarm,
+      // icon: <Map className="text-[#5B8C51]" size={48} />,
+      link: "/signup",
+      image: "/corn.jpg"
     },
     {
-      title: t.howItWorks.steps.getInsights,
-      description: t.howItWorks.stepDescriptions.getInsights,
-      link: "/insights",
+      title:t.howItWorks.steps.getInsights,
+      description:t.howItWorks.stepDescriptions.getInsights,
+      // icon: <Brain className="text-[#5B8C51]" size={48} />,
+      link: "/signup",
       image: "/onions.jpg"
     },
     {
-      title: t.howItWorks.steps.connectGrow,
-      description: t.howItWorks.stepDescriptions.connectGrow,
-      link: "/marketplace",
-      image: "/corn.jpg"
+      title:t.howItWorks.steps.connectGrow,
+      description:t.howItWorks.stepDescriptions.connectGrow,
+      icon: <Handshake className="text-[#5B8C51]" size={48} />,
+      link: "/signup",
+      image: "/Crop.jpg"
     },
   ];
 
   return (
     <section 
       ref={containerRef}
-      className={`relative py-20 px-6 md:px-12 bg-[#e4e5ba] ${language === 'am' ? 'amharic' : ''}`}
+      className={`relative py-20 px-6 md:px-12 bg-gray-200 ${language === 'am' ? 'amharic' : ''}`}
     >
       <div className="max-w-6xl mx-auto">
         <motion.div 
@@ -68,7 +74,7 @@ const HowItWorks = () => {
           </p>
 
           <h2 className="text-4xl md:text-5xl font-extrabold leading-tight text-gray-900">
-            How <span className="text-[#e33f3e]">AgriMarket</span> Works.
+            How <span className="text-[#4A7342]">AgriMarket</span> Works.
           </h2>
           <motion.p 
             className="mt-6 max-w-2xl text-gray-700 text-lg"
@@ -90,7 +96,7 @@ const HowItWorks = () => {
               y1="0"
               x2="50%"
               y2="100%"
-              stroke="#e33f3e"
+              stroke="#668B57"
               strokeWidth="3"
               strokeDasharray="8 8"
               style={{
@@ -132,13 +138,9 @@ const HowItWorks = () => {
               >  
                 {index < steps.length - 1 && (
                   <motion.div
-                    className="absolute left-1/2 bottom-0 w-4 h-4 bg-[#e33f3e] rounded-full transform -translate-x-1/2 translate-y-1/2 hidden md:block"
+                    className="absolute left-1/2 bottom-0 w-4 h-4 bg-[#668B57] rounded-full transform -translate-x-1/2 translate-y-1/2 hidden md:block"
                     style={{
-                      scale: useTransform(
-                        smoothProgress,
-                        [stepEnd - 0.1, stepEnd],
-                        [0, 1]
-                      )
+                      scale: animations.dotScale
                     }}
                   />
                 )}
@@ -146,21 +148,32 @@ const HowItWorks = () => {
                 <motion.div 
                   className={`${index % 2 !== 0 ? 'md:order-2' : ''}`}
                   style={{
-                    rotate: smoothRotate,
-                    scale: imageScale
+                    rotate: animations.rotate,
+                    scale: animations.scale
                   }}
                 >
                   <motion.div 
-                    className="relative w-full h-87.5 border-10 border-white overflow-hidden shadow-xl"
+                    className="relative w-full h-87.5 border-8 border-white overflow-hidden shadow-xl rounded-lg"
                     whileHover={{ scale: 1.02 }}
                     transition={{ type: "spring", stiffness: 300, damping: 20 }}
                   >
-                    <Image
-                      src={step.image}
-                      alt={step.title}
-                      fill
-                      className="object-cover"
-                    />
+                    {/* {step.icon ? (
+                      <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                        {step.icon}
+                      </div>
+                    ) : (
+                      <Image
+                        src={step.image}
+                        alt={step.title}
+                        fill
+                        className="object-cover"
+                      />
+                    )} */}
+                    <Image src={step.image}
+                    alt={step.title}
+                    fill
+                    className='
+                    object-cover'/>
                   </motion.div>
                 </motion.div>
 
@@ -173,11 +186,11 @@ const HowItWorks = () => {
                       viewport={{ once: true }}
                       transition={{ duration: 0.5, ease: "easeOut" }}
                     >
-                      <p className="text-sm font-bold text-[#e33f3e] mb-3 relative z-10">
+                      <p className="text-sm font-bold text-[#4A7342] mb-3 relative z-10">
                         {`0${index + 1}.`}
                       </p>
                       <motion.div
-                        className="absolute bottom-0 left-0 h-0.5 bg-[#e33f3e]"
+                        className="absolute bottom-0 left-0 h-0.5 bg-[#668B57]"
                         initial={{ width: "0%" }}
                         whileInView={{ width: "100%" }}
                         viewport={{ once: true }}
@@ -218,7 +231,7 @@ const HowItWorks = () => {
         >
           <Link href="/signup">
             <motion.button 
-              className="px-10 py-4 bg-[#e33f3e] font-semibold cursor-pointer relative overflow-hidden"
+              className="px-10 py-4 bg-[#668B57] text-white font-semibold cursor-pointer relative overflow-hidden rounded-lg"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               transition={{ type: "spring", stiffness: 400, damping: 25 }}

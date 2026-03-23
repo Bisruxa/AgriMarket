@@ -9,7 +9,7 @@ import { LanguageButton } from "../ui/languageButton";
 
 const LogoComponent = () => (
   <div className="absolute top-6 left-8 z-50">
-    <h1 className="text-[25px] font-extrabold text-[#e23f3e]">AgriMarket</h1>
+    <h1 className="text-[25px] font-extrabold text-[#4A7342]">AgriMarket</h1>
   </div>
 );
 
@@ -19,7 +19,7 @@ const Navbar = () => {
   const t = useTranslations();
   
   const navItems = [
-    {name:t.nav.about,link:"/about"},
+    
     {name:t.nav.signup,link:"/signup"},
     {name:t.nav.login,link:"/signin"}
   ]
