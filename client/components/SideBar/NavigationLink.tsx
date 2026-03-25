@@ -1,6 +1,5 @@
 'use client';
 import Link from "next/link";
-import { farmerLinks, adminLinks ,traderLinks} from "@/lib/sidebarLinkContent";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "../hooks/useTranlations";
 interface LinkItem {
@@ -20,7 +19,7 @@ const NavigationLink = ({ Links }: NavigationLinkProps) => {
     <div>
       <h1 className="text-xs text-black/30 my-3 font-semibold">{t.sidebar.general}</h1>
       <ul className="text-sm space-y-2">
-        {links.map((one, index) => {
+        {Links.map((one, index) => {
           const isActive = pathname === one.to;
           return (
             <li
