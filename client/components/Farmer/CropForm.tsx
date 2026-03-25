@@ -10,6 +10,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
+import { Loader2 } from "lucide-react"
 
 const cropOptions = [
   "Rice",
@@ -41,21 +42,48 @@ const cropOptions = [
 
 type CropOption = typeof cropOptions[number] | "OTHER"
 
-interface CropFormProps {
-  onSubmit?: (data: CropFormData) => void
-}
-
-interface CropFormData {
+export interface CropFormData {
   crop: string
   amount: string
   price: string
 }
 
-export function CropForm({ onSubmit }: CropFormProps) {
+interface CropFormProps {
+  initialData?: CropFormData
+  productId?: string
+  onSubmit?: (data: CropFormData) => void
+  onClose?: () => void
+  isLoading?: boolean
+}
+
+export function CropForm({ 
+  initialData, 
+  productId,
+  onSubmit, 
+  onClose,
+  isLoading = false 
+}: CropFormProps) {
   const [selectedCrop, setSelectedCrop] = React.useState<CropOption | undefined>()
   const [otherCrop, setOtherCrop] = React.useState("")
   const [amount, setAmount] = React.useState("")
   const [price, setPrice] = React.useState("")
+
+  // Initialize form with data if in edit mode
+  React.useEffect(() => {
+    if (initialData) {
+      // Check if the crop is in the predefined list or is "OTHER"
+      const cropValue = initialData.crop
+      if (cropOptions.includes(cropValue as any)) {
+        setSelectedCrop(cropValue as CropOption)
+      } else {
+        setSelectedCrop("OTHER")
+        setOtherCrop(cropValue)
+      }
+      
+      setAmount(initialData.amount)
+      setPrice(initialData.price)
+    }
+  }, [initialData])
 
   const handleCropChange = (value: CropOption) => {
     setSelectedCrop(value)
@@ -70,9 +98,26 @@ export function CropForm({ onSubmit }: CropFormProps) {
     let cropValue = ""
 
     if (selectedCrop === "OTHER") {
+      if (!otherCrop.trim()) {
+        alert("Please specify the crop name")
+        return
+      }
       cropValue = otherCrop
     } else if (selectedCrop) {
       cropValue = selectedCrop
+    } else {
+      alert("Please select a crop")
+      return
+    }
+
+    if (!amount || parseFloat(amount) <= 0) {
+      alert("Please enter a valid amount")
+      return
+    }
+
+    if (!price || parseFloat(price) <= 0) {
+      alert("Please enter a valid price")
+      return
     }
 
     const cropData: CropFormData = {
@@ -82,7 +127,6 @@ export function CropForm({ onSubmit }: CropFormProps) {
     }
 
     onSubmit?.(cropData)
-    alert("Submitted (demo)")
   }
 
   return (
@@ -93,22 +137,37 @@ export function CropForm({ onSubmit }: CropFormProps) {
       <div className="flex min-h-full flex-col">
         <div className="flex-1 flex items-center justify-center p-6 md:p-12">
           <div className="w-full max-w-120">
-            <h2 className="mb-1 text-4xl font-semibold tracking-tight text-[#2a5a2a]">
-              Crop Details
-            </h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-4xl font-semibold tracking-tight text-[#2a5a2a]">
+                {productId ? "Edit Crop" : "Crop Details"}
+              </h2>
+              {onClose && (
+                <button
+                  onClick={onClose}
+                  className="text-gray-500 hover:text-gray-700 text-2xl"
+                >
+                  ×
+                </button>
+              )}
+            </div>
             <p className="mb-8 text-sm text-gray-500">
-              Enter crop production information
+              {productId 
+                ? "Update crop production information" 
+                : "Enter crop production information"}
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-5">
-
                 <div className="space-y-2">
                   <Label className="text-xs font-semibold uppercase tracking-wide text-gray-600">
                     Crop Type
                   </Label>
 
-                  <Select value={selectedCrop} onValueChange={handleCropChange}>
+                  <Select 
+                    value={selectedCrop} 
+                    onValueChange={handleCropChange}
+                    disabled={isLoading}
+                  >
                     <SelectTrigger className="h-12 w-full border-gray-200 bg-white">
                       <SelectValue placeholder="— select crop —" />
                     </SelectTrigger>
@@ -129,7 +188,8 @@ export function CropForm({ onSubmit }: CropFormProps) {
                       placeholder="Type crop name"
                       value={otherCrop}
                       onChange={(e) => setOtherCrop(e.target.value)}
-                      className="h-12 w-full border-gray-200"
+                      className="h-12 w-full border-gray-200 mt-2"
+                      disabled={isLoading}
                     />
                   )}
                 </div>
@@ -148,6 +208,7 @@ export function CropForm({ onSubmit }: CropFormProps) {
                       value={amount}
                       onChange={(e) => setAmount(e.target.value)}
                       className="h-12 w-full border-gray-200"
+                      disabled={isLoading}
                     />
                   </div>
 
@@ -164,20 +225,27 @@ export function CropForm({ onSubmit }: CropFormProps) {
                       value={price}
                       onChange={(e) => setPrice(e.target.value)}
                       className="h-12 w-full border-gray-200"
+                      disabled={isLoading}
                     />
                   </div>
                 </div>
-
               </div>
 
               <Button
                 type="submit"
-                className="h-12 w-full rounded-full bg-[#2a5a2a] text-white hover:bg-[#1e431e]"
+                disabled={isLoading}
+                className="h-12 w-full rounded-full bg-[#2a5a2a] text-white hover:bg-[#1e431e] disabled:opacity-50"
               >
-                Submit
+                {isLoading ? (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {productId ? "Updating..." : "Submitting..."}
+                  </div>
+                ) : (
+                  productId ? "Update" : "Submit"
+                )}
               </Button>
             </form>
-
           </div>
         </div>
       </div>
