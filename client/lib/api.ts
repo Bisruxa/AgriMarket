@@ -85,6 +85,7 @@ class ApiClient {
 
 export const api = new ApiClient(API_URL);
 
+// Auth API functions
 export const authApi = {
   register: (data: {
     name: string;
@@ -107,6 +108,7 @@ export const authApi = {
   logout: () => api.post('/auth/logout', {}),
 };
 
+// Products API functions
 export const productsApi = {
   getAll: (params?: Record<string, string>) => {
     const query = params ? '?' + new URLSearchParams(params).toString() : '';

@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { Context } from "../context/Context";
 import { ReactNode } from "react";
+import FarmerSidebar from "./sidebar";
 import AddCrop from "@/components/Farmer/AddCrop";
 
 interface NodeProp {
