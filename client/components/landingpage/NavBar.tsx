@@ -4,11 +4,12 @@ import { Menu, X, Globe } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "@/app/context/LanguageContext";
 import { useTranslations } from "../hooks/useTranlations";
+import { LanguageButton } from "../ui/languageButton";
 
 
 const LogoComponent = () => (
   <div className="absolute top-6 left-8 z-50">
-    <h1 className="text-[25px] font-extrabold text-[#e23f3e]">AgriMarket</h1>
+    <h1 className="text-[25px] font-extrabold text-[#4A7342]">AgriMarket</h1>
   </div>
 );
 
@@ -18,7 +19,7 @@ const Navbar = () => {
   const t = useTranslations();
   
   const navItems = [
-    {name:t.nav.about,link:"/about"},
+    
     {name:t.nav.signup,link:"/signup"},
     {name:t.nav.login,link:"/signin"}
   ]
@@ -40,16 +41,10 @@ const Navbar = () => {
           </Link>
         ))}
         
-        <button
-          onClick={toggleLanguage}
-          className="flex items-center gap-2 px-3 py-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors duration-300 ml-4"
-          aria-label={language === 'en' ? 'Switch to Amharic' : 'Switch to English'}
-        >
-          <Globe size={18} />
-          <span className="text-sm text-[#e4e5ba] font-medium">
-            {language === 'en' ? 'አማ' : 'ENG'}
-          </span>
-        </button>
+        {/* Language Toggle Button */}
+        <div className="flex items-center">
+                    <LanguageButton  />
+                  </div>
       </div>
 
       <div className="md:hidden z-50 flex items-center gap-4">

@@ -9,15 +9,12 @@ export default function HeroSection() {
     { src: "/Farm_Truck.mp4", brightness: 0.7 },
     { src: "/Farm_Land.mp4", brightness: 0.7 }
   ];
-
   const handlePrevious = () => {
     setCurrentVideoIndex((prev) => (prev === 0 ? videos.length - 1 : prev - 1));
   };
-
   const handleNext = () => {
     setCurrentVideoIndex((prev) => (prev === videos.length - 1 ? 0 : prev + 1));
   };
-
   return (
     <div className='relative min-h-screen flex flex-col md:flex-row items-center justify-between px-4 md:px-8 lg:px-20 py-20 pt-32 overflow-hidden'>
       
@@ -61,7 +58,6 @@ export default function HeroSection() {
           />
         </svg>
       </button>
-
       <button 
         onClick={handleNext}
         className="absolute right-4 md:right-8 bottom-8 z-20 group flex items-center gap-3 text-[#e4e5ba]"
@@ -84,7 +80,6 @@ export default function HeroSection() {
           />
         </svg>
       </button>
-
       <div className="absolute left-1/2 transform -translate-x-1/2 bottom-8 z-20 flex gap-4">
         {videos.map((_, index) => (
           <button
@@ -99,23 +94,21 @@ export default function HeroSection() {
           />
         ))}
       </div>
-
       <div className="relative z-10 flex flex-col items-center md:items-start w-full md:w-1/2 text-center md:text-left space-y-6 md:space-y-8">
         <div className="text-4xl sm:text-4xl md:text-[40px] font-extrabold leading-tight">
           <h1 className="text-[#e4e5ba]">
            {t.hero.title} <br />
-            <span className="text-[#e33f3e]">
+            <span className="text-[#4A7342]">
              {t.hero.titleHighlight}
             </span> {t.hero.subtitle}
           </h1>
-        </div>
-        
+        </div>   
         <p className="text-[#e4e5ba] text-sm sm:text-sm md:text-[20px] leading-relaxed max-w-2xl ">
         {t.hero.description}
         </p>
         <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-6 mb-6">
           <Link href="/signup">
-            <button className="px-8 py-3 text-[14px] bg-[#e33f3e] cursor-pointer  text-[#e4e5ba] font-semibold text-lg transform flex items-center gap-2">
+            <button className="px-8 py-3 text-[14px] bg-[#668B57] cursor-pointer  text-[#e4e5ba] font-semibold text-lg transform flex items-center gap-2">
               {t.hero.buttons.getStarted} 
             </button>
           </Link>
