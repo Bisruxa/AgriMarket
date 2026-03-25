@@ -1,27 +1,54 @@
-import React from "react";
+'use client';
 import Link from "next/link";
+import { farmerLinks, adminLinks ,traderLinks} from "@/lib/sidebarLinkContent";
 import { usePathname } from "next/navigation";
-const NavigationLink = ({Links}) => {
-  const pathname  = usePathname();
+
+interface LinkItem {
+  name: string;
+  icon: React.ReactNode;
+  to: string;
+}
+
+interface NavigationLinkProps {
+  Links: LinkItem[];
+}
+
+const NavigationLink = ({ Links }: NavigationLinkProps) => {
+  const pathname = usePathname();
+  
+  const getLinks = () => {
+    if (pathname?.startsWith('/admin')) {
+      return adminLinks;
+    } else if (pathname?.startsWith('/farmer')) {
+      return farmerLinks;
+    }
+    else{
+      return traderLinks;
+    }
+  };
+  
+  const links = getLinks();
+
   return (
     <div>
       <h1 className="text-xs text-black/30 my-3 font-semibold">General</h1>
       <ul className="text-sm space-y-2">
-        {Links.map((one, index) => (
-          <li
-            className="flex text-[14px] border border-[#2A5A2A]/60 items-center px-2 rounded-lg transition-colors duration-200 ease-in-out"
-            style={{
-              color: pathname === one.to ? "white" : "rgba(0, 0, 0, 0.7)",
-              backgroundColor: pathname === one.to ? "#2A5A2A" : "",
-            }}
-            key={index}
-          >
-            {one.icon}
-            <Link className="w-full py-2.5" href={one.to}>
-              {one.name}
-            </Link>
-          </li>
-        ))}
+        {links.map((one, index) => {
+          const isActive = pathname === one.to;
+          return (
+            <li
+              className={`flex text-[14px] border border-[#2A5A2A]/60 items-center px-2 rounded-lg transition-colors duration-200 ease-in-out ${
+                isActive ? 'bg-[#2A5A2A] text-white' : 'text-black/70 hover:bg-gray-50'
+              }`}
+              key={index}
+            >
+              <span className="mr-2">{one.icon}</span>
+              <Link className="w-full py-2.5" href={one.to}>
+                {one.name}
+              </Link>
+            </li>
+          );
+        })}
       </ul>
     </div>
   );
