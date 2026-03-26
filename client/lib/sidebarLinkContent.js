@@ -1,4 +1,4 @@
-import { ChartNoAxesCombined, House,ReceiptText, Store,Clock } from 'lucide-react';
+import { ChartNoAxesCombined, House,ReceiptText, Store,Clock,ShoppingCart } from 'lucide-react';
 import React from 'react';
 import { useTranslations } from '@/components/hooks/useTranlations';
 
@@ -24,7 +24,7 @@ export const farmerLinks = [
     to:"/farmer/market"
   }
 ];
-export const Admin_Links = [
+export const adminLinks = [
   {
     name: "Farmer & Traders",
     icon: <House className='mr-2' size={20} />,
@@ -38,21 +38,21 @@ export const Admin_Links = [
  
  
 ];
-export const Trader_Links = [
+
+export const traderLinks = [
   {
     name: "Dashboard",
     icon: <House className='mr-2' size={20} />,
-    to: "/trader/dashboard"
+    to:"/trader/dashboard"
+  },
+  {
+    name: "Purchase Details",
+    icon: <ShoppingCart  className='mr-2' size={20} />,
+    to:"/trader/purchases"
   },
   {
     name: "Trends and Forcast",
     icon: <ChartNoAxesCombined className='mr-2' size={20} />,
-    to: "/trader/trends"
+    to:"/trader/trends"
   },
-  {
-    name: "Purchases",
-    icon: <Clock className='mr-2' size={20} />,
-    to: "/trader/purchases"
-  },
- 
 ];

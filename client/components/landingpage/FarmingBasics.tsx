@@ -1,6 +1,6 @@
 'use client'
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion,Variants } from "framer-motion";
 import { useTranslations } from '../hooks/useTranlations';
 
 const FarmingBasics = () => {
@@ -36,7 +36,7 @@ const FarmingBasics = () => {
     },
   };
 
-  const itemVariants = {
+  const itemVariants:Variants = {
     hidden: { 
       opacity: 0, 
       x: -50 
@@ -52,7 +52,7 @@ const FarmingBasics = () => {
     },
   } as const;
 
-  const textVariants = {
+  const textVariants : Variants = {
     hidden: { 
       opacity: 0, 
       y: 20 
@@ -67,7 +67,7 @@ const FarmingBasics = () => {
     },
   } as const;
 
-  const imageVariants = {
+  const imageVariants : Variants= {
     hidden: { 
       opacity: 0, 
       x: 100,
@@ -86,7 +86,7 @@ const FarmingBasics = () => {
     },
   } as const ;
 
-  const buttonVariants = {
+  const buttonVariants:Variants = {
     hidden: { 
       opacity: 0, 
       scale: 0.8,
