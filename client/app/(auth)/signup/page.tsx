@@ -183,7 +183,7 @@ export default function SignUpPage() {
     );
   };
 
-  const handleRoleChange = (newRole: 'FARMER' | 'BUYER') => {
+  const handleRoleChange = (newRole: 'FARMER' | 'TRADER') => {
     setRole(newRole);
   };
 

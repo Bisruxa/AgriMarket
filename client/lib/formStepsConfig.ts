@@ -28,7 +28,7 @@ export const formStepsConfig = {
       ]
     }
   ],
-  BUYER: [
+  TRADER: [
     {
       title: 'Welcome',
       subtitle: 'SignUp',
