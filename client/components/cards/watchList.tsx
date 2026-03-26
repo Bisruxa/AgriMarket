@@ -1,6 +1,6 @@
 'use client'
 import { useState } from "react";
-import { TrendingUp, TrendingDown, Sprout } from 'lucide-react';
+import { TrendingUp, TrendingDown, Sprout, ChevronRight, ChevronLeft } from 'lucide-react';
 
 function WatchList() {
   const [crops] = useState([
@@ -9,98 +9,116 @@ function WatchList() {
     { name: 'Cabbage', price: '12', change: '-4', demand: 'Low', yield: '10', icon: '🥬' },
     { name: 'Potato', price: '25', change: '+9', demand: 'High', yield: '45', icon: '🥔' },
     { name: 'Tomato', price: '18', change: '-3', demand: 'Low', yield: '5', icon: '🍅' },
-    { name: 'Tomato', price: '18', change: '-3', demand: 'Low', yield: '5', icon: '🍅' },
-    { name: 'Tomato', price: '18', change: '-3', demand: 'Low', yield: '5', icon: '🍅' },
-    { name: 'Tomato', price: '18', change: '-3', demand: 'Low', yield: '5', icon: '🍅' },
+    { name: 'Onion', price: '22', change: '+5', demand: 'Medium', yield: '15', icon: '🧅' },
+    { name: 'Carrot', price: '28', change: '+7', demand: 'High', yield: '20', icon: '🥕' },
+    { name: 'Lentil', price: '45', change: '-2', demand: 'Medium', yield: '12', icon: '🫘' },
   ]);
 
   const getDemandColor = (demand: string) => {
     switch(demand) {
-      case 'High': return 'text-green-600 bg-green-100';
-      case 'Medium': return 'text-yellow-600 bg-yellow-100';
-      case 'Low': return 'text-red-600 bg-red-100';
-      default: return 'text-gray-600 bg-gray-100';
+      case 'High': return 'text-emerald-700 bg-emerald-50 border border-emerald-200';
+      case 'Medium': return 'text-amber-700 bg-amber-50 border border-amber-200';
+      case 'Low': return 'text-rose-700 bg-rose-50 border border-rose-200';
+      default: return 'text-gray-700 bg-gray-50 border border-gray-200';
     }
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-[#5B8C51]/30 flex flex-col hover:shadow-sm transition-all overflow-hidden  max-w-full w-full">
-      {/* Header - Fixed on mobile */}
-      <div className="p-3 sm:p-4 border-b border-gray-100 bg-white sticky top-0 z-10">
-        <div className="flex items-center gap-2">
-          <Sprout size={18} className="text-[#5B8C51] shrink-0" />
-          <h3 className="font-semibold text-gray-800 text-sm sm:text-base truncate">
-            Top Profitable Crops
-          </h3>
+    <div className="bg-white rounded-xl shadow-md border border-[#5B8C51]/20 flex flex-col hover:shadow-lg transition-all overflow-hidden max-w-full w-full">
+      {/* Header */}
+      <div className="p-4 sm:p-5 border-b border-gray-100 bg-gradient-to-r from-white to-[#F5F9F5]">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 bg-[#5B8C51]/10 rounded-lg">
+              <Sprout size={20} className="text-[#5B8C51]" />
+            </div>
+            <h3 className="font-semibold text-gray-800 text-base sm:text-lg">
+              Top Profitable Crops
+            </h3>
+          </div>
+          <span className="text-xs text-[#5B8C51] bg-[#5B8C51]/10 px-2 py-1 rounded-full">
+            This Season
+          </span>
         </div>
         
-        {/* Column Headers - Hidden on mobile, shown on tablet+ */}
-        <div className="hidden sm:grid grid-cols-5 gap-1 mt-2 text-xs text-gray-500 font-medium">
+        {/* Column Headers */}
+        <div className="hidden sm:grid grid-cols-5 gap-2 mt-4 text-xs font-medium text-gray-500 px-1">
           <div className="col-span-1">Crop</div>
-          <div className="col-span-1 text-right">Price</div>
-          <div className="col-span-1 text-right">Change</div>
+          <div className="col-span-1 text-right">Price (Birr)</div>
+          <div className="col-span-1 text-right">24h Change</div>
           <div className="col-span-1 text-right">Demand</div>
-          <div className="col-span-1 text-right">Yield</div>
+          <div className="col-span-1 text-right">Yield/ha</div>
         </div>
 
-        {/* Mobile scroll hint */}
-        <div className="sm:hidden flex justify-end mt-1">
-          <span className="text-[10px] text-gray-400 animate-pulse">
-            ← Scroll horizontally →
-          </span>
+        {/* Mobile scroll hint with gradient fade */}
+        <div className="sm:hidden relative mt-2">
+          <div className="flex justify-between items-center text-[10px] text-gray-400">
+            <span className="flex items-center gap-1">
+              <ChevronLeft size={12} /> Scroll
+            </span>
+            <span className="flex items-center gap-1">
+              Scroll <ChevronRight size={12} />
+            </span>
+          </div>
+          <div className="absolute left-0 top-0 h-full w-8 bg-gradient-to-r from-white to-transparent pointer-events-none"></div>
+          <div className="absolute right-0 top-0 h-full w-8 bg-gradient-to-l from-white to-transparent pointer-events-none"></div>
         </div>
       </div>
 
       {/* Scrollable Container */}
       <div className="relative">
-        {/* Mobile Horizontal Scroll */}
-        <div className="block sm:hidden overflow-x-auto scrollbar-hide p-2">
-          <div className="inline-flex gap-2 min-w-full">
+        {/* Mobile Horizontal Scroll - Enhanced Cards */}
+        <div className="block sm:hidden overflow-x-auto scrollbar-hide p-3 pt-1">
+          <div className="inline-flex gap-3 min-w-full pb-1">
             {crops.map((crop, index) => (
               <div 
                 key={index}
-                className="shrink-0 w-64 bg-white border border-gray-200 rounded-lg p-3 shadow-sm"
+                className="shrink-0 w-64 bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-all hover:border-[#5B8C51]/30"
               >
-                {/* Mobile Card Layout */}
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-xl">{crop.icon}</span>
-                  <span className="font-bold text-gray-800">{crop.name}</span>
+                {/* Header with Icon and Name */}
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-2xl">{crop.icon}</span>
+                  <div>
+                    <span className="font-bold text-gray-800">{crop.name}</span>
+                    <span className="text-xs text-gray-400 block mt-0.5">ID: CR-{index + 101}</span>
+                  </div>
                 </div>
                 
-                <div className="space-y-2">
-                  {/* Price Row */}
+                {/* Metrics Grid */}
+                <div className="space-y-2.5">
+                  {/* Price */}
                   <div className="flex justify-between items-center">
-                    <span className="text-xs text-gray-500">Price</span>
-                    <span className="font-medium text-gray-800">{crop.price} Br</span>
+                    <span className="text-xs text-gray-500">Current Price</span>
+                    <span className="font-semibold text-gray-800">{crop.price} Br</span>
                   </div>
                   
-                  {/* Change Row */}
+                  {/* Change */}
                   <div className="flex justify-between items-center">
-                    <span className="text-xs text-gray-500">Change</span>
-                    <span className={`flex items-center gap-1 font-medium ${
-                      crop.change.startsWith('+') ? 'text-green-600' : 'text-red-600'
+                    <span className="text-xs text-gray-500">24h Change</span>
+                    <span className={`flex items-center gap-1 font-semibold ${
+                      crop.change.startsWith('+') ? 'text-emerald-600' : 'text-rose-600'
                     }`}>
                       {crop.change.startsWith('+') ? (
-                        <TrendingUp size={12} />
+                        <TrendingUp size={14} />
                       ) : (
-                        <TrendingDown size={12} />
+                        <TrendingDown size={14} />
                       )}
                       {crop.change}%
                     </span>
                   </div>
                   
-                  {/* Demand Row */}
+                  {/* Demand */}
                   <div className="flex justify-between items-center">
                     <span className="text-xs text-gray-500">Demand</span>
-                    <span className={`text-xs px-2 py-1 rounded-full ${getDemandColor(crop.demand)}`}>
+                    <span className={`text-xs px-2 py-1 rounded-full font-medium ${getDemandColor(crop.demand)}`}>
                       {crop.demand}
                     </span>
                   </div>
                   
-                  {/* Yield Row */}
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-gray-500">Yield</span>
-                    <span className="font-medium text-gray-800">{crop.yield} kg/ha</span>
+                  {/* Yield */}
+                  <div className="flex justify-between items-center pt-1 border-t border-gray-100">
+                    <span className="text-xs text-gray-500">Yield/ha</span>
+                    <span className="font-bold text-[#5B8C51]">{crop.yield} kg</span>
                   </div>
                 </div>
               </div>
@@ -109,59 +127,62 @@ function WatchList() {
         </div>
 
         {/* Desktop Vertical Scroll */}
-        <div className="hidden sm:block flex-1 overflow-y-auto scrollbar-hide p-2 sm:p-3 space-y-1.5 max-h-96">
+        <div className="hidden sm:block flex-1 overflow-y-auto scrollbar-hide p-3 space-y-1 max-h-[400px]">
           {crops.map((crop, index) => (
             <div 
               key={index}
-              className="grid grid-cols-5 gap-1 items-center py-1.5 px-1 rounded-lg hover:bg-gray-50 transition-colors text-xs sm:text-sm"
+              className="grid grid-cols-5 gap-2 items-center py-2.5 px-3 rounded-lg hover:bg-[#F5F9F5] transition-colors group border border-transparent hover:border-[#5B8C51]/20"
             >
               {/* Crop Name with Icon */}
-              <div className="col-span-1 flex items-center gap-1">
-                <span className="text-sm sm:text-base">{crop.icon}</span>
-                <span className="font-medium text-gray-800 truncate">{crop.name}</span>
+              <div className="col-span-1 flex items-center gap-2">
+                <span className="text-xl group-hover:scale-110 transition-transform">{crop.icon}</span>
+                <span className="font-medium text-gray-800">{crop.name}</span>
               </div>
 
               {/* Price */}
-              <div className="col-span-1 text-right font-medium text-gray-700">
-                {crop.price}
-                <span className="text-[10px] text-gray-500 ml-0.5">Br</span>
+              <div className="col-span-1 text-right">
+                <span className="font-semibold text-gray-800">{crop.price}</span>
+                <span className="text-xs text-gray-400 ml-1">Br</span>
               </div>
 
-              {/* Change Percentage with Icon */}
-              <div className={`col-span-1 text-right font-medium flex items-center justify-end gap-0.5
-                ${crop.change.startsWith('+') ? 'text-green-600' : 'text-red-600'}`}
-              >
-                {crop.change.startsWith('+') ? (
-                  <TrendingUp size={12} />
-                ) : (
-                  <TrendingDown size={12} />
-                )}
-                {crop.change}%
+              {/* Change */}
+              <div className="col-span-1 text-right">
+                <span className={`inline-flex items-center justify-end gap-1 font-semibold
+                  ${crop.change.startsWith('+') ? 'text-emerald-600' : 'text-rose-600'}`}
+                >
+                  {crop.change.startsWith('+') ? (
+                    <TrendingUp size={14} />
+                  ) : (
+                    <TrendingDown size={14} />
+                  )}
+                  {crop.change}%
+                </span>
               </div>
 
               {/* Demand Badge */}
               <div className="col-span-1 text-right">
-                <span className={`text-[10px] sm:text-xs px-1.5 py-0.5 rounded-full ${getDemandColor(crop.demand)}`}>
+                <span className={`text-xs px-2 py-1 rounded-full font-medium ${getDemandColor(crop.demand)}`}>
                   {crop.demand}
                 </span>
               </div>
 
               {/* Yield */}
-              <div className="col-span-1 text-right font-medium text-gray-700">
-                {crop.yield}
-                <span className="text-[10px] text-gray-500 ml-0.5">kg/ha</span>
+              <div className="col-span-1 text-right">
+                <span className="font-semibold text-[#5B8C51]">{crop.yield}</span>
+                <span className="text-xs text-gray-400 ml-1">kg</span>
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Mobile scroll indicators */}
-      <div className="sm:hidden flex justify-center gap-1 p-2">
-        <div className="w-1 h-1 bg-[#5B8C51] rounded-full"></div>
-        <div className="w-1 h-1 bg-gray-300 rounded-full"></div>
-        <div className="w-1 h-1 bg-gray-300 rounded-full"></div>
-        <div className="w-1 h-1 bg-gray-300 rounded-full"></div>
+      {/* Footer with summary */}
+      <div className="p-3 border-t border-gray-100 bg-gray-50/50 flex justify-between items-center text-xs text-gray-500">
+        <span>{crops.length} crops monitored</span>
+        <span className="flex items-center gap-1 text-[#5B8C51]">
+          <Sprout size={12} />
+          Updated live
+        </span>
       </div>
     </div>
   );
