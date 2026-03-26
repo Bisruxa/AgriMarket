@@ -2,6 +2,8 @@
 __pycache__/
 *.py[cod]
 *$py.class
+
+# Virtual Environment files and environment variables
 venv/
 .env
 
@@ -20,6 +22,11 @@ models/*.pth
 models/*.pkl
 models/*.bin
 models/*.json
+
+models/*/*.json
+models/*/*.csv
+
+models/.gitkeep  # Keep the folder structure, ignore contents
 
 # IDEs
 .vscode/
