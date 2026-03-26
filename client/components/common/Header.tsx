@@ -4,6 +4,8 @@ import { LanguageButton } from '@/components/ui/languageButton'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from '../hooks/useTranlations'
 import LogOutSection from '../SideBar/LogOut'
+import { Button } from '../ui/button'
+import { Bell } from 'lucide-react'
 function Header() {
   const [isScrolled, setIsScrolled] = useState(false)
 const pathname = usePathname()
@@ -61,7 +63,10 @@ const getPageTranslationKey = (path: string): string => {
           {/* Right - Language */}
           <div className="flex items-center">
              <LanguageButton />
-            <LogOutSection/>
+              <Button className='bg-white text-black hover:bg-[#2A5A2A] hover:text-white  '>
+            <Bell size={20} />
+          </Button>
+            {/* <LogOutSection/> */}
            
           </div>
         </div>

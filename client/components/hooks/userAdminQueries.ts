@@ -185,10 +185,11 @@ export const usePendingTraders = () => {
           
           console.log('Possible array properties:', possibleArrays);
           
-          if (possibleArrays.length > 0) {
-            // Use the first array property found
-            tradersData = response.data[possibleArrays[0]] as TraderFromAPI[];
-          }
+        if (possibleArrays.length > 0) {
+  // Use type assertion to tell TypeScript this is a valid key
+  const arrayKey = possibleArrays[0] as keyof PendingTradersResponse;
+  tradersData = response.data[arrayKey] as TraderFromAPI[];
+}
         }
         
         console.log('Extracted traders data:', tradersData);

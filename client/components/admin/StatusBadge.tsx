@@ -1,7 +1,15 @@
-
 import { Clock, CheckCircle, XCircle } from 'lucide-react';
 
-export const getStatusBadge = (status: string, t?: any) => {
+// Define the translation type
+interface TranslationType {
+  status?: {
+    approved?: string;
+    rejected?: string;
+    pending?: string;
+  };
+}
+
+export const getStatusBadge = (status: string, t?: TranslationType) => {
   switch(status) {
     case 'approved':
       return (
@@ -30,7 +38,7 @@ export const getStatusBadge = (status: string, t?: any) => {
 // Also export as a component if you prefer
 interface StatusBadgeProps {
   status: string;
-  t?: any;
+  t?: TranslationType;
 }
 
 export const StatusBadge = ({ status, t }: StatusBadgeProps) => {
