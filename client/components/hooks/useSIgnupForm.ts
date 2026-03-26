@@ -28,6 +28,7 @@ export const useSignupForm = () => {
   const [formData, setFormData] = useState<FormData>({
     fullName: '',
     email: '',
+    phone:'',
     password: '',
     confirmPassword: '',
     region: '',
@@ -121,6 +122,7 @@ export const useSignupForm = () => {
         name: formData.fullName,
         email: formData.email,
         password: formData.password,
+        phone:formData.phone,
         role: role,
       };
 

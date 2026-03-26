@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { farmerLinks, adminLinks ,traderLinks} from "@/lib/sidebarLinkContent";
 import { usePathname } from "next/navigation";
-
+import { useTranslations } from "../hooks/useTranlations";
 interface LinkItem {
   name: string;
   icon: React.ReactNode;
@@ -15,23 +15,10 @@ interface NavigationLinkProps {
 
 const NavigationLink = ({ Links }: NavigationLinkProps) => {
   const pathname = usePathname();
-  
-  const getLinks = () => {
-    if (pathname?.startsWith('/admin')) {
-      return adminLinks;
-    } else if (pathname?.startsWith('/farmer')) {
-      return farmerLinks;
-    }
-    else{
-      return traderLinks;
-    }
-  };
-  
-  const links = getLinks();
-
+ const t = useTranslations();
   return (
     <div>
-      <h1 className="text-xs text-black/30 my-3 font-semibold">General</h1>
+      <h1 className="text-xs text-black/30 my-3 font-semibold">{t.sidebar.general}</h1>
       <ul className="text-sm space-y-2">
         {links.map((one, index) => {
           const isActive = pathname === one.to;

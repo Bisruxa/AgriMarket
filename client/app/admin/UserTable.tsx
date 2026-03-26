@@ -2,14 +2,18 @@
 import React from 'react';
 import { Eye, User as UserIcon, Mail, Phone } from 'lucide-react';
 import { User } from '@/types/auth-page';
-
+import { useTranslations } from '@/components/hooks/useTranlations';
 interface UserTableProps {
   users: User[];
   onEdit: (user: User) => void;
   getRoleBadge: (role: string) => React.JSX.Element;
 }
 
-export const UserTable = ({ users, onEdit, getRoleBadge }: UserTableProps) => (
+
+export const UserTable = ({ users, onEdit, getRoleBadge }: UserTableProps) =>{ 
+    const t = useTranslations();
+  return (
+
   <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
     <div className="overflow-x-auto">
       <table className="w-full">
@@ -18,28 +22,33 @@ export const UserTable = ({ users, onEdit, getRoleBadge }: UserTableProps) => (
             <th className="px-6 py-4 text-left">
               <div className="flex items-center gap-2 text-xs font-semibold text-gray-600 uppercase tracking-wider">
                 <UserIcon className="w-3.5 h-3.5" />
+                 {/* {t.admin.users.table.name} */}
                 Name
               </div>
             </th>
             <th className="px-6 py-4 text-left">
               <div className="flex items-center gap-2 text-xs font-semibold text-gray-600 uppercase tracking-wider">
                 <Mail className="w-3.5 h-3.5" />
+                {/* {t.admin.users.table.email} */}
                 Email
               </div>
             </th>
             <th className="px-6 py-4 text-left">
               <div className="flex items-center gap-2 text-xs font-semibold text-gray-600 uppercase tracking-wider">
                 <Phone className="w-3.5 h-3.5" />
+                 {/* {t.admin.users.table.phone}  */}
                 Phone
               </div>
             </th>
             <th className="px-6 py-4 text-left">
               <div className="flex items-center gap-2 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                 {/* {t.admin.users.table.role} */}
                 Role
               </div>
             </th>
             <th className="px-6 py-4 text-left">
               <div className="flex items-center gap-2 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+               {/* {t.admin.users.table.actions} */}
                 Actions
               </div>
             </th>
@@ -99,4 +108,4 @@ export const UserTable = ({ users, onEdit, getRoleBadge }: UserTableProps) => (
       </div>
     )}
   </div>
-);
+)};
