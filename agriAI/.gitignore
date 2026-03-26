@@ -1,0 +1,15 @@
+venv/
+
+.env
+
+data/
+
+__pycache__/
+*.pyc
+
+.DS_Store
+.idea/
+.vscode/
+
+# models
+models/price_forecaster/
