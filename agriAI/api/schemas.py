@@ -1,23 +1,45 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import Optional
+from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
 
 class PriceForecastRequest(BaseModel):
-    crop_name: str = Field(..., description="Crop name, e.g. Teff")
-    region: str = Field(..., description="Region name, e.g. Oromia")
-    as_of_date: Optional[date] = Field(
-        None,
-        description="Optional date (YYYY-MM-DD) to use as the last observed week.",
-    )
+    crop: str = Field(..., description="The crop to forecast prices for.")
+    start_date: date = Field(..., description="The start date of the forecast.")
+    end_date: date = Field(..., description="The end date of the forecast.")
 
 
 class PriceForecastResponse(BaseModel):
-    crop_name: str
-    region: str
+    prediction: float
+
+
+class MetadataResponse(BaseModel):
+    model_type: str
+    model_version: str
+    crops: List[str]
+
+
+class CropRecommendationRequest(BaseModel):
+    nitrogen: int
+    phosphorus: int
+    potassium: int
+    temperature: float
+    humidity: float
+    ph: float
+    rainfall: float
+
+
+class CropRecommendation(BaseModel):
+    crop: str
+    confidence: str
+
+
+class CropRecommendationResponse(BaseModel):
+    recommendations: List[CropRecommendation]
+
     as_of_date: date
     forecast_date: date
     forecast_horizon_weeks: int

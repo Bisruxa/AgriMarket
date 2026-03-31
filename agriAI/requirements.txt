@@ -1,12 +1,15 @@
 # ----------------------------
 # Core Python ML Stack
 # ----------------------------
-numpy
-pandas
-scikit-learn
+numpy==2.0.0
+pandas==2.2.2
+scikit-learn==1.5.1
 matplotlib
 seaborn
-
+xgboost==2.1.0
+python-dotenv==1.0.1
+fastapi==0.111.1
+uvicorn[standard]==0.30.1
 # ----------------------------
 # Deep Learning (PyTorch)
 # ----------------------------

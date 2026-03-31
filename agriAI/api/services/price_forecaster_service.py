@@ -4,7 +4,7 @@ import json
 import os
 from datetime import date
 from pathlib import Path
-from typing import Optional
+from typing import Any, Dict, Optional
 
 import pandas as pd
 import xgboost as xgb
@@ -16,18 +16,68 @@ from models.price_forecaster import (
     load_price_data,
 )
 
+from .base_service import InferenceService
 
-class PriceForecasterService:
-    def __init__(self, model_path: Path, metadata_path: Path, data_path: Path) -> None:
-        self.model_path = model_path
-        self.metadata_path = metadata_path
-        self.data_path = data_path
 
+class PriceForecasterService(InferenceService):
+    """
+    A service for forecasting crop prices.
+    It uses an XGBoost model to make predictions.
+    """
+
+    def __init__(self, model_path: str, metadata_path: str, data_path: str) -> None:
+        self.metadata_path = Path(metadata_path)
+        self.data_path = Path(data_path)
         self._load_metadata()
-        self._load_model()
         self._load_data()
+        super().__init__(model_path)
 
-    @classmethod
+    def _load_model(self) -> xgb.Booster:
+        """Loads the XGBoost model from the specified path."""
+        model = xgb.Booster()
+        model.load_model(self.model_path)
+        return model
+
+    def _load_metadata(self) -> None:
+        """Loads the model metadata from the specified path."""
+        with open(self.metadata_path) as f:
+            self.metadata = json.load(f)
+
+    def _load_data(self) -> None:
+        """Loads the price data from the specified path."""
+        self.price_data = load_price_data(self.data_path)
+
+    def predict(self, data: Dict[str, Any]) -> pd.DataFrame:
+        """Makes a price prediction based on the input data."""
+        crop = data["crop"]
+        start_date = pd.to_datetime(data["start_date"])
+        end_date = pd.to_datetime(data["end_date"])
+
+        if crop not in self.metadata["crops"]:
+            raise ValueError(f"Crop '{crop}' not supported.")
+
+        features = build_feature_frame(
+            self.price_data,
+            target_crop=crop,
+            start_date=start_date,
+            end_date=end_date,
+            lag_weeks=LAG_WEEKS,
+            rolling_windows=ROLLING_WINDOWS,
+        )
+
+        if features.empty:
+            return pd.DataFrame()
+
+        feature_names = self.model.feature_names
+        predictions = self.model.predict(xgb.DMatrix(features[feature_names]))
+
+        result_df = features.copy()
+        result_df["prediction"] = predictions
+        return result_df[["prediction"]]
+
+    def get_metadata(self) -> Dict[str, Any]:
+        """Returns the model metadata."""
+        return self.metadata
     def from_env(cls) -> "PriceForecasterService":
         root = Path(__file__).resolve().parents[2]
         model_dir = Path(
