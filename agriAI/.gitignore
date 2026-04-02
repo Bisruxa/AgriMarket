@@ -25,6 +25,7 @@ models/*.json
 
 models/*/*.json
 models/*/*.csv
+models/*/*.joblib
 
 models/.gitkeep  # Keep the folder structure, ignore contents
 
