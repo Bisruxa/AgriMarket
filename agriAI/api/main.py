@@ -44,7 +44,7 @@ def load_all_services() -> None:
     app.state.recommender_service = service_factory.get_service(
         "crop_recommender",
         model_path=os.getenv("RECOMMENDER_MODEL_PATH", "models/crop_recommender/xgboost_crop_recommender.json"),
-        data_path=os.getenv("RECOMMENDER_DATA_PATH", "data/synthetic/crop_recommendation_data.csv"),
+        encoder_path=os.getenv("RECOMMENDER_ENCODER_PATH", "models/crop_recommender/label_encoder.joblib"),
     )
     print("All AI services loaded.")
 
