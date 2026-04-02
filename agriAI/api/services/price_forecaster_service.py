@@ -26,11 +26,12 @@ class PriceForecasterService(InferenceService):
     """
 
     def __init__(self, model_path: str, metadata_path: str, data_path: str) -> None:
+        self.model_path = Path(model_path)
         self.metadata_path = Path(metadata_path)
         self.data_path = Path(data_path)
         self._load_metadata()
         self._load_data()
-        super().__init__(model_path)
+        super().__init__(self.model_path) # Pass the Path object, not the string
 
     def _load_model(self) -> xgb.Booster:
         """Loads the XGBoost model from the specified path."""
