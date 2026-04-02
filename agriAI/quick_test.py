@@ -5,12 +5,14 @@ from api.services.crop_recommender_service import CropRecommenderService
 
 
 def main():
-    data_file = Path("data/synthetic/crop_recommendation_data.csv")
-    if not data_file.exists():
-        print(f"{data_file} not found. Run scripts/data_generation/generate_recommendations.py first.")
+    model_file = Path("models/crop_recommender/xgboost_crop_recommender.json")
+    encoder_file = Path("models/crop_recommender/label_encoder.joblib")
+
+    if not model_file.exists() or not encoder_file.exists():
+        print(f"Model or encoder not found. Run scripts/ml_service/train_crop_recommender.py first.")
         return
 
-    svc = CropRecommenderService(model_path=":memory:", data_path=str(data_file))
+    svc = CropRecommenderService(model_path=str(model_file), encoder_path=str(encoder_file))
     payload = {
         "nitrogen": 50,
         "phosphorus": 30,
