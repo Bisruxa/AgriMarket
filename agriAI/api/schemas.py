@@ -1,19 +1,20 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import List, Optional
+from typing import List
 
 from pydantic import BaseModel, Field
 
 
 class PriceForecastRequest(BaseModel):
     crop: str = Field(..., description="The crop to forecast prices for.")
-    start_date: date = Field(..., description="The start date of the forecast.")
-    end_date: date = Field(..., description="The end date of the forecast.")
+    start_date: date = Field(..., description="Forecast window start date.")
+    end_date: date = Field(..., description="Forecast window end date.")
 
 
 class PriceForecastResponse(BaseModel):
-    prediction: float
+    date: date
+    price: float
 
 
 class MetadataResponse(BaseModel):
@@ -39,17 +40,3 @@ class CropRecommendation(BaseModel):
 
 class CropRecommendationResponse(BaseModel):
     recommendations: List[CropRecommendation]
-
-    as_of_date: date
-    forecast_date: date
-    forecast_horizon_weeks: int
-    predicted_price: float
-    model_version: str
-
-
-class MetadataResponse(BaseModel):
-    available_crops: list[str]
-    available_regions: list[str]
-    forecast_horizon_weeks: int
-    feature_notes: list[str]
-    model_version: str

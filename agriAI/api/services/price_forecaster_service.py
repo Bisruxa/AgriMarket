@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import date
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 import pandas as pd
 import xgboost as xgb
@@ -20,65 +19,16 @@ from .base_service import InferenceService
 
 
 class PriceForecasterService(InferenceService):
-    """
-    A service for forecasting crop prices.
-    It uses an XGBoost model to make predictions.
-    """
+    """Service for crop price forecasting using a trained XGBoost regressor."""
 
-    def __init__(self, model_path: str, metadata_path: str, data_path: str) -> None:
-        self.model_path = Path(model_path)
+    def __init__(self, model_path: str | Path, metadata_path: str | Path, data_path: str | Path) -> None:
         self.metadata_path = Path(metadata_path)
         self.data_path = Path(data_path)
+        super().__init__(Path(model_path))
         self._load_metadata()
         self._load_data()
-        super().__init__(self.model_path) # Pass the Path object, not the string
 
-    def _load_model(self) -> xgb.Booster:
-        """Loads the XGBoost model from the specified path."""
-        model = xgb.Booster()
-        model.load_model(self.model_path)
-        return model
-
-    def _load_metadata(self) -> None:
-        """Loads the model metadata from the specified path."""
-        with open(self.metadata_path) as f:
-            self.metadata = json.load(f)
-
-    def _load_data(self) -> None:
-        """Loads the price data from the specified path."""
-        self.price_data = load_price_data(self.data_path)
-
-    def predict(self, data: Dict[str, Any]) -> pd.DataFrame:
-        """Makes a price prediction based on the input data."""
-        crop = data["crop"]
-        start_date = pd.to_datetime(data["start_date"])
-        end_date = pd.to_datetime(data["end_date"])
-
-        if crop not in self.metadata["crops"]:
-            raise ValueError(f"Crop '{crop}' not supported.")
-
-        features = build_feature_frame(
-            self.price_data,
-            target_crop=crop,
-            start_date=start_date,
-            end_date=end_date,
-            lag_weeks=LAG_WEEKS,
-            rolling_windows=ROLLING_WINDOWS,
-        )
-
-        if features.empty:
-            return pd.DataFrame()
-
-        feature_names = self.model.feature_names
-        predictions = self.model.predict(xgb.DMatrix(features[feature_names]))
-
-        result_df = features.copy()
-        result_df["prediction"] = predictions
-        return result_df[["prediction"]]
-
-    def get_metadata(self) -> Dict[str, Any]:
-        """Returns the model metadata."""
-        return self.metadata
+    @classmethod
     def from_env(cls) -> "PriceForecasterService":
         root = Path(__file__).resolve().parents[2]
         model_dir = Path(
@@ -96,6 +46,15 @@ class PriceForecasterService(InferenceService):
             data_path=data_path,
         )
 
+    def _load_model(self) -> xgb.Booster:
+        model_path = Path(self.model_path)
+        if not model_path.exists():
+            raise FileNotFoundError(f"Missing model file: {model_path}")
+
+        model = xgb.Booster()
+        model.load_model(str(model_path))
+        return model
+
     def _load_metadata(self) -> None:
         if not self.metadata_path.exists():
             raise FileNotFoundError(f"Missing metadata file: {self.metadata_path}")
@@ -105,16 +64,10 @@ class PriceForecasterService(InferenceService):
         self.forecast_horizon_weeks = int(self.metadata.get("forecast_horizon_weeks", 1))
         self.feature_notes = self.metadata.get("feature_notes", [])
         self.model_version = self.metadata.get("model_version", "price_forecaster_xgboost")
+        self.supported_crops = self.metadata.get("crops", [])
 
         if not self.feature_columns:
             raise ValueError("No feature columns found in training metadata.")
-
-    def _load_model(self) -> None:
-        if not self.model_path.exists():
-            raise FileNotFoundError(f"Missing model file: {self.model_path}")
-
-        self.model = xgb.Booster()
-        self.model.load_model(str(self.model_path))
 
     def _load_data(self) -> None:
         if not self.data_path.exists():
@@ -145,49 +98,18 @@ class PriceForecasterService(InferenceService):
             *[f"price_roll_max_{window}" for window in ROLLING_WINDOWS],
         ]
 
-    def _resolve_value(self, available: list[str], requested: str, label: str) -> str:
-        for value in available:
+    def _resolve_crop_name(self, requested: str) -> str:
+        candidates = self.supported_crops or self.available_crops
+        for value in candidates:
             if value.lower() == requested.lower():
                 return value
         raise ValueError(
-            f"Unknown {label}: {requested}. Available: {', '.join(available)}"
+            f"Crop '{requested}' not supported. Supported crops are: {candidates}"
         )
 
-    def _select_feature_row(
-        self,
-        crop_name: str,
-        region: str,
-        as_of_date: Optional[date],
-    ) -> pd.Series:
-        frame = self.feature_frame
-        subset = frame[
-            (frame["Crop Name"] == crop_name) & (frame["Region"] == region)
-        ]
-
-        if as_of_date:
-            as_of_timestamp = pd.Timestamp(as_of_date)
-            subset = subset[subset["Date"] <= as_of_timestamp]
-
-        subset = subset.dropna(subset=self.numeric_columns)
-
-        if subset.empty:
-            raise LookupError(
-                "No historical data available for the requested crop and region."
-            )
-
-        return subset.sort_values("Date").iloc[-1]
-
-    def _encode_features(self, row: pd.Series) -> pd.DataFrame:
-        base = {
-            "Date": row["Date"],
-            "Crop Name": row["Crop Name"],
-            "Region": row["Region"],
-            "Season": row["Season"],
-        }
-        for column in self.numeric_columns:
-            base[column] = row[column]
-
-        model_frame = pd.DataFrame([base])
+    def _encode_features(self, rows: pd.DataFrame) -> pd.DataFrame:
+        base_columns = ["Date", "Crop Name", "Region", "Season", *self.numeric_columns]
+        model_frame = rows[base_columns].copy()
         encoded = pd.get_dummies(
             model_frame,
             columns=["Crop Name", "Region", "Season"],
@@ -198,33 +120,55 @@ class PriceForecasterService(InferenceService):
             if column not in encoded.columns:
                 encoded[column] = 0.0
 
-        encoded = encoded[self.feature_columns].astype(float)
-        return encoded
+        return encoded[self.feature_columns].astype(float)
 
-    def predict_price(
-        self,
-        crop_name: str,
-        region: str,
-        as_of_date: Optional[date] = None,
-    ) -> dict:
-        crop = self._resolve_value(self.available_crops, crop_name, "crop")
-        region_value = self._resolve_value(self.available_regions, region, "region")
+    def predict(self, data: Dict[str, Any]) -> pd.DataFrame:
+        """Predict prices for a crop across a target date range.
 
-        row = self._select_feature_row(crop, region_value, as_of_date)
-        features = self._encode_features(row)
+        Returns a DataFrame indexed by forecast date with a single
+        `prediction` column.
+        """
+        crop_name = self._resolve_crop_name(str(data["crop"]))
+        start_date = pd.to_datetime(data["start_date"])
+        end_date = pd.to_datetime(data["end_date"])
 
-        matrix = xgb.DMatrix(features, feature_names=self.feature_columns)
-        prediction = float(self.model.predict(matrix)[0])
+        if start_date > end_date:
+            raise ValueError("start_date must be less than or equal to end_date")
 
-        as_of = pd.Timestamp(row["Date"]).date()
-        forecast_date = (pd.Timestamp(row["Date"]) + pd.Timedelta(weeks=self.forecast_horizon_weeks)).date()
+        rows = self.feature_frame[
+            (self.feature_frame["Crop Name"] == crop_name)
+            & (self.feature_frame["target_date"] >= start_date)
+            & (self.feature_frame["target_date"] <= end_date)
+        ].copy()
 
+        rows = rows.dropna(subset=self.numeric_columns)
+        if rows.empty:
+            return pd.DataFrame(columns=["prediction"])
+
+        encoded = self._encode_features(rows)
+        matrix = xgb.DMatrix(encoded, feature_names=self.feature_columns)
+        predictions = self.model.predict(matrix)
+
+        result = pd.DataFrame(
+            {
+                "target_date": rows["target_date"].to_numpy(),
+                "prediction": predictions,
+            }
+        )
+
+        aggregated = (
+            result.groupby("target_date", as_index=True)["prediction"]
+            .mean()
+            .to_frame()
+            .sort_index()
+        )
+        aggregated.index = pd.to_datetime(aggregated.index)
+        return aggregated
+
+    def get_metadata(self) -> Dict[str, Any]:
         return {
-            "crop_name": crop,
-            "region": region_value,
-            "as_of_date": as_of,
-            "forecast_date": forecast_date,
+            "crops": self.supported_crops or self.available_crops,
             "forecast_horizon_weeks": self.forecast_horizon_weeks,
-            "predicted_price": prediction,
+            "feature_notes": self.feature_notes,
             "model_version": self.model_version,
         }

@@ -161,9 +161,11 @@ def save_training_metadata(
     feature_notes: list[str],
     train_end_date: str,
     forecast_horizon: int,
+    crops: list[str],
 ) -> None:
     payload = {
         "metrics": metrics,
+        "crops": crops,
         "feature_columns": feature_columns,
         "train_rows": train_rows,
         "valid_rows": valid_rows,

@@ -25,13 +25,12 @@ def train_and_save_model(data_path, model_output_dir):
 
     print("Training XGBoost model...")
     model = xgb.XGBClassifier(
-        objective="multi:softmax",
+        objective="multi:softprob",
         num_class=len(label_encoder.classes_),
         eval_metric="mlogloss",
-        use_label_encoder=False,
         # Add GPU support if available
-        # tree_method='gpu_hist',
-        # gpu_id=0
+        # tree_method='hist',
+        # device='cuda'
     )
     model.fit(X_train, y_train)
 

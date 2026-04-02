@@ -106,12 +106,11 @@ def main() -> int:
         feature_notes=dataset.feature_notes,
         train_end_date=args.train_end_date,
         forecast_horizon=args.forecast_horizon,
+        crops=price_data["Crop Name"].unique().tolist(),
     )
 
-    dataset.valid_context.assign(
-        actual_price=dataset.valid_y.to_numpy(),
-        predicted_price=predictions,
-    ).to_csv(predictions_path, index=False)
+    dataset.valid_context["prediction"] = predictions
+    dataset.valid_context.to_csv(predictions_path, index=False)
 
     print("Training complete.")
     print(f"Model saved to: {model_path}")
