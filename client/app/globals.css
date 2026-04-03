@@ -140,3 +140,20 @@
     font-family: var(--font-ethiopic), var(--font-inter), system-ui;
   }
 }
+/* Ensure popup appears above everything */
+.popup-open {
+  overflow: hidden;
+}
+
+/* Ensure all other elements have lower z-index when popup is open */
+.popup-open .table-filter,
+.popup-open .search-input,
+.popup-open .filter-dropdown {
+  z-index: 1 !important;
+}
+
+/* Make sure portal root has proper stacking context */
+#__next,
+#root {
+  isolation: isolate;
+}

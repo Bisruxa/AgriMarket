@@ -1,6 +1,10 @@
 import React from "react";
 import { useState } from "react";
-const Message = ({ status, message }) => {
+interface MessageProps {
+  status: number | string;
+  message:string;
+}
+const Message = ({ status, message }:MessageProps) => {
   const [show, setShow] = useState(false);
   if (status === 200) {
     setTimeout(() => {
