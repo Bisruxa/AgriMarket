@@ -2,12 +2,11 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
+import { motion, useScroll, useTransform, useSpring, useMotionValue } from 'framer-motion';
 import { useRef } from 'react';
 import { useTranslations } from '@/components/hooks/useTranlations';
 import { useLanguage } from '@/app/context/LanguageContext';
 import { Brain, Map, Handshake } from 'lucide-react';
-import { describe } from 'node:test';
 
 const HowItWorks = () => {
   const t = useTranslations();
@@ -18,6 +17,7 @@ const HowItWorks = () => {
     target: containerRef,
     offset: ["start start", "end end"]
   });
+  
   const smoothProgress = useSpring(scrollYProgress, {
     stiffness: 100,
     damping: 30,
@@ -54,23 +54,20 @@ const HowItWorks = () => {
       image: "/potato.jpg"
     },
     {
-      
- title: t.howItWorks.steps.addFarm,
- description :t.howItWorks.stepDescriptions.addFarm,
-      // icon: <Map className="text-[#5B8C51]" size={48} />,
+      title: t.howItWorks.steps.addFarm,
+      description: t.howItWorks.stepDescriptions.addFarm,
       link: "/signup",
       image: "/corn.jpg"
     },
     {
-      title:t.howItWorks.steps.getInsights,
-      description:t.howItWorks.stepDescriptions.getInsights,
-      // icon: <Brain className="text-[#5B8C51]" size={48} />,
+      title: t.howItWorks.steps.getInsights,
+      description: t.howItWorks.stepDescriptions.getInsights,
       link: "/signup",
       image: "/onions.jpg"
     },
     {
-      title:t.howItWorks.steps.connectGrow,
-      description:t.howItWorks.stepDescriptions.connectGrow,
+      title: t.howItWorks.steps.connectGrow,
+      description: t.howItWorks.stepDescriptions.connectGrow,
       icon: <Handshake className="text-[#5B8C51]" size={48} />,
       link: "/signup",
       image: "/Crop.jpg"
@@ -153,7 +150,7 @@ const HowItWorks = () => {
                   <motion.div
                     className="absolute left-1/2 bottom-0 w-4 h-4 bg-[#668B57] rounded-full transform -translate-x-1/2 translate-y-1/2 hidden md:block"
                     style={{
-                      scale: animations.dotScale
+                      scale: dotScale
                     }}
                   />
                 )}
@@ -162,8 +159,8 @@ const HowItWorks = () => {
                 <motion.div 
                   className={`${index % 2 !== 0 ? 'md:order-2' : ''}`}
                   style={{
-                    rotate: animations.rotate,
-                    scale: animations.scale
+                    rotate: smoothRotate,
+                    scale: imageScale
                   }}
                 >
                   <motion.div 
@@ -171,7 +168,7 @@ const HowItWorks = () => {
                     whileHover={{ scale: 1.02 }}
                     transition={{ type: "spring", stiffness: 300, damping: 20 }}
                   >
-                    {/* {step.icon ? (
+                    {step.icon ? (
                       <div className="w-full h-full flex items-center justify-center bg-gray-100">
                         {step.icon}
                       </div>
@@ -182,12 +179,7 @@ const HowItWorks = () => {
                         fill
                         className="object-cover"
                       />
-                    )} */}
-                    <Image src={step.image}
-                    alt={step.title}
-                    fill
-                    className='
-                    object-cover'/>
+                    )}
                   </motion.div>
                 </motion.div>
 

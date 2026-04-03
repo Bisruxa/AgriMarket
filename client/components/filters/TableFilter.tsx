@@ -24,7 +24,6 @@ export default function TableFilter({
 
   const placeholder = searchPlaceholder || t.common?.search || "Search...";
 
-  // Handle search input change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchInput(value);
@@ -41,10 +40,8 @@ export default function TableFilter({
     return t.filters?.status?.[option.value as keyof typeof t.filters.status] || option.label;
   };
 
-  // Get current filter label
   const currentFilterLabel = filterOptions.find(opt => opt.value === filterValue)?.label || 'Filter';
 
-  // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (filterRef.current && !filterRef.current.contains(event.target as Node)) {
@@ -57,9 +54,9 @@ export default function TableFilter({
   }, []);
 
   return (
-    <div >
+    <div className="relative">
       <div className="flex flex-col sm:flex-row gap-4">
-        {/* Search Input - Enhanced */}
+        {/* Search Input */}
         <div className="flex-1 relative group">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-[#5B8C51] transition-colors duration-200" />
           <input
@@ -79,7 +76,7 @@ export default function TableFilter({
           )}
         </div>
 
-        {/* Filter Dropdown - Custom Select */}
+        {/* Filter Dropdown */}
         {showFilter && filterOptions.length > 0 && (
           <div className="relative sm:w-48" ref={filterRef}>
             <button
@@ -94,9 +91,9 @@ export default function TableFilter({
               }`} />
             </button>
 
-            {/* Dropdown Menu */}
+            {/* Dropdown Menu with lower z-index and pointer-events auto */}
             {isFilterOpen && (
-              <div className="absolute z-20 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden animate-in fade-in slide-in-from-top-2">
+              <div className="absolute mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden z-20">
                 <div className="py-1">
                   {filterOptions.map((option) => (
                     <button
@@ -124,7 +121,7 @@ export default function TableFilter({
         )}
       </div>
 
-      {/* Active Filters Indicator (Optional) */}
+      {/* Active Filters Indicator */}
       {searchInput && (
         <div className="mt-3 flex items-center gap-2">
           <span className="text-xs text-gray-500">Active filter:</span>
