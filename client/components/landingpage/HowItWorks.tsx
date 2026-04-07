@@ -150,7 +150,7 @@ const HowItWorks = () => {
                   <motion.div
                     className="absolute left-1/2 bottom-0 w-4 h-4 bg-[#668B57] rounded-full transform -translate-x-1/2 translate-y-1/2 hidden md:block"
                     style={{
-                      scale: dotScale
+                      scale: animations.dotScale
                     }}
                   />
                 )}
@@ -159,8 +159,8 @@ const HowItWorks = () => {
                 <motion.div 
                   className={`${index % 2 !== 0 ? 'md:order-2' : ''}`}
                   style={{
-                    rotate: smoothRotate,
-                    scale: imageScale
+                    rotate: animations.rotate,
+                    scale: animations.scale
                   }}
                 >
                   <motion.div 

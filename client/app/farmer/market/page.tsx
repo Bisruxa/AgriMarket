@@ -14,20 +14,39 @@ import { CirclePlus, Pencil, Trash2, Loader2, AlertCircle } from "lucide-react";
 import CTA from "./CTA";
 import { api } from "@/lib/api";
 import { Context } from "@/app/context/Context";
+import Header from "@/components/common/Header"
 
+// Updated Product interface to match backend response
 interface Product {
-  _id: string;
+  id: string;           // Changed from _id to id
   name: string;
-  amount: number;
-  pricePerQuantal: number;
-  soldAmount: number;
-  soldPercentage?: number;
+  description: string;
+  price: string | number;
+  unit: string;
   category: string;
-  available: boolean;
-  description?: string;
-  images?: string[];
-  createdAt?: string;
-  updatedAt?: string;
+  stock: number;        // Changed from amount
+  location: string;
+  isOrganic: boolean;
+  harvestDate?: string;
+  expiryDate?: string;
+  isAvailable: boolean; // Changed from available
+  ratingsAverage: number;
+  ratingsCount: number;
+  farmerId: string;
+  createdAt: string;
+  updatedAt: string;
+  farmer?: {
+    id: string;
+    name: string;
+    email: string;
+  };
+}
+
+interface PaginatedResponse {
+  products: Product[];
+  total: number;
+  page: number;
+  pages: number;
 }
 
 const ITEMS_PER_PAGE = 10;
@@ -50,8 +69,6 @@ const Page = () => {
     
     try {
       const params = {
-        category: "VEGITABLES",
-        available: "true",
         page: page.toString(),
         limit: ITEMS_PER_PAGE.toString()
       };
@@ -60,12 +77,13 @@ const Page = () => {
       const response = await api.get(`/products/my-products?${queryString}`);
       
       if (response.success && response.data) {
-        if (typeof response.data === 'object' && response.data !== null && 'products' in response.data) {
-          const paginatedData = response.data as { products: Product[], total: number, totalPages?: number };
-          setProducts(paginatedData.products || []);
-          setTotalItems(paginatedData.total || paginatedData.products.length);
-          setTotalPages(paginatedData.totalPages || Math.ceil((paginatedData.total || paginatedData.products.length) / ITEMS_PER_PAGE));
+        // Handle paginated response with products array
+        if (response.data && Array.isArray(response.data)) {
+          setProducts(response.data);
+          // setTotalItems(response.total || response.data.length);
+          // setTotalPages(response.pages || Math.ceil((response.total || response.data.length) / ITEMS_PER_PAGE));
         } 
+        // Handle array response
         else if (Array.isArray(response.data)) {
           setProducts(response.data);
           setTotalItems(response.data.length);
@@ -120,18 +138,19 @@ const Page = () => {
     setIsDeleting(productId);
     
     try {
-      const response = await api.delete(`/api/products/${productId}`);
+      const response = await api.delete(`/products/${productId}`);
       
       if (response.success) {
-        setProducts(prevProducts => prevProducts.filter(p => p._id !== productId));
+        setProducts(prevProducts => prevProducts.filter(p => p.id !== productId));
         setTotalItems(prev => prev - 1);
         
         const newTotalPages = Math.ceil((totalItems - 1) / ITEMS_PER_PAGE);
-        if (currentPage > newTotalPages) {
+        if (currentPage > newTotalPages && newTotalPages > 0) {
           setCurrentPage(Math.max(1, newTotalPages));
         }
         
-        alert("Product deleted successfully!");
+        // Refresh the current page to get updated data
+        fetchProducts(currentPage);
       } else {
         alert(response.message || "Failed to delete product");
       }
@@ -143,21 +162,14 @@ const Page = () => {
     }
   };
 
-  const calculateSoldPercentage = (product: Product) => {
-    if (product.soldPercentage) return product.soldPercentage;
-    if (product.amount > 0) {
-      return ((product.soldAmount || 0) / product.amount) * 100;
-    }
-    return 0;
-  };
-
-  const formatPrice = (price: number) => {
+  const formatPrice = (price: string | number) => {
+    const numPrice = typeof price === 'string' ? parseFloat(price) : price;
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'ETB',
       minimumFractionDigits: 2,
       maximumFractionDigits: 2
-    }).format(price);
+    }).format(numPrice);
   };
 
   const formatNumber = (num: number) => {
@@ -166,111 +178,115 @@ const Page = () => {
 
   if (loading && products.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-100">
-        <Loader2 className="h-8 w-8 animate-spin text-[#2A5A2A]" />
-        <p className="mt-4 text-gray-600">Loading products...</p>
-      </div>
+      <>
+        <Header />
+        <div className="flex flex-col items-center justify-center min-h-screen">
+          <Loader2 className="h-8 w-8 animate-spin text-[#2A5A2A]" />
+          <p className="mt-4 text-gray-600">Loading products...</p>
+        </div>
+      </>
     );
   }
 
   if (error && products.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-100">
-        <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md text-center">
-          <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-          <h3 className="text-lg font-semibold text-red-700 mb-2">Error Loading Products</h3>
-          <p className="text-red-600 mb-4">{error}</p>
-          <Button 
-            onClick={() => fetchProducts(currentPage)}
-            className="bg-red-600 hover:bg-red-700 text-white"
-          >
-            Try Again
-          </Button>
+      <>
+        <Header />
+        <div className="flex flex-col items-center justify-center min-h-screen">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md text-center">
+            <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-red-700 mb-2">Error Loading Products</h3>
+            <p className="text-red-600 mb-4">{error}</p>
+            <Button 
+              onClick={() => fetchProducts(currentPage)}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Try Again
+            </Button>
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
   return (
     <>
-      <div className="flex justify-between mt-8">
-       
-        <div>
-          <h1 className="font-bold text-2xl mb-2">Agricultural Products</h1>
-          <p className="text-sm text-black/60">
-            View, create and manage agricultural products
-          </p>
+      <Header />
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex justify-between items-center mt-8 mb-6">
+          <div>
+            <h1 className="font-bold text-3xl text-[#2A5A2A] mb-2">My Agricultural Products</h1>
+            <p className="text-sm text-gray-600">
+              View, create and manage your agricultural products
+            </p>
+          </div>
+          <Button
+            onClick={handleCreateNew}
+            className="bg-[#2A5A2A] hover:bg-[#1E431E] cursor-pointer rounded-lg"
+          >
+            <CirclePlus className="mr-2 h-4 w-4" />
+            Create New
+          </Button>
         </div>
-        <Button
-          onClick={handleCreateNew}
-          className="bg-[#2A5A2A] hover:bg-[#2A5A2A]/90 cursor-pointer"
-        >
-          <CirclePlus className="mr-2 h-4 w-4" />
-          Create New
-        </Button>
-      </div>
 
-      <div className="border border-[rgba(0,0,0,0.2)] mt-15 rounded-md overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-gray-50">
-              <TableHead className="px-5 py-4 font-extrabold uppercase text-black/60">Name</TableHead>
-              <TableHead className="px-5 py-4 font-extrabold uppercase text-black/60">Amount (Quintal)</TableHead>
-              <TableHead className="px-5 py-4 font-extrabold uppercase text-black/60">Price Per Quintal</TableHead>
-              <TableHead className="px-5 py-4 font-extrabold uppercase text-black/60">Sold Amount (%)</TableHead>
-              <TableHead className="px-5 py-4 font-extrabold uppercase text-black/60">Status</TableHead>
-              <TableHead className="px-5 py-4 font-extrabold uppercase text-black/60">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {products.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-gray-500">
-                  No products found. Click &quot;Create New&quot; to add your first product.
-                </TableCell>
+        <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-gray-50">
+                <TableHead className="px-5 py-4 font-semibold text-gray-700">Name</TableHead>
+                <TableHead className="px-5 py-4 font-semibold text-gray-700">Stock</TableHead>
+                <TableHead className="px-5 py-4 font-semibold text-gray-700">Price</TableHead>
+                <TableHead className="px-5 py-4 font-semibold text-gray-700">Unit</TableHead>
+                <TableHead className="px-5 py-4 font-semibold text-gray-700">Category</TableHead>
+                <TableHead className="px-5 py-4 font-semibold text-gray-700">Status</TableHead>
+                <TableHead className="px-5 py-4 font-semibold text-gray-700">Actions</TableHead>
               </TableRow>
-            ) : (
-              products.map((product) => {
-                const soldPercentage = calculateSoldPercentage(product);
-                
-                return (
-                  <TableRow key={product._id} className="hover:bg-gray-50">
-                    <TableCell className="py-5 text-sm px-7 text-black/80 font-medium">
+            </TableHeader>
+            <TableBody>
+              {products.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                    No products found. Click "Create New" to add your first product.
+                  </TableCell>
+                </TableRow>
+              ) : (
+                products.map((product) => (
+                  <TableRow key={product.id} className="hover:bg-gray-50">
+                    <TableCell className="py-4 text-sm px-5 text-gray-800 font-medium">
                       {product.name}
                     </TableCell>
-                    <TableCell className="py-5 text-sm px-7 text-black/80">
-                      {formatNumber(product.amount)}
+                    <TableCell className="py-4 text-sm px-5 text-gray-600">
+                      {formatNumber(product.stock)}
                     </TableCell>
-                    <TableCell className="py-5 text-sm px-7 text-black/80">
-                      {formatPrice(product.pricePerQuantal)}
+                    <TableCell className="py-4 text-sm px-5 text-gray-600">
+                      {formatPrice(product.price)}
                     </TableCell>
-                    <TableCell className="py-5 text-sm px-7 text-black/80">
-                      <div className="flex items-center gap-2">
-                        <span>{soldPercentage.toFixed(1)}%</span>
-                        <div className="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-[#2A5A2A] rounded-full"
-                            style={{ width: `${Math.min(soldPercentage, 100)}%` }}
-                          />
-                        </div>
-                      </div>
+                    <TableCell className="py-4 text-sm px-5 text-gray-600">
+                      <span className="px-2 py-1 bg-gray-100 rounded-full text-xs">
+                        {product.unit}
+                      </span>
                     </TableCell>
-                    <TableCell className="py-5 text-sm px-7">
+                    <TableCell className="py-4 text-sm px-5 text-gray-600">
+                      <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs">
+                        {product.category}
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-4 text-sm px-5">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        product.available 
+                        product.isAvailable 
                           ? "bg-green-100 text-green-700" 
                           : "bg-red-100 text-red-700"
                       }`}>
-                        {product.available ? "Available" : "Sold Out"}
+                        {product.isAvailable ? "Available" : "Sold Out"}
                       </span>
                     </TableCell>
-                    <TableCell className="py-5 text-sm px-7 text-black/80">
+                    <TableCell className="py-4 text-sm px-5">
                       <div className="flex items-center gap-2">
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleEdit(product._id)}
-                          disabled={isDeleting === product._id}
+                          onClick={() => handleEdit(product.id)}
+                          disabled={isDeleting === product.id}
                           className="h-8 px-3 text-xs border-gray-200 hover:bg-gray-50 hover:text-blue-600"
                         >
                           <Pencil className="h-3.5 w-3.5 mr-1" />
@@ -279,11 +295,11 @@ const Page = () => {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleDelete(product._id)}
-                          disabled={isDeleting === product._id}
+                          onClick={() => handleDelete(product.id)}
+                          disabled={isDeleting === product.id}
                           className="h-8 px-3 text-xs border-gray-200 hover:bg-gray-50 hover:text-red-600"
                         >
-                          {isDeleting === product._id ? (
+                          {isDeleting === product.id ? (
                             <Loader2 className="h-3.5 w-3.5 mr-1 animate-spin" />
                           ) : (
                             <Trash2 className="h-3.5 w-3.5 mr-1" />
@@ -293,22 +309,22 @@ const Page = () => {
                       </div>
                     </TableCell>
                   </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
-      </div>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
 
-      {products.length > 0 && (
-        <CTA
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalItems={totalItems}
-          onNext={handleNextPage}
-          onPrev={handlePrevPage}
-        />
-      )}
+        {products.length > 0 && totalPages > 1 && (
+          <CTA
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            onNext={handleNextPage}
+            onPrev={handlePrevPage}
+          />
+        )}
+      </div>
     </>
   );
 };
