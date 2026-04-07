@@ -3,35 +3,44 @@ import React, { useEffect, useState, useContext } from 'react'
 import { CropForm, CropFormData } from './CropForm'
 import { api } from '@/lib/api'
 import { Context } from '@/app/context/Context'
-
+import {useAuth} from "@/app/context/UserContext";
 interface AddCropProps {
   productId?: string | null
   onSuccess?: () => void
 }
 
 const AddCrop = ({ productId, onSuccess }: AddCropProps) => {
-  const { setShow } = useContext(Context)!
+  const {user} = useAuth();
+  const { setShow} = useContext(Context)!
   const [initialData, setInitialData] = useState<CropFormData | undefined>()
   const [isLoading, setIsLoading] = useState(false)
   const [isFetching, setIsFetching] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+
   useEffect(() => {
     const fetchProductData = async () => {
       if (productId) {
         setIsFetching(true)
+        setSubmitError(null)
         try {
           const response = await api.get(`/products/${productId}`)
           if (response.success && response.data) {
             const product = response.data as any
             setInitialData({
-              crop: product.name,
-              amount: product.amount.toString(),
-              price: product.pricePerQuantal.toString()
+              name: product.name,
+              stock: product.stock?.toString() || product.amount?.toString() || "",
+              price: product.price?.toString() || product.pricePerQuantal?.toString() || "",
+              unit: product.unit || "KG",
+              description: product.description || "",
+              harvestDate: product.harvestDate?.split('T')[0] || "",
+              expiryDate: product.expiryDate?.split('T')[0] || ""
             })
+          } else {
+            setSubmitError(response.message || 'Failed to load product data')
           }
         } catch (error) {
-          console.error("Error fetching product:", error)
-          alert("Failed to load product data")
-          setShow(false)
+          console.error('Error fetching product:', error)
+          setSubmitError('Failed to load product data. Please try again.')
         } finally {
           setIsFetching(false)
         }
@@ -41,40 +50,43 @@ const AddCrop = ({ productId, onSuccess }: AddCropProps) => {
     }
 
     fetchProductData()
-  }, [productId, setShow])
+  }, [productId])
 
   const handleSubmit = async (data: CropFormData) => {
+    setSubmitError(null)
     setIsLoading(true)
     try {
+      const payload = {
+        name: data.name,
+        description: data.description,
+        price: parseFloat(data.price),
+        unit: data.unit,
+        category: 'VEGETABLES',
+        stock: parseInt(data.stock),
+        location: `${user?.region || 'Unknown'}, ${user?.woreda || 'Unknown'}`,
+        isOrganic: true,
+        harvestDate: data.harvestDate,
+        expiryDate: data.expiryDate,
+        images: []
+      }
+      
       let response
       
       if (productId) {
-        response = await api.put(`/api/api/products/${productId}`, {
-          name: data.crop,
-          amount: parseFloat(data.amount),
-          pricePerQuantal: parseFloat(data.price)
-        })
+        response = await api.put(`/products/${productId}`, payload)
       } else {
-        response = await api.post('/api/products', {
-          name: data.crop,
-          amount: parseFloat(data.amount),
-          pricePerQuantal: parseFloat(data.price),
-          category: "VEGITABLES",
-          available: true,
-          soldAmount: 0
-        })
+        response = await api.post('/products', payload)
       }
 
       if (response.success) {
-        alert(productId ? "Product updated successfully!" : "Product created successfully!")
         onSuccess?.()
         setShow(false)
       } else {
-        alert(response.message || "Operation failed")
+        setSubmitError(response.message || 'Operation failed. Please try again.')
       }
     } catch (error) {
-      alert("Network error. Please try again.")
-      console.error("Error:", error)
+      console.error('Error:', error)
+      setSubmitError('Network error. Please try again.')
     } finally {
       setIsLoading(false)
     }
@@ -86,7 +98,7 @@ const AddCrop = ({ productId, onSuccess }: AddCropProps) => {
 
   if (isFetching) {
     return (
-      <div className="h-[90vh] w-[45vw] my-6 mx-auto rounded-4xl bg-white flex items-center justify-center">
+      <div className="h-[90vh] w-[55vw] my-6 mx-auto rounded-4xl bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin h-8 w-8 border-4 border-[#2a5a2a] border-t-transparent rounded-full mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading product data...</p>
@@ -102,6 +114,7 @@ const AddCrop = ({ productId, onSuccess }: AddCropProps) => {
       onSubmit={handleSubmit}
       onClose={handleClose}
       isLoading={isLoading}
+      errorMessage={submitError}
     />
   )
 }
