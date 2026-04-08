@@ -50,6 +50,7 @@ const Trader_Portfolio = () => {
     <>
       <Profile/>
       <EditForm Fields={farmerField}/>
+      <h2>delete</h2>
     </>
   );
 };
