@@ -53,8 +53,8 @@ const SidebarContent = ({ arr, role }: SidebarProps) => {
             </div>
           ) : (
             <div>
-              <h1 className="text-xs text-black/30 my-3 font-semibold">{t.sidebar.myspace}</h1>
-              <div
+              {/* <h1 className="text-xs text-black/30 my-3 font-semibold">{t.sidebar.myspace}</h1> */}
+              {/* <div
                 className="flex text-[14px] border border-[#2A5A2A]/60 items-center px-2 rounded-lg transition-colors duration-200 ease-in-out cursor-pointer hover:bg-[#2A5A2A]/5"
                 style={{
                   color: pathname.split("/").pop() === "portfolio"
@@ -67,7 +67,7 @@ const SidebarContent = ({ arr, role }: SidebarProps) => {
                 <Link className="w-full py-2.5" href={`/${role}/portfolio`}>
                  {t.sidebar.portfolio}
                 </Link>
-              </div>
+              </div> */}
               <div className="">
                 <h1 className="text-xs text-black/30 my-3 font-semibold">Support</h1>
                 <div

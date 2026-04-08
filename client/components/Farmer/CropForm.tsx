@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { Loader2, Leaf, Calendar, MapPin, Package, DollarSign } from "lucide-react"
+import { Loader2, Leaf, Calendar, Package, DollarSign } from "lucide-react"
 
 const cropOptions = [
   "Rice", "Wheat", "Maize", "Barley", "Soybean", "Potato", "Tomato",
@@ -54,8 +54,6 @@ export function CropForm({
   const [otherCrop, setOtherCrop] = React.useState("")
   const [description, setDescription] = React.useState("")
   const [price, setPrice] = React.useState("")
-  const [unit, setUnit] = React.useState("KG")
-  const [category, setCategory] = React.useState("VEGETABLES")
   const [stock, setStock] = React.useState("")
   const [harvestDate, setHarvestDate] = React.useState("")
   const [formError, setFormError] = React.useState<string | null>(null)
@@ -64,6 +62,7 @@ export function CropForm({
   React.useEffect(() => {
     if (initialData) {
       const cropValue = initialData.name
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if (cropOptions.includes(cropValue as any)) {
         setSelectedCrop(cropValue as CropOption)
       } else {
@@ -72,8 +71,6 @@ export function CropForm({
       }
       setDescription(initialData.description || "")
       setPrice(initialData.price)
-      setUnit(initialData.unit || "KG")
-      setCategory(initialData.category || "VEGETABLES")
       setStock(initialData.stock)
       setHarvestDate(initialData.harvestDate?.split('T')[0] || "")
     }
@@ -126,8 +123,8 @@ export function CropForm({
       name: cropName,
       description: description,
       price: price,
-      unit: unit,
-      category: category,
+      unit: "KG", // Fixed to KG as backend only supports KG
+      category: "VEGETABLES", // Fixed to VEGETABLES as backend only supports vegetables
       stock: stock,
       location: "", // Will be filled from parent component
       harvestDate: harvestDate
@@ -138,14 +135,14 @@ export function CropForm({
 
   return (
     <div onClick={(e) => e.stopPropagation()} className="relative">
-      {/* Background overlay */}
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40" onClick={onClose} />
+      {/* Background overlay - More transparent */}
+      <div className="fixed inset-0 bg-black/10 backdrop-blur-xs z-40" onClick={onClose} />
       
       {/* Modal */}
-      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-2xl">
-        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
+      <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-112 max-w-2xl">
+        <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl overflow-hidden">
           {/* Header */}
-          <div className="bg-gradient-to-r from-[#2a5a2a] to-[#3a7a3a] px-6 py-4">
+          <div className="bg-gradient-to-r from-[#2a5a2a]/90 to-[#3a7a3a]/90 backdrop-blur-sm px-6 py-4">
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-3">
                 <Leaf className="h-6 w-6 text-white" />
@@ -168,14 +165,22 @@ export function CropForm({
           {/* Form Body */}
           <div className="px-6 py-6 max-h-[80vh] overflow-y-auto">
             <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Error Message */}
+              {(formError || errorMessage) && (
+                <div className=" p-3">
+                  <p className="text-sm text-red-700">{formError || errorMessage}</p>
+                </div>
+              )}
+
               {/* Crop Selection */}
               <div className="space-y-2">
+                
                 <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                   <Leaf className="h-4 w-4 text-[#2a5a2a]" />
                   Crop Type *
                 </Label>
                 <Select value={selectedCrop} onValueChange={handleCropChange} disabled={isLoading}>
-                  <SelectTrigger className="h-11 w-full border-gray-200 bg-white rounded-lg">
+                  <SelectTrigger className="h-11 w-full border-gray-200 bg-white/80 backdrop-blur-sm rounded-lg">
                     <SelectValue placeholder="Select a crop" />
                   </SelectTrigger>
                   <SelectContent>
@@ -191,7 +196,7 @@ export function CropForm({
                     placeholder="Enter crop name"
                     value={otherCrop}
                     onChange={(e) => setOtherCrop(e.target.value)}
-                    className="h-11 w-full border-gray-200 mt-2 rounded-lg"
+                    className="h-11 w-full border-gray-200 mt-2 rounded-lg bg-white/80 backdrop-blur-sm"
                     disabled={isLoading}
                   />
                 )}
@@ -207,18 +212,18 @@ export function CropForm({
                   placeholder="Describe your crop quality, freshness, organic status..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full border-gray-200 rounded-lg resize-none"
+                  className="w-full border-gray-200 rounded-lg resize-none bg-white/80 backdrop-blur-sm"
                   rows={3}
                   disabled={isLoading}
                 />
               </div>
 
-              {/* Price, Unit, Category */}
+              {/* Price and Stock */}
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                  <Label className="text-xs font-semibold text-gray-700 flex items-center gap-2">
                     <DollarSign className="h-4 w-4 text-[#2a5a2a]" />
-                    Price *
+                    Price (ETB) *
                   </Label>
                   <div className="relative">
                     <Input
@@ -228,51 +233,17 @@ export function CropForm({
                       step="0.01"
                       value={price}
                       onChange={(e) => setPrice(e.target.value)}
-                      className="h-11 w-full border-gray-200 rounded-lg pl-8"
+                      className="h-11 w-full border-gray-200 rounded-lg pl-8 bg-white/80 backdrop-blur-sm"
                       disabled={isLoading}
                     />
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">$</span>
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">Br</span>
                   </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-gray-700">Unit *</Label>
-                  <Select value={unit} onValueChange={setUnit} disabled={isLoading}>
-                    <SelectTrigger className="h-11 w-full border-gray-200 rounded-lg">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="KG">Kilogram (KG)</SelectItem>
-                      <SelectItem value="QTY">Quantity (QTY)</SelectItem>
-                      <SelectItem value="TON">Ton (TON)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-gray-700">Category *</Label>
-                  <Select value={category} onValueChange={setCategory} disabled={isLoading}>
-                    <SelectTrigger className="h-11 w-full border-gray-200 rounded-lg">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="GRAINS">Grains</SelectItem>
-                      <SelectItem value="VEGETABLES">Vegetables</SelectItem>
-                      <SelectItem value="FRUITS">Fruits</SelectItem>
-                      <SelectItem value="SEEDS">Seeds</SelectItem>
-                      <SelectItem value="LIVESTOCK">Livestock</SelectItem>
-                      <SelectItem value="DAIRY">Dairy</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {/* Stock and Harvest Date */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                  <Label className="text-xs font-semibold text-gray-700 flex items-center gap-2">
                     <Package className="h-4 w-4 text-[#2a5a2a]" />
-                    Stock Quantity *
+                    Stock Quantity 
                   </Label>
                   <Input
                     type="number"
@@ -280,39 +251,34 @@ export function CropForm({
                     min="0"
                     value={stock}
                     onChange={(e) => setStock(e.target.value)}
-                    className="h-11 w-full border-gray-200 rounded-lg"
+                    className="h-11 w-full border-gray-200 rounded-lg bg-white/80 backdrop-blur-sm"
                     disabled={isLoading}
                   />
                 </div>
-
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
-                    <Calendar className="h-4 w-4 text-[#2a5a2a]" />
-                    Harvest Date *
-                  </Label>
-                  <Input
-                    type="date"
-                    value={harvestDate}
-                    onChange={(e) => setHarvestDate(e.target.value)}
-                    className="h-11 w-full border-gray-200 rounded-lg"
-                    disabled={isLoading}
-                  />
-                </div>
+                 {/* Harvest Date */}
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold text-gray-700 flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-[#2a5a2a]" />
+                  Harvest Date *
+                </Label>
+                <Input
+                  type="date"
+                  value={harvestDate}
+                  onChange={(e) => setHarvestDate(e.target.value)}
+                  className="h-11 w-full border-gray-200 rounded-lg bg-white/80 backdrop-blur-sm"
+                  disabled={isLoading}
+                />
+              </div>
+            
               </div>
 
-              {/* Error Message */}
-              {(formError || errorMessage) && (
-                <div className="rounded-lg bg-red-50 border border-red-200 p-3">
-                  <p className="text-sm text-red-700">{formError || errorMessage}</p>
-                </div>
-              )}
-
+             
               {/* Action Buttons */}
               <div className="flex gap-3 pt-4">
                 <Button
                   type="button"
                   onClick={onClose}
-                  className="flex-1 h-11 rounded-lg border-2 border-gray-200 bg-white text-gray-700 hover:bg-gray-50"
+                  className="flex-1 h-11 rounded-lg border-2 border-gray-200 bg-white/80 backdrop-blur-sm text-gray-700 hover:bg-gray-50"
                 >
                   Cancel
                 </Button>
