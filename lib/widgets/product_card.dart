@@ -105,23 +105,23 @@ class ProductCard extends StatelessWidget {
                           color: Color(0xFF2A5A2A),
                         ),
                       ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.green.shade50,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          product.farmerName,
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: Colors.green.shade700,
-                          ),
-                        ),
-                      ),
+                      // Container(
+                      //   padding: const EdgeInsets.symmetric(
+                      //     horizontal: 8,
+                      //     vertical: 4,
+                      //   ),
+                      //   decoration: BoxDecoration(
+                      //     color: Colors.green.shade50,
+                      //     borderRadius: BorderRadius.circular(12),
+                      //   ),
+                      //   child: Text(
+                      //     // product.farmerName,
+                      //     style: TextStyle(
+                      //       fontSize: 10,
+                      //       color: Colors.green.shade700,
+                      //     ),
+                      //   ),
+                      // ),
                     ],
                   ),
                 ],

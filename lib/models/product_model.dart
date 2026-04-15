@@ -6,7 +6,7 @@ class Product {
   final String quality; // Grade 1, Grade 2, etc.
   final String harvestDate;
   final String location;
-  final String farmerName;
+  // final String farmerName;
   final String farmerId;
   final bool isAvailable;
   final String imageUrl;
@@ -20,7 +20,7 @@ class Product {
     required this.quality,
     required this.harvestDate,
     required this.location,
-    required this.farmerName,
+    // required this.farmerName,
     required this.farmerId,
     this.isAvailable = true,
     required this.imageUrl,
@@ -38,7 +38,7 @@ final List<Product> mockProducts = [
     quality: 'Grade 1',
     harvestDate: '2024-12-15',
     location: 'Ada\'a, Oromia',
-    farmerName: 'Tesfaye K.',
+    // farmerName: 'Tesfaye K.',
     farmerId: 'f1',
     imageUrl: 'assets/images/teff_product.jpg',
     images: ['assets/images/teff_product.jpg'],
@@ -51,7 +51,7 @@ final List<Product> mockProducts = [
     quality: 'Grade 1',
     harvestDate: '2024-11-20',
     location: 'Yirgacheffe, SNNPR',
-    farmerName: 'Almaz W.',
+    // farmerName: 'Almaz W.',
     farmerId: 'f2',
     imageUrl: 'assets/images/coffee_product.jpg',
     images: ['assets/images/coffee_product.jpg'],
@@ -64,7 +64,7 @@ final List<Product> mockProducts = [
     quality: 'Grade 2',
     harvestDate: '2024-10-10',
     location: 'Bako, Oromia',
-    farmerName: 'Girma A.',
+    // farmerName: 'Girma A.',
     farmerId: 'f3',
     imageUrl: 'assets/images/maize_product.jpg',
     images: ['assets/images/maize_product.jpg'],
