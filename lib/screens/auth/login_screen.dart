@@ -1,5 +1,9 @@
 // lib/screens/auth/login_screen.dart
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+
 import '../../widgets/auth/login_form.dart';
 import '../../widgets/auth/auth_header.dart';
 import 'signup_screen.dart';
@@ -7,7 +11,7 @@ import '../farmer/farmer_dashboard.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
-  
+
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
@@ -26,10 +30,7 @@ class _LoginScreenState extends State<LoginScreen> {
       body: Stack(
         children: [
           Positioned.fill(
-            child: Image.asset(
-              'assets/images/welcome.png', 
-              fit: BoxFit.cover,
-            ),
+            child: Image.asset('assets/images/welcome.png', fit: BoxFit.cover),
           ),
           Positioned.fill(
             child: Container(
@@ -39,7 +40,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   end: Alignment.bottomCenter,
                   colors: [
                     Colors.transparent,
-                    Colors.black.withOpacity(0.7),
+                    Colors.black.withAlpha((0.7 * 255).round()),
                   ],
                 ),
               ),
@@ -72,7 +73,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Column(
                         children: [
                           const SizedBox(height: 20),
-                          
+
                           // Error message display
                           if (_errorMessage != null)
                             Container(
@@ -85,22 +86,31 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               child: Row(
                                 children: [
-                                  Icon(Icons.error_outline, color: Colors.red.shade700),
+                                  Icon(
+                                    Icons.error_outline,
+                                    color: Colors.red.shade700,
+                                  ),
                                   const SizedBox(width: 8),
                                   Expanded(
                                     child: Text(
                                       _errorMessage!,
-                                      style: TextStyle(color: Colors.red.shade700),
+                                      style: TextStyle(
+                                        color: Colors.red.shade700,
+                                      ),
                                     ),
                                   ),
                                   GestureDetector(
-                                    onTap: () => setState(() => _errorMessage = null),
-                                    child: Icon(Icons.close, color: Colors.red.shade700),
+                                    onTap: () =>
+                                        setState(() => _errorMessage = null),
+                                    child: Icon(
+                                      Icons.close,
+                                      color: Colors.red.shade700,
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
-                          
+
                           Expanded(
                             child: LoginForm(
                               formKey: _formKey,
@@ -110,7 +120,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               onSubmit: () => _handleLogin(context),
                             ),
                           ),
-                          
+
                           Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
@@ -155,8 +165,7 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       final email = _emailController.text.trim();
       final password = _passwordController.text;
-      
-      // Simple validation (replace with your actual authentication logic)
+
       if (email.isEmpty || password.isEmpty) {
         setState(() {
           _errorMessage = 'Please fill in all fields';
@@ -164,34 +173,43 @@ class _LoginScreenState extends State<LoginScreen> {
         });
         return;
       }
-      
-      // TODO: Replace this with your actual authentication logic
-      // This is just a placeholder - implement your own authentication
-      await Future.delayed(const Duration(seconds: 1)); // Simulate network request
-      
-      // Example: Check if email and password match your criteria
-      if (email == 'test@example.com' && password == 'password') {
-        // Success - navigate to dashboard
-        if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const FarmerDashboard()),
-          );
-          
-          // Show success message
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Login successful!'),
-              backgroundColor: Colors.green,
-              behavior: SnackBarBehavior.floating,
-              duration: Duration(seconds: 2),
-            ),
-          );
-        }
+
+      final uri = Uri.parse('http://localhost:5000/api/auth/login');
+      final response = await http.post(
+        uri,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'password': password}),
+      );
+
+      if (!mounted) return;
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const FarmerDashboard()),
+        );
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Login successful!'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 2),
+          ),
+        );
       } else {
-        // Failed login
+        String message = 'Invalid email or password';
+        try {
+          final body = jsonDecode(response.body);
+          if (body is Map<String, dynamic> && body['message'] is String) {
+            message = body['message'];
+          }
+        } catch (_) {
+          // ignore malformed JSON
+        }
+
         setState(() {
-          _errorMessage = 'Invalid email or password';
+          _errorMessage = message;
           _isLoading = false;
         });
       }

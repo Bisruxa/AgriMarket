@@ -75,7 +75,7 @@ class ProfitableCropsCard extends StatelessWidget {
       children: [
         // Crop Image Placeholder
         Container(
-          width: 50,
+          width: 40,
           height: 50,
           decoration: BoxDecoration(
             color: Colors.green.shade50,
