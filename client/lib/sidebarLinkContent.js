@@ -1,5 +1,6 @@
 import { ChartNoAxesCombined, House,ReceiptText, Store,Clock } from 'lucide-react';
 import React from 'react';
+import { useTranslations } from '@/components/hooks/useTranlations';
 
 export const farmerLinks = [
   {
@@ -8,7 +9,7 @@ export const farmerLinks = [
     to:"/farmer/dashboard"
   },
   {
-    name: "Crop Details / Insight",
+    name: "Crop Recommendations",
     icon: <ReceiptText className='mr-2' size={20} />,
     to:"/farmer/cropdetail"
   },

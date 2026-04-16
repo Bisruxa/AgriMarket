@@ -78,6 +78,7 @@ model User {
   
   // Relations
   products    Product[]
+  farms       Farm[]      // One farmer can have multiple farm lands
   
   @@map("users")
 }
@@ -112,4 +113,36 @@ model Product {
   @@index([category])
   @@index([isAvailable])
   @@map("products")
+}
+
+model Farm {
+  id            String    @id @default(cuid())
+  name          String    // Custom name for the farm land (e.g., "North Field", "Riverside Plot")
+  description   String?
+  size          String?   // Size of the farm land (e.g., "5 hectares", "2 acres")
+  sizeUnit      String?   // Unit of measurement (hectares, acres, etc.)
+  
+  // Location fields
+  region        String?
+  woreda        String?
+  kebele        String?
+  latitude      Float?
+  longitude     Float?
+  
+  // Farm details
+  soilType      String?
+  waterSource   String?   // e.g., "Rain-fed", "Irrigation", "Well"
+  crops         String[]  // Array of crops grown on this farm
+  
+  isActive      Boolean   @default(true)
+  
+  // Relations
+  farmer        User      @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+  farmerId      String
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@index([farmerId])
+  @@map("farms")
 }
