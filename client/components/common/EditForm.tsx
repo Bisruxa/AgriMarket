@@ -20,6 +20,7 @@ interface FieldType {
 interface EditFormProps {
   Fields: FieldType[];
   endpoint?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   onSuccess?: (data: any) => void;
 }
 
@@ -140,10 +141,10 @@ const EditForm = ({ Fields, endpoint = "/profile/update", onSuccess }: EditFormP
                   {field.label}
                 </Label>
                 <Input
-                  ref={(el) => (inputRefs.current[field.id] = el)}
+                  ref={(el) => { inputRefs.current[field.id] = el; }}
                   className={`shadow-none focus-visible:ring-0 bg-black/5 focus-visible:ring-offset-0 focus:outline-none transition-colors ${
-                    fieldError 
-                      ? "border-2 border-red-500 focus-visible:border-red-500 bg-red-50" 
+                    fieldError
+                      ? "border-2 border-red-500 focus-visible:border-red-500 bg-red-50"
                       : "border border-gray-300 focus-visible:border-gray-400"
                   }`}
                   id={field.id}

@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from "react";
-import { UserPen, MessageCircleMore, Menu, X } from "lucide-react";
+import { MessageCircleMore, Menu, X } from "lucide-react";
 import Link from "next/link";
 import LogOutSection from "@/components/SideBar/LogOut";
 import NavigationLink from "@/components/SideBar/NavigationLink";
@@ -23,19 +23,21 @@ const SidebarContent = ({ arr, role }: SidebarProps) => {
   const t = useTranslations();
   return (
     <>
-      <div className="flex-1">
-        <div className="space-y-5 text-center">
+      <div className="flex-1 flex flex-col">
+        <div className="pb-4 text-center">
           <h1 className="text-[20px] sm:text-[25px] font-extrabold text-[#2A5A2A] break-words">
             AgriMarket
           </h1>
         </div>
 
-        <NavigationLink Links={arr} />
+        <div className="mt-2">
+          <NavigationLink Links={arr} />
+        </div>
         
         <div>
           {role === "Admin" ? (
-            <div className="mb-8 sm:mb-30">
-              <h1 className="text-xs text-black/30 my-3 font-semibold">{t.sidebar.support}</h1>
+            <div className="mt-8">
+              <h1 className="text-xs text-black/30 mb-3 font-semibold tracking-wide uppercase">{t.sidebar.support}</h1>
               <div
                 className="flex h-10 border border-[#2A5A2A]/60 text-[14px] items-center px-2 rounded-lg transition-colors duration-200 ease-in-out cursor-pointer hover:bg-[#2A5A2A]/5"
                 style={{
@@ -52,9 +54,9 @@ const SidebarContent = ({ arr, role }: SidebarProps) => {
               </div>
             </div>
           ) : (
-            <div>
-              <h1 className="text-xs text-black/30 my-3 font-semibold">{t.sidebar.myspace}</h1>
-              <div
+            <div className="mt-8">
+              {/* <h1 className="text-xs text-black/30 my-3 font-semibold">{t.sidebar.myspace}</h1> */}
+              {/* <div
                 className="flex text-[14px] border border-[#2A5A2A]/60 items-center px-2 rounded-lg transition-colors duration-200 ease-in-out cursor-pointer hover:bg-[#2A5A2A]/5"
                 style={{
                   color: pathname.split("/").pop() === "portfolio"
@@ -67,9 +69,11 @@ const SidebarContent = ({ arr, role }: SidebarProps) => {
                 <Link className="w-full py-2.5" href={`/${role}/portfolio`}>
                  {t.sidebar.portfolio}
                 </Link>
-              </div>
-              <div className="">
-                <h1 className="text-xs text-black/30 my-3 font-semibold">Support</h1>
+              </div> */}
+              <div>
+                <h1 className="text-xs text-black/30 mb-3 font-semibold tracking-wide uppercase">
+                  {t.sidebar.support}
+                </h1>
                 <div
                   className="flex h-10 border border-[#2A5A2A]/60 text-[14px] items-center px-2 rounded-lg transition-colors duration-200 ease-in-out cursor-pointer hover:bg-[#2A5A2A]/5"
                   style={{
@@ -90,7 +94,7 @@ const SidebarContent = ({ arr, role }: SidebarProps) => {
         </div>
       </div>
       
-      <div className="flex mt-auto pt-4 border-t border-gray-200">
+      <div className="flex mt-8 pt-4 border-t border-gray-200">
         <LogOutSection />
       </div>
     </>
@@ -180,7 +184,7 @@ const Sidebar = ({ arr, role }: SidebarProps) => {
       )}
 
       {/* Desktop Sidebar */}
-      <div className="hidden md:flex flex-col min-h-screen py-3 px-4 w-64 lg:w-72 bg-white border-r border-gray-200">
+      <div className="hidden md:flex flex-col min-h-screen py-3 px-4 w-75 lg:w-85 bg-white border-r border-gray-200">
         <SidebarContent arr={arr} role={role} />
       </div>
     </>
