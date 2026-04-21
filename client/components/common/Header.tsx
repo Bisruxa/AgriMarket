@@ -49,7 +49,6 @@ const getPageTranslationKey = (path: string): string => {
       <div className="px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14">
           
-          {/* Left - Page Indicator */}
           <div className="flex items-center gap-4">
             <span 
               className={`hidden sm:inline text-sm font-medium transition-colors duration-300 ${
@@ -60,13 +59,11 @@ const getPageTranslationKey = (path: string): string => {
             </span>
           </div>
 
-          {/* Right - Language */}
           <div className="flex items-center">
              <LanguageButton />
               <Button className='bg-white text-black hover:bg-[#2A5A2A] hover:text-white  '>
             <Bell size={20} />
           </Button>
-            {/* <LogOutSection/> */}
            
           </div>
         </div>
