@@ -14,7 +14,6 @@ const HowItWorks = () => {
   const containerRef = useRef(null);
   const headingRef = useRef(null);
   
-  // Fixed: Properly define animations with motion values
   const dotScale = useMotionValue(1);
   const rotate = useMotionValue(0);
   const scale = useMotionValue(1);
@@ -52,7 +51,6 @@ const HowItWorks = () => {
     {
       title: t.howItWorks.steps.connectGrow,
       description: t.howItWorks.stepDescriptions.connectGrow,
-      icon: <Handshake className="text-[#5B8C51]" size={48} />,
       link: "/signup",
       image: "/Crop.jpg"
     },
@@ -115,20 +113,17 @@ const HowItWorks = () => {
             const stepEnd = (index + 1) / steps.length;
             const stepRange = 0.15;
             
-            // eslint-disable-next-line react-hooks/rules-of-hooks
             const rawRotate = useTransform(
               smoothProgress,
               [stepStart, stepStart + stepRange, stepEnd - stepRange, stepEnd],
               [0, 2, -2, 0]
             );
             
-            // eslint-disable-next-line react-hooks/rules-of-hooks
             const smoothRotate = useSpring(rawRotate, {
               stiffness: 50,
               damping: 20
             });
 
-            // eslint-disable-next-line react-hooks/rules-of-hooks
             const imageScale = useTransform(
               smoothProgress,
               [stepStart, stepStart + stepRange * 1.5],

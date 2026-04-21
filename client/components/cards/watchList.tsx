@@ -25,7 +25,6 @@ function WatchList() {
 
   return (
     <div className="bg-white rounded-xl shadow-md border border-[#5B8C51]/20 flex flex-col hover:shadow-lg transition-all overflow-hidden max-w-full w-full">
-      {/* Header */}
       <div className="p-4 sm:p-5 border-b border-gray-100 bg-gradient-to-r from-white to-[#F5F9F5]">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -41,7 +40,6 @@ function WatchList() {
           </span>
         </div>
         
-        {/* Column Headers */}
         <div className="hidden sm:grid grid-cols-5 gap-2 mt-4 text-xs font-medium text-gray-500 px-1">
           <div className="col-span-1">Crop</div>
           <div className="col-span-1 text-right">Price (Birr)</div>
@@ -49,7 +47,6 @@ function WatchList() {
           <div className="col-span-1 text-right">Yield/ha</div>
         </div>
 
-        {/* Mobile scroll hint with gradient fade */}
         <div className="sm:hidden relative mt-2">
           <div className="flex justify-between items-center text-[10px] text-gray-400">
             <span className="flex items-center gap-1">
@@ -64,9 +61,7 @@ function WatchList() {
         </div>
       </div>
 
-      {/* Scrollable Container */}
       <div className="relative">
-        {/* Mobile Horizontal Scroll - Enhanced Cards */}
         <div className="block sm:hidden overflow-x-auto scrollbar-hide p-3 pt-1">
           <div className="inline-flex gap-3 min-w-full pb-1">
             {crops.map((crop, index) => (
@@ -74,7 +69,6 @@ function WatchList() {
                 key={index}
                 className="shrink-0 w-64 bg-white border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-all hover:border-[#5B8C51]/30"
               >
-                {/* Header with Icon and Name */}
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-2xl">{crop.icon}</span>
                   <div>
@@ -83,15 +77,12 @@ function WatchList() {
                   </div>
                 </div>
                 
-                {/* Metrics Grid */}
                 <div className="space-y-2.5">
-                  {/* Price */}
                   <div className="flex justify-between items-center">
                     <span className="text-xs text-gray-500">Current Price</span>
                     <span className="font-semibold text-gray-800">{crop.price} Br</span>
                   </div>
                  
-                  {/* Demand */}
                   <div className="flex justify-between items-center">
                     <span className="text-xs text-gray-500">Demand</span>
                     <span className={`text-xs px-2 py-1 rounded-full font-medium ${getDemandColor(crop.demand)}`}>
@@ -99,7 +90,6 @@ function WatchList() {
                     </span>
                   </div>
                   
-                  {/* Yield */}
                   <div className="flex justify-between items-center pt-1 border-t border-gray-100">
                     <span className="text-xs text-gray-500">Yield/ha</span>
                     <span className="font-bold text-[#5B8C51]">{crop.yield} kg</span>
@@ -110,34 +100,29 @@ function WatchList() {
           </div>
         </div>
 
-        {/* Desktop Vertical Scroll */}
         <div className="hidden sm:block flex-1 overflow-y-auto scrollbar-hide p-3 space-y-1 max-h-[400px]">
           {crops.map((crop, index) => (
             <div 
               key={index}
               className="grid grid-cols-5 gap-2 items-center py-2.5 px-3 rounded-lg hover:bg-[#F5F9F5] transition-colors group border border-transparent hover:border-[#5B8C51]/20"
             >
-              {/* Crop Name with Icon */}
               <div className="col-span-1 flex items-center gap-2">
                 <span className="text-xl group-hover:scale-110 transition-transform">{crop.icon}</span>
                 <span className="font-medium text-gray-800">{crop.name}</span>
               </div>
 
-              {/* Price */}
               <div className="col-span-1 text-right">
                 <span className="font-semibold text-gray-800">{crop.price}</span>
                 <span className="text-xs text-gray-400 ml-1">Br</span>
               </div>
 
 
-              {/* Demand Badge */}
               <div className="col-span-1 text-right">
                 <span className={`text-xs px-2 py-1 rounded-full font-medium ${getDemandColor(crop.demand)}`}>
                   {crop.demand}
                 </span>
               </div>
 
-              {/* Yield */}
               <div className="col-span-1 text-right">
                 <span className="font-semibold text-[#5B8C51]">{crop.yield}</span>
                 <span className="text-xs text-gray-400 ml-1">kg</span>
@@ -147,7 +132,6 @@ function WatchList() {
         </div>
       </div>
 
-      {/* Footer with summary */}
       <div className="p-3 border-t border-gray-100 bg-gray-50/50 flex justify-between items-center text-xs text-gray-500">
         <span>{crops.length} crops monitored</span>
         <span className="flex items-center gap-1 text-[#5B8C51]">
