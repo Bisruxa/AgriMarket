@@ -13,11 +13,6 @@ const HowItWorks = () => {
   const { language } = useLanguage();
   const containerRef = useRef(null);
   const headingRef = useRef(null);
-  
-  const dotScale = useMotionValue(1);
-  const rotate = useMotionValue(0);
-  const scale = useMotionValue(1);
-
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end end"]
@@ -29,6 +24,29 @@ const HowItWorks = () => {
     restDelta: 0.001
   });
   
+  const stepAnimations = [
+    {
+      rotate: useSpring(useTransform(smoothProgress, [0, 0.15, 0.85, 1], [0, 2, -2, 0]), { stiffness: 50, damping: 20 }),
+      scale: useTransform(smoothProgress, [0, 0.225], [0.95, 1]),
+      dotScale: useTransform(smoothProgress, [0.9, 1], [0, 1])
+    },
+    {
+      rotate: useSpring(useTransform(smoothProgress, [0.25, 0.4, 0.6, 0.75], [0, 2, -2, 0]), { stiffness: 50, damping: 20 }),
+      scale: useTransform(smoothProgress, [0.25, 0.475], [0.95, 1]),
+      dotScale: useTransform(smoothProgress, [1.15, 1.25], [0, 1])
+    },
+    {
+      rotate: useSpring(useTransform(smoothProgress, [0.5, 0.65, 0.85, 1], [0, 2, -2, 0]), { stiffness: 50, damping: 20 }),
+      scale: useTransform(smoothProgress, [0.5, 0.725], [0.95, 1]),
+      dotScale: useTransform(smoothProgress, [1.4, 1.5], [0, 1])
+    },
+    {
+      rotate: useSpring(useTransform(smoothProgress, [0.75, 0.9, 1.1, 1.25], [0, 2, -2, 0]), { stiffness: 50, damping: 20 }),
+      scale: useTransform(smoothProgress, [0.75, 0.975], [0.95, 1]),
+      dotScale: null
+    }
+  ];
+
   const steps = [
     {
       title: t.howItWorks.steps.signup,
@@ -62,6 +80,8 @@ const HowItWorks = () => {
       className={`relative py-20 px-6 md:px-12 bg-gray-200 ${language === 'am' ? 'amharic' : ''}`}
     >
       <div className="max-w-6xl mx-auto">
+
+        {/* Main Heading - simpler entrance animation */}
         <motion.div 
           ref={headingRef}
           className="mb-20"
@@ -77,6 +97,7 @@ const HowItWorks = () => {
           <h2 className="text-4xl md:text-5xl font-extrabold leading-tight text-gray-900">
             How <span className="text-[#4A7342]">AgriMarket</span> Works.
           </h2>
+
           <motion.p 
             className="mt-6 max-w-2xl text-gray-700 text-lg"
             initial={{ opacity: 0, y: 20 }}
@@ -87,8 +108,11 @@ const HowItWorks = () => {
             {t.howItWorks.description}
           </motion.p>
         </motion.div>
-        
+
+
+        {/* Steps */}
         <div className="space-y-24 relative">
+          {/* Drawing line SVG with smooth animation */}
           <svg
             className="absolute left-1/2 top-0 w-0.5 h-full transform -translate-x-1/2 hidden md:block"
             style={{ zIndex: 0 }}
@@ -109,26 +133,7 @@ const HowItWorks = () => {
           </svg>
 
           {steps.map((step, index) => {
-            const stepStart = index / steps.length;
-            const stepEnd = (index + 1) / steps.length;
-            const stepRange = 0.15;
-            
-            const rawRotate = useTransform(
-              smoothProgress,
-              [stepStart, stepStart + stepRange, stepEnd - stepRange, stepEnd],
-              [0, 2, -2, 0]
-            );
-            
-            const smoothRotate = useSpring(rawRotate, {
-              stiffness: 50,
-              damping: 20
-            });
-
-            const imageScale = useTransform(
-              smoothProgress,
-              [stepStart, stepStart + stepRange * 1.5],
-              [0.95, 1]
-            );
+            const animations = stepAnimations[index];
             
             return (
               <motion.div
@@ -138,21 +143,24 @@ const HowItWorks = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.3 }}
                 transition={{ duration: 0.6, delay: index * 0.15, ease: "easeOut" }}
-              >  
-                {index < steps.length - 1 && (
+              >
+                
+                {/* Connecting line dots with smooth scale */}
+                {index < steps.length - 1 && animations.dotScale && (
                   <motion.div
                     className="absolute left-1/2 bottom-0 w-4 h-4 bg-[#668B57] rounded-full transform -translate-x-1/2 translate-y-1/2 hidden md:block"
                     style={{
-                      scale: dotScale
+                      scale: animations.dotScale
                     }}
                   />
                 )}
                 
+                {/* Image with smooth rotation */}
                 <motion.div 
                   className={`${index % 2 !== 0 ? 'md:order-2' : ''}`}
                   style={{
-                    rotate: smoothRotate,
-                    scale: imageScale
+                    rotate: animations.rotate,
+                    scale: animations.scale
                   }}
                 >
                   <motion.div 
@@ -160,23 +168,20 @@ const HowItWorks = () => {
                     whileHover={{ scale: 1.02 }}
                     transition={{ type: "spring", stiffness: 300, damping: 20 }}
                   >
-                    {step.icon ? (
-                      <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                        {step.icon}
-                      </div>
-                    ) : (
-                      <Image
-                        src={step.image}
-                        alt={step.title}
-                        fill
-                        className="object-cover"
-                      />
-                    )}
+                    <Image
+                      src={step.image}
+                      alt={step.title}
+                      fill
+                      className="object-cover"
+                    />
                   </motion.div>
                 </motion.div>
 
+
+                {/* Text content */}
                 <div className={`${index % 2 !== 0 ? 'md:order-1' : ''}`}>
                   <div className="relative">
+                    {/* Step number */}
                     <motion.div 
                       className="relative inline-block"
                       initial={{ opacity: 0, x: -15 }}
@@ -205,6 +210,7 @@ const HowItWorks = () => {
                     >
                       {step.title}
                     </motion.h3>
+
                     <motion.p 
                       className="text-gray-700 leading-relaxed mb-6"
                       initial={{ x: -15, opacity: 0 }}
@@ -216,11 +222,13 @@ const HowItWorks = () => {
                     </motion.p>
                   </div>
                 </div>
+
               </motion.div>
             );
           })}
         </div>
-        
+
+        {/* CTA */}
         <motion.div 
           className="mt-24 text-center"
           initial={{ opacity: 0, y: 20 }}
@@ -246,6 +254,7 @@ const HowItWorks = () => {
             </motion.button>
           </Link>
         </motion.div>
+
       </div>
     </section>
   );

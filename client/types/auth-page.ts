@@ -59,6 +59,9 @@ export interface User {
   company?: string;
   phone?:string;
   registrationDate?:string;
+  region?: string;
+  woreda?: string;
+  experience?: string;
 }
 
 export interface AuthContextType {

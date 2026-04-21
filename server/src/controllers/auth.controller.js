@@ -1,54 +1,12 @@
-const { prisma } = require('../config/db');
-const { hashPassword, comparePassword, generateToken } = require('../models/User.model');
+const { generateToken } = require('../models/User.model');
+const authService = require('../services/auth.service');
 
 // @desc    Register user
 // @route   POST /api/auth/register
 // @access  Public
 exports.register = async (req, res, next) => {
   try {
-    const { 
-      name, 
-      email, 
-      password, 
-      role,
-      phone,
-      region,
-      woreda,
-      farmSize,
-      crops,
-      experience
-    } = req.body;
-
-    // Check if user exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email }
-    });
-
-    if (existingUser) {
-      return res.status(400).json({
-        success: false,
-        message: 'User with this email already exists'
-      });
-    }
-
-    // Hash password
-    const hashedPassword = await hashPassword(password);
-
-    // Create user with all fields
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        role: role ? role.toUpperCase() : 'TRADER',
-        phone: phone || null,
-        region: region || null,
-        woreda: woreda || null,
-        farmSize: farmSize || null,
-        crops: crops || null,
-        experience: experience || null
-      }
-    });
+    const user = await authService.registerUser(req.body);
 
     sendTokenResponse(user, 201, res);
   } catch (error) {
@@ -62,52 +20,7 @@ exports.register = async (req, res, next) => {
 exports.login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
-
-    // Find user
-    const user = await prisma.user.findUnique({
-      where: { email }
-    });
-
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid credentials'
-      });
-    }
-
-    // Check if user account is deleted
-    if (user.deletedAt) {
-      return res.status(401).json({
-        success: false,
-        message: 'This account has been deleted. Please contact support if you believe this is an error.'
-      });
-    }
-
-    // Check if trader is approved
-    if (user.role === 'TRADER') {
-      if (user.approvalStatus === 'PENDING') {
-        return res.status(403).json({
-          success: false,
-          message: 'Your account is pending approval. Please wait for admin verification.'
-        });
-      }
-      if (user.approvalStatus === 'REJECTED') {
-        return res.status(403).json({
-          success: false,
-          message: 'Your account has been rejected. Please contact support for more information.'
-        });
-      }
-    }
-
-    // Check password
-    const isMatch = await comparePassword(password, user.password);
-
-    if (!isMatch) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid credentials'
-      });
-    }
+    const user = await authService.loginUser(email, password);
 
     sendTokenResponse(user, 200, res);
   } catch (error) {
@@ -120,29 +33,7 @@ exports.login = async (req, res, next) => {
 // @access  Private
 exports.getMe = async (req, res, next) => {
   try {
-    const user = await prisma.user.findUnique({
-      where: { id: req.user.id },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        phone: true,
-        avatar: true,
-        street: true,
-        city: true,
-        state: true,
-        country: true,
-        zipCode: true,
-        region: true,
-        woreda: true,
-        farmSize: true,
-        crops: true,
-        experience: true,
-        isVerified: true,
-        createdAt: true
-      }
-    });
+    const user = await authService.getCurrentUser(req.user.id);
 
     res.status(200).json({
       success: true,
@@ -184,19 +75,17 @@ exports.checkEmail = async (req, res, next) => {
       });
     }
 
-    // Check if user exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email }
-    });
+    const available = await authService.checkEmailAvailability(email);
 
     res.status(200).json({
       success: true,
-      available: !existingUser  // true if email is not in use
+      available
     });
   } catch (error) {
     next(error);
   }
 };
+
 // Helper function to send token response with cookie
 const sendTokenResponse = (user, statusCode, res) => {
   const token = generateToken(user);

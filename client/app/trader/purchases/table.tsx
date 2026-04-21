@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useState } from 'react'
-import { ChevronUp, ChevronDown, Package } from 'lucide-react'
+import { ChevronUp, ChevronDown } from 'lucide-react'
 import {
   Table,
   TableHeader,
@@ -128,14 +128,15 @@ export default function PurchaseTable() {
     )
   }
   return (
-    <div className="w-full max-w-6xl mx-auto">
-      <div className="my-3  flex items-center gap-2">
+    <div className="w-full max-w-6xl">
+      <div className="my-3 flex items-center gap-2">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">Recent Purchases</h2>
-          <p className="text-sm text-gray-500 mt-0.5">Latest transactions and orders</p>
+          <h2 className="text-lg font-semibold text-gray-900 sm:text-xl">Recent Purchases</h2>
+          <p className="mt-0.5 text-xs text-gray-500 sm:text-sm">Latest transactions and orders</p>
         </div>
       </div>
-      <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
+      <div className="mt-5 overflow-hidden rounded-xl border border-gray-200 bg-white">
+        <div className="w-full overflow-x-auto">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent border-b border-gray-200 bg-gray-50/50">
@@ -151,7 +152,7 @@ export default function PurchaseTable() {
                 <TableHead
                   key={field}
                   onClick={() => handleSort(field)}
-                  className="px-6 py-4 cursor-pointer group hover:bg-gray-100/80 transition-colors font-semibold text-gray-700 text-sm uppercase tracking-wider"
+                  className="group cursor-pointer whitespace-nowrap px-4 py-3 text-xs font-semibold uppercase tracking-wider text-gray-700 transition-colors hover:bg-gray-100/80 sm:px-6 sm:py-4 sm:text-sm"
                 >
                   <div className="flex items-center gap-2">
                     {label}
@@ -169,29 +170,29 @@ export default function PurchaseTable() {
                   index !== sortedData.length - 1 ? 'border-b border-gray-100' : ''
                 }`}
               >
-                <TableCell className="px-6 py-4 font-medium text-gray-900 group-hover:text-gray-900">
+                <TableCell className="whitespace-nowrap px-4 py-3 font-medium text-gray-900 group-hover:text-gray-900 sm:px-6 sm:py-4">
                   <div className="flex items-center gap-2">
                     <span>{row.item}</span>
                   </div>
                 </TableCell>
-                <TableCell className="px-6 py-4">
+                <TableCell className="px-4 py-3 sm:px-6 sm:py-4">
                   <span className="px-2.5 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
                     {row.category}
                   </span>
                 </TableCell>
-                <TableCell className="px-6 py-4 text-gray-700 font-medium">
+                <TableCell className="px-4 py-3 font-medium text-gray-700 sm:px-6 sm:py-4">
                   {row.qty}
                 </TableCell>
-                <TableCell className="px-6 py-4 text-gray-600">
+                <TableCell className="px-4 py-3 text-gray-600 sm:px-6 sm:py-4">
                   {row.unit}
                 </TableCell>
-                <TableCell className="px-6 py-4 text-gray-700">
+                <TableCell className="px-4 py-3 text-gray-700 sm:px-6 sm:py-4">
                   {row.price}
                 </TableCell>
-                <TableCell className="px-6 py-4 font-semibold text-gray-900">
+                <TableCell className="px-4 py-3 font-semibold text-gray-900 sm:px-6 sm:py-4">
                   {row.total}
                 </TableCell>
-                <TableCell className="px-6 py-4 text-gray-600">
+                <TableCell className="whitespace-nowrap px-4 py-3 text-gray-600 sm:px-6 sm:py-4">
                   {new Date(row.date).toLocaleDateString('en-US', {
                     year: 'numeric',
                     month: 'short',
@@ -202,8 +203,9 @@ export default function PurchaseTable() {
             ))}
           </TableBody>
         </Table>
+        </div>
       </div>
-      <div className="mt-4 flex justify-between items-center text-sm text-gray-500 px-2">
+      <div className="mt-4 flex flex-col gap-1 px-1 text-xs text-gray-500 sm:flex-row sm:items-center sm:justify-between sm:px-2 sm:text-sm">
         <span>Showing {sortedData.length} items</span>
         <span>Last updated today</span>
       </div>

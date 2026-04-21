@@ -10,13 +10,13 @@ const CardContent = [
 const Info = () => {
   return (
     <>  
-        <div className="flex items-center space-x-2 py-3">
-            <NotebookPen className="text-[#2a5a2a]" size={35}/>
-            <h1 className="text-lg opacity-70 font-bold uppercase">Purchase Journal</h1>
+        <div className="flex items-center gap-2 py-3">
+            <NotebookPen className="text-[#2a5a2a]" size={28}/>
+            <h1 className="text-base font-bold uppercase opacity-70 sm:text-lg">Purchase Journal</h1>
         </div>
-      <div className="flex space-x-2">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {CardContent.map((one, index) => (
-          <div className="h-35 w-65 relative " key={index}>
+          <div className="relative h-32 w-full sm:h-36" key={index}>
             <Image
               className="object-cover rounded-lg w-full h-full"
               src={one.image}
@@ -25,8 +25,8 @@ const Info = () => {
               alt={one.title}
             />
             <div className="absolute flex flex-col py-2 justify-end px-2 inset-0 rounded-lg bg-linear-to-t from-black via-transparent to-transparent">
-              <h1 className="text-white/95 font-semibold">{one.title}</h1>
-              <p className="text-white text-sm">{one.value}</p>
+              <h1 className="text-sm font-semibold text-white/95 sm:text-base">{one.title}</h1>
+              <p className="text-xs text-white sm:text-sm">{one.value}</p>
             </div>
           </div>
         ))}
