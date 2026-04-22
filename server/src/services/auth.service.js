@@ -43,7 +43,7 @@ const registerUser = async (payload) => {
       farmSize: farmSize || null,
       crops: crops || null,
       experience: experience || null
-    }
+    },
   });
 
   return user;
