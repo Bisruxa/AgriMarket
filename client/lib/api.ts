@@ -115,7 +115,22 @@ export const authApi = {
 export const productsApi = {
   getMyProducts: (page: number, limit: number) => 
     api.get<Product[]>(`/products/my-products?page=${page}&limit=${limit}`),
-  
+   getAllProducts: (page: number, limit: number, filters?: {
+    category?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    search?: string;
+  }) => {
+    let url = `/products?page=${page}&limit=${limit}`;
+    if (filters) {
+      if (filters.category) url += `&category=${filters.category}`;
+      if (filters.minPrice) url += `&minPrice=${filters.minPrice}`;
+      if (filters.maxPrice) url += `&maxPrice=${filters.maxPrice}`;
+      if (filters.search) url += `&search=${filters.search}`;
+    }
+    return api.get<Product[]>(url);
+  },
+  getProductById: (id: string) => api.get(`/products/${id}`),
   create: (data: unknown) => api.post('/products', data),
   
   update: (id: string, data: unknown) => api.put(`/products/${id}`, data),

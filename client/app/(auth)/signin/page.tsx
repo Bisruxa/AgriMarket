@@ -10,10 +10,11 @@ import { useTranslations } from '../../../components/hooks/useTranlations';
 import { Translations } from '@/lib/translations';
 import { authApi } from '@/lib/api';
 import {useRouter} from 'next/navigation';
+import { useAuth } from '@/app/context/UserContext';
 export default function SignInPage() {
 
   const t = useTranslations() as Translations;
-  
+  const { login } = useAuth();
   const [role, setRole] = useState<'FARMER' | 'TRADER'>('FARMER');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -52,6 +53,7 @@ export default function SignInPage() {
         localStorage.setItem('token',response.token);
       }
       if(response.user){
+        login(response.user);
         localStorage.setItem('user',JSON.stringify(response.user));
         const userRole = response.user.role?.toUpperCase();
         let redirectPath = '';

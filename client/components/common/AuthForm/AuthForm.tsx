@@ -10,6 +10,7 @@ import { Translations } from '@/lib/translations';
 import { Logo } from '../../logo/Logo';
 import { ImageSection } from './ImageSection';
 import { FormContent } from './FormContent';
+
 export default function AuthPage({
   children,
   title,
