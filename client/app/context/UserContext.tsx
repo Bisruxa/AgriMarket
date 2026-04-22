@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { User } from '@/types/auth-page';
 import { AuthContextType
  } from '@/types/auth-page';
+import { useRouter } from 'next/navigation';
 const AuthContext = createContext<AuthContextType>({
   user: null,
   login: () => {},
@@ -14,9 +15,10 @@ const AuthContext = createContext<AuthContextType>({
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-
+  const router = useRouter(); 
   useEffect(() => {
   
+
     const loadUserFromStorage = () => {
       try {
         const storedUser = localStorage.getItem('user');
@@ -42,6 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     localStorage.removeItem('user');
     localStorage.removeItem('token');
+    router.push('/signin');
   };
 
   return (
