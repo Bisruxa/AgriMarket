@@ -5,6 +5,7 @@ import { Context } from "../context/Context";
 import { ReactNode } from "react";
 import FarmerSidebar from "./sidebar";
 import AddCrop from "@/components/Farmer/AddCrop";
+import TopActionControls from "@/components/ui/topActionControls";
 
 interface NodeProp {
   children: ReactNode;
@@ -40,12 +41,16 @@ const Framerlayout = ({ children }: NodeProp) => {
           {/* Main Content */}
           <div className={`
             flex-1 min-h-screen px-3 py-2 flex flex-col
-            ${isMobile ? 'w-full' : 'md:ml-64 lg:ml-72'}
+            ${isMobile ? 'w-full' : 'md:ml-64 lg:ml-85'}
             transition-all duration-300 ease-in-out
           `}>
             {/* Add padding-top for mobile header */}
             {isMobile && <div className="h-16" />}
             
+            <div className="mb-3 flex justify-end">
+              <TopActionControls />
+            </div>
+
             <div className="flex-1">
               {children}
             </div>
