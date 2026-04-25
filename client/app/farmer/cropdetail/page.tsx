@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 const CropDetail = () => {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
-      <Header />
+      {/* <Header /> */}
       
       <div className="flex justify-center items-center flex-1 p-4">
         <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-8">

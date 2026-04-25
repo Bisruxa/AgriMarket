@@ -121,7 +121,7 @@ const ProductsTable = () => {
 
   return (
     <>
-      <Header />
+      {/* <Header /> */}
       <div className="container mx-auto px-4 py-8">
         <div className="mb-6">
           <h1 className="font-bold text-3xl text-[#2A5A2A] mb-2">

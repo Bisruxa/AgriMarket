@@ -35,7 +35,7 @@ const Framerlayout = ({ children }: NodeProp) => {
       {/* Main Content */}
       <div className={`
         flex-1 min-h-screen px-3 py-2 flex flex-col
-        ${isMobile ? 'w-full' : 'md:ml-64 lg:ml-72'}
+        ${isMobile ? 'w-full' : 'md:ml-96 '}
         transition-all duration-300 ease-in-out
       `}>
         {/* Add padding-top for mobile header */}
