@@ -17,8 +17,8 @@ const NavigationLink = ({ Links }: NavigationLinkProps) => {
  const t = useTranslations();
   return (
     <div>
-      <h1 className="text-xs text-black/30 my-3 font-semibold">{t.sidebar.general}</h1>
-      <ul className="text-sm space-y-2">
+      <h1 className="text-xs text-black/30 mb-3 font-semibold tracking-wide uppercase">{t.sidebar.general}</h1>
+      <ul className="text-sm space-y-3">
         {Links.map((one, index) => {
           const isActive = pathname === one.to;
           return (

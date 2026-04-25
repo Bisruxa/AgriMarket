@@ -41,7 +41,6 @@ function WelcomeCard() {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 px-4 sm:px-5 text-black mt-20 sm:mt-0 mb-5 md:-ml-5 ml-0 ">
-      {/* Welcome Card */}
       <Link href="/portfolio" className="w-full">
         <div className="bg-whitek rounded-lg shadow-sm p-4 sm:p-5 h-48 sm:h-56 md:h-60 relative cursor-pointer overflow-hidden group border border-[#5B8C51]/30 hover:shadow-lg transition-all ">
           <div className="absolute inset-0">
@@ -65,9 +64,7 @@ function WelcomeCard() {
         </div>
       </Link>
 
-      {/* Weather Card */}
       <div className="bg-white text-black p-4 sm:p-5 md:p-6 rounded-lg shadow-sm h-48 sm:h-56 md:h-60 border border-[#5B8C51]/30 flex flex-col hover:shadow-lg transition-all">
-        {/* Location & Units */}
         <div className="flex justify-between items-start gap-2">
           <div className="flex items-center gap-2 bg-gray-100 p-1 px-2 rounded-lg">
             <MapPin size={16} className="text-[#5B8C51]" />
@@ -81,7 +78,6 @@ function WelcomeCard() {
           </div>
         </div>
 
-        {/* Date */}
         <div className="mt-2 sm:mt-3">
           <div className="flex items-center gap-1 sm:gap-2 mt-5">
             <Calendar size={14} className="text-gray-500" />
@@ -90,7 +86,6 @@ function WelcomeCard() {
           <p className="mt-1 ml-5 sm:ml-6 text-xs sm:text-sm text-gray-500">{formattedDate}</p>
         </div>
 
-        {/* Temperature */}
         <div className="mt-auto flex items-center justify-between">
           <div>
             <p className="text-lg sm:text-xl md:text-2xl font-bold ">
@@ -113,7 +108,6 @@ function WelcomeCard() {
         </div>
       </div>
 
-      {/* Placeholder Card */}
       <div className="bg-white p-4 sm:p-5 md:p-6 rounded-lg shadow-sm h-48 sm:h-56 md:h-60 border border-[#5B8C51]/30 flex items-center justify-center text-gray-500 hover:shadow-sm transition-all">
         <p className="text-xs sm:text-sm text-center">Coming Soon</p>
       </div>
