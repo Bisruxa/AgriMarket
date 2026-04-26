@@ -30,7 +30,7 @@ class LocationPicker extends StatelessWidget {
       children: [
         // Region Dropdown
         DropdownButtonFormField<String>(
-          value: selectedRegion,
+          initialValue: selectedRegion,
           hint: const Text('Select Region'),
           items: ethiopianRegions.map((region) {
             return DropdownMenuItem(
@@ -50,7 +50,7 @@ class LocationPicker extends StatelessWidget {
         
         // Woreda Dropdown
         DropdownButtonFormField<String>(
-          value: selectedWoreda,
+          initialValue: selectedWoreda,
           hint: const Text('Select Woreda'),
           items: woredasForSelectedRegion.map((woreda) {
             return DropdownMenuItem(

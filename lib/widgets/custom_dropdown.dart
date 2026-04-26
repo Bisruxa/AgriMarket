@@ -33,7 +33,7 @@ class CustomDropdown<T> extends StatelessWidget {
         ),
         const SizedBox(height: 6),
         DropdownButtonFormField<T>(
-          value: value,
+          initialValue: value,
           hint: Text(hint ?? 'Select $label'),
           items: items.map((item) {
             return DropdownMenuItem(

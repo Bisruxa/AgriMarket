@@ -4,9 +4,7 @@ import '../../models/product_model.dart';
 import '../../widgets/welcome_card.dart';
 import '../../widgets/profitable_crops_card.dart';
 import '../../widgets/product_card.dart';
-import './farmer_profile.dart';
 import 'crop_recommendation.dart';
-import './farmer.chat.dart';
 import 'marketplace.dart';
 // import 'my_products.dart'; 
 
@@ -32,7 +30,7 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
     // Crop Recommendations Screen
     const CropRecommendation(),
     // Marketplace Screen
-    const Marketplace(),
+     MarketplaceScreen(),
     // Chats Screen
     // const FarmerChat(), // Uncomment this when you create the chat screen
     // // Profile Screen
@@ -183,15 +181,15 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
               ),
               itemCount: mockProducts.length > 4 ? 4 : mockProducts.length,
               itemBuilder: (context, index) {
-                return ProductCard(
-                  product: mockProducts[index],
-                  onTap: () {
-                    // Navigate to product detail or switch to market tab
-                    setState(() {
-                      _selectedIndex = 2;
-                    });
-                  },
-                );
+                // return ProductCard(
+                //   product: mockProducts[index],
+                //   onTap: () {
+                //     // Navigate to product detail or switch to market tab
+                //     setState(() {
+                //       _selectedIndex = 2;
+                //     });
+                //   },
+                // );
               },
             ),
           ],

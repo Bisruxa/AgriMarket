@@ -1,356 +1,178 @@
 import 'package:flutter/material.dart';
+import '../../services/api_service.dart';
 import '../../models/product_model.dart';
 import '../../widgets/product_card.dart';
+import '../../widgets/add_product.dart';
+import '../auth/login_screen.dart';
 
-class Marketplace extends StatefulWidget {
-  const Marketplace({super.key});
+class MarketplaceScreen extends StatefulWidget {
+  const MarketplaceScreen({super.key});
 
   @override
-  State<Marketplace> createState() => _MarketplaceState();
+  State<MarketplaceScreen> createState() => _MarketplaceScreenState();
 }
 
-class _MarketplaceState extends State<Marketplace> {
-  final List<Product> _myProducts = [
-    Product(
-      id: '101',
-      cropName: 'White Teff',
-      quantity: 15.5,
-      pricePerQuintal: 4700,
-      quality: 'Grade 1',
-      harvestDate: '2024-12-10',
-      location: 'Ada\'a, Oromia',
-      // farmerName: 'Bisrat A.',
-      farmerId: 'f1',
-      imageUrl: 'assets/images/teff_product.jpg',
-      images: ['assets/images/teff_product.jpg'],
-    ),
-    Product(
-      id: '102',
-      cropName: 'Maize',
-      quantity: 30.0,
-      pricePerQuintal: 2850,
-      quality: 'Grade 2',
-      harvestDate: '2024-11-05',
-      location: 'Ada\'a, Oromia',
-      // farmerName: 'Bisrat A.',
-      farmerId: 'f1',
-      imageUrl: 'assets/images/maize_product.jpg',
-      images: ['assets/images/maize_product.jpg'],
-    ),
-  ];
+class _MarketplaceScreenState extends State<MarketplaceScreen> {
+  final ApiService _apiService = ApiService();
+  List<Product> products = [];
+  bool isLoading = true;
+  String? errorMessage;
+  int currentPage = 1;
+  int totalPages = 1;
+  bool isLoadingMore = false;
+
+  @override
+  void initState() {
+    super.initState();
+    fetchProducts();
+  }
+
+  Future<void> fetchProducts({bool loadMore = false}) async {
+    if (loadMore && (isLoadingMore || currentPage >= totalPages)) return;
+    
+    setState(() {
+      if (loadMore) isLoadingMore = true;
+      else isLoading = true;
+      errorMessage = null;
+    });
+
+    try {
+      final response = await _apiService.get('/products/my-products?page=$currentPage&limit=10');
+      
+      if (response.statusCode == 200 && response.data['success']) {
+        final newProducts = (response.data['data'] as List)
+            .map((json) => Product.fromJson(json))
+            .toList();
+        
+        setState(() {
+          if (loadMore) products.addAll(newProducts);
+          else products = newProducts;
+          totalPages = response.data['pagination']?['pages'] ?? 1;
+          currentPage = response.data['pagination']?['page'] ?? 1;
+          isLoading = isLoadingMore = false;
+        });
+      } else if (response.statusCode == 401) {
+        await _handleUnauthorized();
+      } else {
+        throw Exception(response.data['message'] ?? 'Failed to load products');
+      }
+    } catch (e) {
+      setState(() => errorMessage = e.toString());
+      _showSnackBar('Error: $e', Colors.red);
+    } finally {
+      if (mounted) setState(() => isLoading = isLoadingMore = false);
+    }
+  }
+
+  Future<void> addProduct(Product product) async {
+    setState(() => isLoading = true);
+    try {
+      final response = await _apiService.post('/products', product.toJson());
+      
+      if (response.statusCode == 201 && response.data['success']) {
+        currentPage = 1;
+        await fetchProducts();
+        Navigator.pop(context);
+        _showSnackBar('✅ Product added successfully', Colors.green);
+      } else {
+        throw Exception(response.data['message'] ?? 'Failed to add product');
+      }
+    } catch (e) {
+      _showSnackBar('Error: $e', Colors.red);
+    } finally {
+      if (mounted) setState(() => isLoading = false);
+    }
+  }
+
+  Future<void> deleteProduct(String id) async {
+    try {
+      final response = await _apiService.delete('/products/$id');
+      if (response.statusCode == 200 && response.data['success']) {
+        await fetchProducts();
+        _showSnackBar('✅ Product deleted', Colors.green);
+      }
+    } catch (e) {
+      _showSnackBar('Error deleting: $e', Colors.red);
+    }
+  }
+
+  Future<void> _handleUnauthorized() async {
+    await _apiService.logout();
+    if (mounted) {
+      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const LoginScreen()), (route) => false);
+    }
+  }
+
+  void _showSnackBar(String msg, Color color) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg), backgroundColor: color, behavior: SnackBarBehavior.floating, duration: const Duration(seconds: 2)),
+    );
+  }
+
+  void _confirmDelete(String id) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Delete Product'),
+        content: const Text('Are you sure?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          TextButton(onPressed: () { Navigator.pop(context); deleteProduct(id); }, style: TextButton.styleFrom(foregroundColor: Colors.red), child: const Text('Delete')),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        title: const Text('Marketplace'),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        foregroundColor: const Color(0xFF2A5A2A),
+        title: const Text('My Products'),
+        backgroundColor: Colors.green.shade700,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.add_circle),
-            onPressed: _showAddProductDialog,
-          ),
+          IconButton(icon: const Icon(Icons.add), onPressed: () => showDialog(context: context, builder: (_) => AddProductDialog(onAdd: addProduct))),
+          IconButton(icon: const Icon(Icons.refresh), onPressed: () { currentPage = 1; fetchProducts(); }),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // My Products Section
-            const Text(
-              'My Products',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 12),
-            if (_myProducts.isEmpty)
-              Container(
-                padding: const EdgeInsets.all(32),
-                child: const Center(
-                  child: Text(
-                    'No products listed yet. Tap + to add your first product.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                ),
-              )
-            else
-              GridView.builder(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 0.75,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                ),
-                itemCount: _myProducts.length,
-                itemBuilder: (context, index) {
-                  return Stack(
-                    children: [
-                      ProductCard(
-                        product: _myProducts[index],
-                        onTap: () {},
-                      ),
-                      Positioned(
-                        top: 8,
-                        right: 8,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.grey.withOpacity(0.2),
-                                blurRadius: 4,
-                              ),
-                            ],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const Icon(Icons.edit, size: 16),
-                                onPressed: () {},
-                                color: Colors.blue,
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete, size: 16),
-                                onPressed: () {
-                                  setState(() {
-                                    _myProducts.removeAt(index);
-                                  });
-                                },
-                                color: Colors.red,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-
-            const SizedBox(height: 24),
-
-            // All Listings Section
-            const Text(
-              'All Listings',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                childAspectRatio: 0.75,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-              ),
-              itemCount: mockProducts.length,
-              itemBuilder: (context, index) {
-                return ProductCard(
-                  product: mockProducts[index],
-                  onTap: () {},
-                );
-              },
-            ),
-          ],
-        ),
+      body: RefreshIndicator(
+        onRefresh: () async { currentPage = 1; await fetchProducts(); },
+        child: _buildBody(),
       ),
     );
   }
 
-  void _showAddProductDialog() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) => const AddProductSheet(),
+  Widget _buildBody() {
+    if (isLoading && products.isEmpty) {
+      return const Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [CircularProgressIndicator(), SizedBox(height: 16), Text('Loading...')]));
+    }
+    
+    if (errorMessage != null && products.isEmpty) {
+      return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+        Icon(Icons.error_outline, size: 64, color: Colors.grey.shade400),
+        const SizedBox(height: 16),
+        Text(errorMessage!, style: TextStyle(color: Colors.grey.shade600)),
+        const SizedBox(height: 16),
+        ElevatedButton(onPressed: () { currentPage = 1; fetchProducts(); }, style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2A5A2A)), child: const Text('Retry')),
+      ]));
+    }
+    
+    if (products.isEmpty) {
+      return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+        Icon(Icons.inventory_2_outlined, size: 80, color: Colors.grey.shade400),
+        const SizedBox(height: 16),
+        Text('No products found', style: TextStyle(fontSize: 18, color: Colors.grey.shade600)),
+        const SizedBox(height: 8),
+        Text('Tap + to add your first product', style: TextStyle(fontSize: 14, color: Colors.grey.shade500)),
+      ]));
+    }
+    
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: products.length + (isLoadingMore ? 1 : 0),
+      itemBuilder: (context, index) {
+        if (index == products.length) return const Center(child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator()));
+        return ProductCard(product: products[index], onDelete: () => _confirmDelete(products[index].id));
+      },
     );
-  }
-}
-
-// Add Product Bottom Sheet
-class AddProductSheet extends StatefulWidget {
-  const AddProductSheet({super.key});
-
-  @override
-  State<AddProductSheet> createState() => _AddProductSheetState();
-}
-
-class _AddProductSheetState extends State<AddProductSheet> {
-  final _formKey = GlobalKey<FormState>();
-  final _cropController = TextEditingController();
-  final _quantityController = TextEditingController();
-  final _priceController = TextEditingController();
-  String? _selectedQuality;
-
-  final List<String> _qualities = ['Grade 1', 'Grade 2', 'Grade 3'];
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
-        left: 20,
-        right: 20,
-        top: 20,
-      ),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Add New Product',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            // Crop Name
-            TextFormField(
-              controller: _cropController,
-              decoration: const InputDecoration(
-                labelText: 'Crop Name',
-                border: OutlineInputBorder(),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter crop name';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 12),
-
-            // Quantity
-            TextFormField(
-              controller: _quantityController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Quantity (in quintals)',
-                border: OutlineInputBorder(),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter quantity';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 12),
-
-            // Price
-            TextFormField(
-              controller: _priceController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Price per Quintal (ETB)',
-                border: OutlineInputBorder(),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter price';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 12),
-
-            // Quality
-            DropdownButtonFormField<String>(
-              value: _selectedQuality,
-              hint: const Text('Select Quality'),
-              items: _qualities.map((quality) {
-                return DropdownMenuItem(
-                  value: quality,
-                  child: Text(quality),
-                );
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  _selectedQuality = value;
-                });
-              },
-              decoration: const InputDecoration(
-                border: OutlineInputBorder(),
-              ),
-              validator: (value) {
-                if (value == null) {
-                  return 'Please select quality';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 20),
-
-            // Buttons
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => Navigator.pop(context),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
-                    child: const Text('Cancel'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: () {
-                      if (_formKey.currentState!.validate()) {
-                        // Save product
-                        Navigator.pop(context);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Product added successfully!'),
-                            backgroundColor: Color(0xFF2A5A2A),
-                          ),
-                        );
-                      }
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF2A5A2A),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
-                    child: const Text('Add Product'),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 20),
-          ],
-        ),
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    _cropController.dispose();
-    _quantityController.dispose();
-    _priceController.dispose();
-    super.dispose();
   }
 }

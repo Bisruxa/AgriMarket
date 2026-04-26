@@ -1,72 +1,148 @@
 class Product {
   final String id;
-  final String cropName;
-  final double quantity; // in quintals
-  final double pricePerQuintal;
-  final String quality; // Grade 1, Grade 2, etc.
-  final String harvestDate;
+  final String name;
+  final String? description;
+  final double price;
+  final String unit;
+  final String category;
+  final int stock;
+  final List<String> images;
   final String location;
-  // final String farmerName;
+  final bool isOrganic;
+  final String harvestDate;
+  final String? expiryDate;
   final String farmerId;
   final bool isAvailable;
-  final String imageUrl;
-  final List<String> images;
 
   Product({
     required this.id,
-    required this.cropName,
-    required this.quantity,
-    required this.pricePerQuintal,
-    required this.quality,
-    required this.harvestDate,
+    required this.name,
+    this.description,
+    required this.price,
+    required this.unit,
+    required this.category,
+    required this.stock,
+    required this.images,
     required this.location,
-    // required this.farmerName,
+    required this.isOrganic,
+    required this.harvestDate,
+    this.expiryDate,
     required this.farmerId,
     this.isAvailable = true,
-    required this.imageUrl,
-    required this.images,
   });
+
+  factory Product.fromJson(Map<String, dynamic> json) {
+  // Safe parser for num/double values
+  double parseDouble(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) {
+      // Handle string that might be "12" or "12.5"
+      return double.tryParse(value) ?? 0.0;
+    }
+    return 0.0;
+  }
+
+  // Safe parser for int values
+  int parseInt(dynamic value) {
+    if (value == null) return 0;
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is String) {
+      return int.tryParse(value) ?? 0;
+    }
+    return 0;
+  }
+
+  // Safe parser for DateTime
+  DateTime parseDateTime(dynamic value) {
+    if (value == null) return DateTime.now();
+    if (value is DateTime) return value;
+    if (value is String) {
+      return DateTime.tryParse(value) ?? DateTime.now();
+    }
+    return DateTime.now();
+  }
+
+  return Product(
+    id: json['id'] ?? json['_id'] ?? '',
+    name: json['name'] ?? '',
+    description: json['description'],
+    price: parseDouble(json['price']),  // ← FIXED: handles String and num
+    unit: json['unit'] ?? 'KG',
+    category: json['category'] ?? '',
+    stock: parseInt(json['stock']),     // ← FIXED: handles String and num
+    images: json['images'] != null ? List<String>.from(json['images']) : [],
+    location: json['location'] ?? '',
+    isOrganic: json['isOrganic'] ?? false,
+    harvestDate: json['harvestDate'] ?? '',
+    expiryDate: json['expiryDate'],
+    farmerId: json['farmerId'] ?? '',
+    isAvailable: json['isAvailable'] ?? true,
+   
+  );
+}
+
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'description': description,
+      'price': price,
+      'unit': unit,
+      'category': category,
+      'stock': stock,
+      'images': images,
+      'location': location,
+      'isOrganic': isOrganic,
+      'harvestDate': harvestDate,
+      'expiryDate': expiryDate,
+    };
+  }
 }
 
 // Mock products for marketplace
 final List<Product> mockProducts = [
   Product(
     id: '1',
-    cropName: 'White Teff',
-    quantity: 25.5,
-    pricePerQuintal: 4800,
-    quality: 'Grade 1',
-    harvestDate: '2024-12-15',
-    location: 'Ada\'a, Oromia',
-    // farmerName: 'Tesfaye K.',
-    farmerId: 'f1',
-    imageUrl: 'assets/images/teff_product.jpg',
+    name: 'White Teff',
+    description: 'High quality white teff grain',
+    price: 4800,
+    unit: 'KG',
+    category: 'GRAINS',
+    stock: 25,
     images: ['assets/images/teff_product.jpg'],
+    location: 'Ada\'a, Oromia',
+    isOrganic: true,
+    harvestDate: '2024-12-15',
+    farmerId: 'f1',
   ),
   Product(
     id: '2',
-    cropName: 'Arabica Coffee',
-    quantity: 12.0,
-    pricePerQuintal: 12500,
-    quality: 'Grade 1',
-    harvestDate: '2024-11-20',
-    location: 'Yirgacheffe, SNNPR',
-    // farmerName: 'Almaz W.',
-    farmerId: 'f2',
-    imageUrl: 'assets/images/coffee_product.jpg',
+    name: 'Arabica Coffee',
+    description: 'Premium arabica coffee beans',
+    price: 12500,
+    unit: 'KG',
+    category: 'BEVERAGES',
+    stock: 12,
     images: ['assets/images/coffee_product.jpg'],
+    location: 'Yirgacheffe, SNNPR',
+    isOrganic: true,
+    harvestDate: '2024-11-20',
+    farmerId: 'f2',
   ),
   Product(
     id: '3',
-    cropName: 'Maize',
-    quantity: 50.0,
-    pricePerQuintal: 2900,
-    quality: 'Grade 2',
-    harvestDate: '2024-10-10',
-    location: 'Bako, Oromia',
-    // farmerName: 'Girma A.',
-    farmerId: 'f3',
-    imageUrl: 'assets/images/maize_product.jpg',
+    name: 'Maize',
+    description: 'Fresh maize crop',
+    price: 2900,
+    unit: 'KG',
+    category: 'GRAINS',
+    stock: 50,
     images: ['assets/images/maize_product.jpg'],
+    location: 'Bako, Oromia',
+    isOrganic: false,
+    harvestDate: '2024-10-10',
+    farmerId: 'f3',
   ),
 ];

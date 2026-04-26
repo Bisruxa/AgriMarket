@@ -9,13 +9,13 @@ class LoginForm extends StatefulWidget {
   final VoidCallback onSubmit;
 
   const LoginForm({
-    Key? key,
+    super.key,
     required this.formKey,
     required this.emailController,
     required this.passwordController,
     required this.isLoading,
     required this.onSubmit,
-  }) : super(key: key);
+  });
 
   @override
   State<LoginForm> createState() => _LoginFormState();
