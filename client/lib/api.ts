@@ -1,6 +1,8 @@
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+// smtg
+import { Product } from '@/types/product';
 
-type ApiResponse<T> = {
+export type ApiResponse<T> = {
   success: boolean;
   data?: T;
   message?: string;
@@ -12,6 +14,9 @@ type ApiResponse<T> = {
   };
   token?:string;
   errors?: { field: string; message: string }[];
+  total?: number;
+  pages?: number;
+  length?: number;
 };
 
 class ApiClient {
@@ -85,7 +90,6 @@ class ApiClient {
 
 export const api = new ApiClient(API_URL);
 
-// Auth API functions
 export const authApi = {
   register: (data: {
     name: string;
@@ -108,18 +112,13 @@ export const authApi = {
   logout: () => api.post('/auth/logout', {}),
 };
 
-// Products API functions
 export const productsApi = {
-  getAll: (params?: Record<string, string>) => {
-    const query = params ? '?' + new URLSearchParams(params).toString() : '';
-    return api.get(`/products${query}`);
-  },
-
-  getById: (id: string) => api.get(`/products/${id}`),
-
+  getMyProducts: (page: number, limit: number) => 
+    api.get<Product[]>(`/products/my-products?page=${page}&limit=${limit}`),
+  
   create: (data: unknown) => api.post('/products', data),
-
+  
   update: (id: string, data: unknown) => api.put(`/products/${id}`, data),
-
+  
   delete: (id: string) => api.delete(`/products/${id}`),
 };

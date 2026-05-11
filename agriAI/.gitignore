@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment files and environment variables
+venv/
+.env
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+
+# Data (Don't commit large datasets)
+data/raw/*
+data/processed/*
+data/synthetic/*
+!data/synthetic/.gitkeep  # Keep the folder structure, ignore contents
+
+# Models (Don't commit large model weights)
+models/*.pt
+models/*.pth
+models/*.pkl
+models/*.bin
+models/*.json
+
+models/*/*.json
+models/*/*.csv
+models/*/*.joblib
+
+models/.gitkeep  # Keep the folder structure, ignore contents
+
+# IDEs
+.vscode/
+.idea/

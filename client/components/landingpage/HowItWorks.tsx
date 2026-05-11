@@ -2,7 +2,7 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { motion, useScroll, useTransform, useSpring, useMotionValue } from 'framer-motion';
+import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 import { useRef } from 'react';
 import { useTranslations } from '@/components/hooks/useTranlations';
 import { useLanguage } from '@/app/context/LanguageContext';
@@ -13,15 +13,6 @@ const HowItWorks = () => {
   const { language } = useLanguage();
   const containerRef = useRef(null);
   const headingRef = useRef(null);
-<<<<<<< HEAD
-=======
-  
-  // Fixed: Properly define animations with motion values
-  const dotScale = useMotionValue(1);
-  const rotate = useMotionValue(0);
-  const scale = useMotionValue(1);
-
->>>>>>> 1ddc3e0fe5fdf9536a85c17659629fae5da5b4ec
   const { scrollYProgress } = useScroll({
     target: containerRef,
     offset: ["start start", "end end"]
@@ -32,7 +23,7 @@ const HowItWorks = () => {
     damping: 30,
     restDelta: 0.001
   });
-<<<<<<< HEAD
+
   const stepAnimations = [
     {
       rotate: useSpring(useTransform(smoothProgress, [0, 0.15, 0.85, 1], [0, 2, -2, 0]), { stiffness: 50, damping: 20 }),
@@ -56,9 +47,6 @@ const HowItWorks = () => {
     }
   ];
 
-=======
-  
->>>>>>> 1ddc3e0fe5fdf9536a85c17659629fae5da5b4ec
   const steps = [
     {
       title: t.howItWorks.steps.signup,
@@ -121,13 +109,8 @@ const HowItWorks = () => {
             {t.howItWorks.description}
           </motion.p>
         </motion.div>
-<<<<<<< HEAD
-
 
         {/* Steps */}
-=======
-        
->>>>>>> 1ddc3e0fe5fdf9536a85c17659629fae5da5b4ec
         <div className="space-y-24 relative">
           {/* Drawing line SVG with smooth animation */}
           <svg
@@ -151,30 +134,6 @@ const HowItWorks = () => {
 
           {steps.map((step, index) => {
             const animations = stepAnimations[index];
-            
-<<<<<<< HEAD
-=======
-            // eslint-disable-next-line react-hooks/rules-of-hooks
-            const rawRotate = useTransform(
-              smoothProgress,
-              [stepStart, stepStart + stepRange, stepEnd - stepRange, stepEnd],
-              [0, 2, -2, 0]
-            );
-            
-            // eslint-disable-next-line react-hooks/rules-of-hooks
-            const smoothRotate = useSpring(rawRotate, {
-              stiffness: 50,
-              damping: 20
-            });
-
-            // eslint-disable-next-line react-hooks/rules-of-hooks
-            const imageScale = useTransform(
-              smoothProgress,
-              [stepStart, stepStart + stepRange * 1.5],
-              [0.95, 1]
-            );
-            
->>>>>>> 1ddc3e0fe5fdf9536a85c17659629fae5da5b4ec
             return (
               <motion.div
                 key={index}
@@ -190,7 +149,7 @@ const HowItWorks = () => {
                   <motion.div
                     className="absolute left-1/2 bottom-0 w-4 h-4 bg-[#668B57] rounded-full transform -translate-x-1/2 translate-y-1/2 hidden md:block"
                     style={{
-                      scale: dotScale
+                      scale: animations.dotScale
                     }}
                   />
                 )}
@@ -199,8 +158,8 @@ const HowItWorks = () => {
                 <motion.div 
                   className={`${index % 2 !== 0 ? 'md:order-2' : ''}`}
                   style={{
-                    rotate: smoothRotate,
-                    scale: imageScale
+                    rotate: animations.rotate,
+                    scale: animations.scale
                   }}
                 >
                   <motion.div 
@@ -273,12 +232,8 @@ const HowItWorks = () => {
             );
           })}
         </div>
-<<<<<<< HEAD
 
         {/* CTA */}
-=======
-        
->>>>>>> 1ddc3e0fe5fdf9536a85c17659629fae5da5b4ec
         <motion.div 
           className="mt-24 text-center"
           initial={{ opacity: 0, y: 20 }}

@@ -1,12 +1,12 @@
 "use client";
 import React from "react";
 import Sidebar from "@/components/SideBar/sidebar";
-import { Trader_Links } from "@/lib/sidebarLinkContent";
+import {traderLinks} from "@/lib/sidebarLinkContent";
 
 const TraderSidebar = () => {
   return (
     <>
-      <Sidebar arr={Trader_Links} role={"trader"} />
+      <Sidebar arr={traderLinks} role={"trader"} />
     </>
   );
 };

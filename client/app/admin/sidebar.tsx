@@ -1,12 +1,12 @@
 "use client";
 import React from "react";
 import Sidebar from "@/components/SideBar/sidebar";
-import { Admin_Links } from "@/lib/sidebarLinkContent";
+import { adminLinks } from "@/lib/sidebarLinkContent";
 
 const AdminSidebar = () => {
   return (
     <>
-      <Sidebar arr={Admin_Links} role={"Admin"} />
+      <Sidebar arr={adminLinks} role={"Admin"} />
     </>
   );
 };

@@ -1,5 +1,4 @@
 'use client'
-
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -58,7 +57,6 @@ const Sidebar = () => {
     };
   }, [isMenuOpen]);
 
-  // Navigation items configuration
   const navItems: NavItem[] = [
     { href: "/Dashboard", label:t.sidebar.dashboard, icon: Home, section: t.sidebar.general },
     { href: "/companies", label: t.sidebar.market, icon: Factory, section: t.sidebar.general },
@@ -85,7 +83,6 @@ const Sidebar = () => {
   return (
     <>
       <div className="w-full absolute text-black z-30">
-        {/* Mobile Header */}
         <div className="bg-white top-0 w-full flex justify-between pb-1 fixed z-10 md:hidden h-20 items-center shadow-sm">
           <Link href="/" className="flex p-6 font-bold gap-2 text-xl">
             <LogoComponent />
@@ -102,7 +99,6 @@ const Sidebar = () => {
           </div>
         </div>
 
-        {/* Overlay - only shown on mobile when menu is open */}
         {isMenuOpen && (
           <div 
             className="fixed inset-0 bg-black/50 z-30 md:hidden"
@@ -110,7 +106,6 @@ const Sidebar = () => {
           />
         )}
 
-        {/* Sidebar - Always visible on desktop, slides in on mobile */}
         <div
           ref={menuRef}
           className={`
@@ -127,7 +122,6 @@ const Sidebar = () => {
             
             <hr className="my-2 border-0 h-px bg-linear-to-r from-transparent via-gray-300 to-transparent" />
 
-            {/* Dynamic Navigation Sections */}
             {Object.entries(groupedItems).map(([section, items]) => (
               <div key={section}>
                 <div className="flex pl-6">
@@ -172,7 +166,6 @@ const Sidebar = () => {
             ))}
           </div>
 
-          {/* Logout Section */}
           <div className="p-4 mt-auto border-t border-gray-200">
             <button
               onClick={handleLogout}
@@ -185,8 +178,6 @@ const Sidebar = () => {
             </button>
           </div>
         </div>
-
-        
       </div>
     </>
   );
