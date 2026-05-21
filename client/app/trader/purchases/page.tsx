@@ -69,7 +69,7 @@ const ProductsTable = () => {
     maxPrice: priceRange.max || undefined,
   });
 
-  const products= data?.products || [];
+  const products: Product[] = data?.products || [];
   const totalPages = data?.pages || 1;
   const totalItems = data?.total || 0;
 
@@ -103,7 +103,7 @@ const ProductsTable = () => {
   if (error) {
     return (
       <>
-        {/* <Header /> */}
+        <Header />
         <div className="container mx-auto px-4 py-8">
           <div className="flex justify-center items-center min-h-[400px]">
             <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
@@ -121,7 +121,7 @@ const ProductsTable = () => {
 
   return (
     <>
-      {/* <Header /> */}
+      <Header />
       <div className="container mx-auto px-4 py-8">
         <div className="mb-6">
           <h1 className="font-bold text-3xl text-[#2A5A2A] mb-2">
@@ -238,7 +238,7 @@ const ProductsTable = () => {
                     <TableCell className="py-4 text-sm px-5">
                       <div>
                         <p className="font-medium">{product.farmer?.name}</p>
-                        {/* <p className="text-xs text-gray-500">{product.farmer}</p> */}
+                        <p className="text-xs text-gray-500">{product.farmer?.email}</p>
                       </div>
                     </TableCell>
                     <TableCell className="py-4 text-sm px-5">
@@ -262,12 +262,12 @@ const ProductsTable = () => {
                         {product.unit}
                       </span>
                     </TableCell>
-                    {/* <TableCell className="py-4 text-sm px-5 text-gray-600">
-                      {product?.location}
+                    <TableCell className="py-4 text-sm px-5 text-gray-600">
+                      {product.location}
                     </TableCell>
                     <TableCell className="py-4 text-sm px-5 text-gray-600">
                       {formatDate(product.harvestDate)}
-                    </TableCell> */}
+                    </TableCell>
                     <TableCell className="py-4 text-sm px-5">
                       <Button
                         size="sm"

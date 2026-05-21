@@ -35,7 +35,7 @@ export interface CropFormData {
 
 interface CropFormProps {
   initialData?: CropFormData
-  productId?: string | null
+  productId?: string
   onSubmit?: (data: CropFormData) => void
   onClose?: () => void
   isLoading?: boolean
