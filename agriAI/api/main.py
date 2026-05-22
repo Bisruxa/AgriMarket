@@ -32,26 +32,37 @@ app.add_middleware(
 
 @app.on_event("startup")
 def load_all_services() -> None:
-    app.state.price_service = service_factory.get_service(
-        "price_forecaster",
-        model_path=os.getenv(
-            "PRICE_MODEL_PATH", "models/price_forecaster/xgboost_price_forecaster.json"
-        ),
-        metadata_path=os.getenv(
-            "PRICE_METADATA_PATH", "models/price_forecaster/training_metadata.json"
-        ),
-        data_path=os.getenv("PRICE_DATA_PATH", "data/synthetic/crop_price_data.csv"),
-    )
-    app.state.recommender_service = service_factory.get_service(
-        "crop_recommender",
-        model_path=os.getenv(
-            "RECOMMENDER_MODEL_PATH",
-            "models/crop_recommender/xgboost_crop_recommender.json",
-        ),
-        encoder_path=os.getenv(
-            "RECOMMENDER_ENCODER_PATH", "models/crop_recommender/label_encoder.joblib"
-        ),
-    )
+    try:
+        app.state.price_service = service_factory.get_service(
+            "price_forecaster",
+            model_path=os.getenv(
+                "PRICE_MODEL_PATH", "models/price_forecaster/xgboost_price_forecaster.json"
+            ),
+            metadata_path=os.getenv(
+                "PRICE_METADATA_PATH", "models/price_forecaster/training_metadata.json"
+            ),
+            data_path=os.getenv("PRICE_DATA_PATH", "data/processed/crop_price_history_v2.csv"),
+        )
+        print("✅  PriceForecasterService loaded.")
+    except Exception as exc:
+        app.state.price_service = None
+        print(f"⚠️  PriceForecasterService failed to load: {exc}")
+
+    try:
+        app.state.recommender_service = service_factory.get_service(
+            "crop_recommender",
+            model_path=os.getenv(
+                "RECOMMENDER_MODEL_PATH",
+                "models/crop_recommender/xgboost_crop_recommender.json",
+            ),
+            encoder_path=os.getenv(
+                "RECOMMENDER_ENCODER_PATH", "models/crop_recommender/label_encoder.joblib"
+            ),
+        )
+        print("✅  CropRecommenderService loaded.")
+    except Exception as exc:
+        app.state.recommender_service = None
+        print(f"⚠️  CropRecommenderService failed to load: {exc}")
 
 
 @app.get("/health")
