@@ -5,6 +5,7 @@ from typing import Any, Dict
 
 import joblib
 import pandas as pd
+import torch
 import xgboost as xgb
 from sklearn.preprocessing import LabelEncoder
 
@@ -27,6 +28,10 @@ class CropRecommenderService(InferenceService):
         """Loads the XGBoost model from the specified path."""
         model = xgb.XGBClassifier()
         model.load_model(self.model_path)
+        
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        model.set_params(device=device)
+        
         return model
 
     def _load_encoder(self) -> None:

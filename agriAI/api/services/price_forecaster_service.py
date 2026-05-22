@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, Dict
 
 import pandas as pd
+import torch
 import xgboost as xgb
 
 from models.price_forecaster import (
@@ -53,6 +54,10 @@ class PriceForecasterService(InferenceService):
 
         model = xgb.Booster()
         model.load_model(str(model_path))
+        
+        device = "cuda" if torch.cuda.is_available() else "cpu"
+        model.set_param({"device": device})
+        
         return model
 
     def _load_metadata(self) -> None:

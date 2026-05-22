@@ -5,6 +5,7 @@ import json
 import sys
 from pathlib import Path
 
+import torch
 import xgboost as xgb
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -71,6 +72,9 @@ def main() -> int:
     train_matrix = xgb.DMatrix(dataset.train_x, label=dataset.train_y, feature_names=dataset.feature_columns)
     valid_matrix = xgb.DMatrix(dataset.valid_x, label=dataset.valid_y, feature_names=dataset.feature_columns)
 
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    print(f"Training on device: {device}")
+
     params = {
         "objective": "reg:squarederror",
         "eval_metric": "rmse",
@@ -79,6 +83,8 @@ def main() -> int:
         "subsample": args.subsample,
         "colsample_bytree": args.colsample_bytree,
         "seed": args.seed,
+        "tree_method": "hist",
+        "device": device,
     }
     evaluation_sets = [(train_matrix, "train"), (valid_matrix, "valid")]
     booster = xgb.train(

@@ -10,7 +10,6 @@ interface StatusCardProps {
 const StatusCard = ({ stats, isLoading }: StatusCardProps) => {
   const t = useTranslations();
   
-  // Extract the actual data if it's wrapped
   const actualStats = stats && 'data' in stats ? stats.data : stats;
   
   const statConfigs = [

@@ -6,10 +6,6 @@ import Image from "next/image";
 const WeatherCard = () => {
   const [unit, setUnit] = useState("C");
   
-  const toggleUnit = () => {
-    setUnit(unit === "C" ? "F" : "C");
-  };
-
   const weather = {
     location: "Addis Ababa, Ethiopia",
     day: "Sunday",
@@ -32,11 +28,11 @@ const WeatherCard = () => {
     unit === "C" ? weather.lowC : ((weather.lowC * 9) / 5 + 32).toFixed(1);
 
   return (
-    <div className="bg-linear-to-br h-50 from-green-50 to-emerald-50 p-5 border border-green-100 transition-all duration-300">
-      <div className="flex justify-between items-center mb-4">
+    <div className="h-full rounded-lg border border-green-100 bg-linear-to-br from-green-50 to-emerald-50 p-4 transition-all duration-300 sm:p-5">
+      <div className="mb-4 flex items-center justify-between gap-2">
         <div className="flex items-center gap-1.5 text-green-700 bg-white/80 backdrop-blur-sm py-1.5 px-3 rounded-full shadow-sm border border-green-200">
           <MapPin size={14} className="text-green-600" />
-          <span className="text-xs font-medium truncate max-w-35">{weather.location}</span>
+          <span className="max-w-32 truncate text-xs font-medium sm:max-w-35">{weather.location}</span>
         </div>
         <div className="flex bg-gray-800 rounded-full p-0.5 shadow-inner">
           <button
@@ -62,7 +58,7 @@ const WeatherCard = () => {
         </div>
       </div>
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
         <div>
           <h3 className="text-xl font-bold text-gray-800">{weather.day}</h3>
           <p className="text-sm text-gray-500 mt-0.5">{weather.date}</p>
@@ -73,7 +69,7 @@ const WeatherCard = () => {
           </div>
         </div>
         
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 self-start sm:self-auto">
           <div className="relative">
             <Image 
               width={60} 
@@ -89,7 +85,7 @@ const WeatherCard = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-3  pt-4 border-t border-green-200/50">
+      <div className="grid grid-cols-1 gap-3 border-t border-green-200/50 pt-4 sm:grid-cols-3">
         <div className="flex items-center gap-2">
           <div className="p-1.5 bg-amber-100 rounded-lg">
             <Sunrise size={16} className="text-amber-600" />

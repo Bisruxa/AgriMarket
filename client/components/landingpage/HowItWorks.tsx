@@ -23,7 +23,6 @@ const HowItWorks = () => {
     damping: 30,
     restDelta: 0.001
   });
-
   const stepAnimations = [
     {
       rotate: useSpring(useTransform(smoothProgress, [0, 0.15, 0.85, 1], [0, 2, -2, 0]), { stiffness: 50, damping: 20 }),
@@ -69,7 +68,6 @@ const HowItWorks = () => {
     {
       title: t.howItWorks.steps.connectGrow,
       description: t.howItWorks.stepDescriptions.connectGrow,
-      icon: <Handshake className="text-[#5B8C51]" size={48} />,
       link: "/signup",
       image: "/Crop.jpg"
     },
@@ -167,18 +165,12 @@ const HowItWorks = () => {
                     whileHover={{ scale: 1.02 }}
                     transition={{ type: "spring", stiffness: 300, damping: 20 }}
                   >
-                    {step.icon ? (
-                      <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                        {step.icon}
-                      </div>
-                    ) : (
-                      <Image
-                        src={step.image}
-                        alt={step.title}
-                        fill
-                        className="object-cover"
-                      />
-                    )}
+                    <Image
+                      src={step.image}
+                      alt={step.title}
+                      fill
+                      className="object-cover"
+                    />
                   </motion.div>
                 </motion.div>
 

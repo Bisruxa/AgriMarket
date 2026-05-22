@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import torch
 import xgboost as xgb
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
@@ -24,13 +25,14 @@ def train_and_save_model(data_path, model_output_dir):
     )
 
     print("Training XGBoost model...")
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    print(f"Training on device: {device}")
     model = xgb.XGBClassifier(
         objective="multi:softprob",
         num_class=len(label_encoder.classes_),
         eval_metric="mlogloss",
-        # Add GPU support if available
-        # tree_method='hist',
-        # device='cuda'
+        tree_method="hist",
+        device=device
     )
     model.fit(X_train, y_train)
 
