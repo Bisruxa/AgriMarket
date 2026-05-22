@@ -55,24 +55,21 @@ export default function SignInPage() {
       if(response.user){
         login(response.user);
         localStorage.setItem('user',JSON.stringify(response.user));
-        const userRole = response.user.role?.toUpperCase();
-        let redirectPath = '';
-        switch(userRole){
-          case 'ADMIN':
-            redirectPath='/admin/dashboard';
-            break;
-           case 'FARMER':
-            redirectPath = '/farmer/dashboard';
-            break;
-          case 'TRADER':
-          // case 'TRADER':
-            redirectPath = '/trader/dashboard';
-            break 
-            default: redirectPath = role === 'FARMER' ? '/farmer/dashboard' : '/buyer/dashboard';
+        
+        // Redirect based on actual user role from API response
+        const userRole = response.user.role;
+        let redirectPath = '/';
+        
+        if (userRole === 'FARMER') {
+          redirectPath = '/farmer/dashboard';
+        } else if (userRole === 'TRADER') {
+          redirectPath = '/trader/dashboard';
+        } else if (userRole === 'ADMIN') {
+          redirectPath = '/admin/dashboard';
         }
+        
         router.push(redirectPath);
       }
-      
     } catch {
       setError(t.signin.errors.invalidCredentials);
     } finally {

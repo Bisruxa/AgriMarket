@@ -1,0 +1,107 @@
+const {
+  getHealth,
+  recommendCrop,
+  predictPrice,
+} = require('../services/agriai.service');
+
+function requireFields(body, fields) {
+  const missing = fields.filter((field) => body[field] === undefined || body[field] === null || body[field] === '');
+  return missing;
+}
+
+// @desc    Check AgriAI upstream health
+// @route   GET /api/agriai/health
+// @access  Private
+exports.getAgriAIHealth = async (req, res, next) => {
+  try {
+    const data = await getHealth();
+    res.status(200).json({
+      success: true,
+      data,
+    });
+  } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({ success: false, message: error.message });
+    }
+    next(error);
+  }
+};
+
+// @desc    Get crop recommendations from AgriAI
+// @route   POST /api/agriai/recommend/crop
+// @access  Private
+exports.recommendCropFromAI = async (req, res, next) => {
+  try {
+    const requiredFields = [
+      'nitrogen',
+      'phosphorus',
+      'potassium',
+      'temperature',
+      'humidity',
+      'ph',
+      'rainfall',
+    ];
+    const missing = requireFields(req.body, requiredFields);
+    if (missing.length) {
+      return res.status(400).json({
+        success: false,
+        message: `Missing required fields: ${missing.join(', ')}`,
+      });
+    }
+
+    const payload = {
+      nitrogen: Number(req.body.nitrogen),
+      phosphorus: Number(req.body.phosphorus),
+      potassium: Number(req.body.potassium),
+      temperature: Number(req.body.temperature),
+      humidity: Number(req.body.humidity),
+      ph: Number(req.body.ph),
+      rainfall: Number(req.body.rainfall),
+    };
+
+    const data = await recommendCrop(payload);
+    res.status(200).json({
+      success: true,
+      data,
+    });
+  } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({ success: false, message: error.message });
+    }
+    next(error);
+  }
+};
+
+// @desc    Get crop price forecast from AgriAI
+// @route   POST /api/agriai/predict/price
+// @access  Private
+exports.predictPriceFromAI = async (req, res, next) => {
+  try {
+    const requiredFields = ['crop', 'start_date', 'end_date'];
+    const missing = requireFields(req.body, requiredFields);
+    if (missing.length) {
+      return res.status(400).json({
+        success: false,
+        message: `Missing required fields: ${missing.join(', ')}`,
+      });
+    }
+
+    const payload = {
+      crop: String(req.body.crop),
+      start_date: String(req.body.start_date),
+      end_date: String(req.body.end_date),
+    };
+
+    const data = await predictPrice(payload);
+    res.status(200).json({
+      success: true,
+      count: Array.isArray(data) ? data.length : 0,
+      data,
+    });
+  } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({ success: false, message: error.message });
+    }
+    next(error);
+  }
+};

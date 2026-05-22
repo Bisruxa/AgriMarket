@@ -2,7 +2,7 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { motion, useScroll, useTransform, useSpring, useMotionValue } from 'framer-motion';
+import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
 import { useRef } from 'react';
 import { useTranslations } from '@/components/hooks/useTranlations';
 import { useLanguage } from '@/app/context/LanguageContext';
@@ -23,7 +23,6 @@ const HowItWorks = () => {
     damping: 30,
     restDelta: 0.001
   });
-  
   const stepAnimations = [
     {
       rotate: useSpring(useTransform(smoothProgress, [0, 0.15, 0.85, 1], [0, 2, -2, 0]), { stiffness: 50, damping: 20 }),
@@ -109,7 +108,6 @@ const HowItWorks = () => {
           </motion.p>
         </motion.div>
 
-
         {/* Steps */}
         <div className="space-y-24 relative">
           {/* Drawing line SVG with smooth animation */}
@@ -134,7 +132,6 @@ const HowItWorks = () => {
 
           {steps.map((step, index) => {
             const animations = stepAnimations[index];
-            
             return (
               <motion.div
                 key={index}
