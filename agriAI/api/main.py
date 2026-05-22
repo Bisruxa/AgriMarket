@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import os
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
@@ -10,15 +10,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from .schemas import (
     CropRecommendationRequest,
     CropRecommendationResponse,
-    MetadataResponse,
     PriceForecastRequest,
     PriceForecastResponse,
+    PriceForecasterMetadataResponse,
 )
 from .services.service_factory import service_factory
 
 load_dotenv()
 
-app = FastAPI(title="AgriAI Service", version="0.2.1")
+app = FastAPI(title="AgriAI Service", version="0.3.0")
 
 allowed_origins = os.getenv("AGRIAI_ALLOWED_ORIGINS", "http://localhost:3000").split(",")
 app.add_middleware(
@@ -70,34 +70,57 @@ def health_check() -> Dict[str, str]:
     return {"status": "ok", "service": "AgriAI"}
 
 
-@app.get("/price-forecaster/metadata", response_model=MetadataResponse)
+# ── Price Forecaster ────────────────────────────────────────────────────
+
+
+@app.get(
+    "/price-forecaster/metadata",
+    response_model=PriceForecasterMetadataResponse,
+)
 def get_price_forecaster_metadata() -> Dict[str, Any]:
+    if app.state.price_service is None:
+        raise HTTPException(status_code=503, detail="Price forecaster service is not available.")
     meta = app.state.price_service.get_metadata()
     return {
         "model_type": "price_forecaster",
-        "model_version": meta.get("model_version", "v1"),
         "crops": meta.get("crops", []),
+        "regions": meta.get("regions", []),
+        "forecast_horizon_months": meta.get("forecast_horizon_months", 1),
+        "validation_rmse": meta.get("validation_rmse", 0.0),
+        "feature_notes": meta.get("feature_notes"),
     }
 
 
-@app.post("/predict/price", response_model=List[PriceForecastResponse])
-def predict_price(request: PriceForecastRequest) -> List[Dict[str, Any]]:
+@app.post(
+    "/predict/price",
+    response_model=PriceForecastResponse,
+)
+def predict_price(request: PriceForecastRequest) -> Dict[str, Any]:
+    if app.state.price_service is None:
+        raise HTTPException(status_code=503, detail="Price forecaster service is not available.")
     try:
-        predictions = app.state.price_service.predict(request.model_dump())
-        if predictions.empty:
-            return []
-
-        formatted = []
-        for idx, row in predictions.iterrows():
-            formatted.append({
-                "date": idx.date().isoformat(),
-                "price": float(row["prediction"]),
-            })
-        return formatted
+        result = app.state.price_service.predict(request.model_dump())
+        return {
+            "crop_name": result.crop_name,
+            "region": result.region,
+            "year": result.year,
+            "month": result.month,
+            "predicted_price": result.predicted_price,
+            "confidence_interval": list(result.confidence_interval),
+            "trend": result.trend,
+            "trend_percentage": result.trend_percentage,
+        }
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {exc}") from exc
+        raise HTTPException(
+            status_code=500, detail=f"An unexpected error occurred: {exc}"
+        ) from exc
+
+
+# ── Crop Recommender ────────────────────────────────────────────────────
 
 
 @app.post("/recommend/crop", response_model=CropRecommendationResponse)
@@ -105,4 +128,6 @@ def recommend_crop(request: CropRecommendationRequest) -> Dict[str, Any]:
     try:
         return app.state.recommender_service.predict(request.model_dump())
     except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {exc}") from exc
+        raise HTTPException(
+            status_code=500, detail=f"An unexpected error occurred: {exc}"
+        ) from exc

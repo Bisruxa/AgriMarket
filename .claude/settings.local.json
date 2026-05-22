@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(~/venvwsl/bin/python *)",
+      "Read(//c/Users/kalfarm/venvwsl/**)",
+      "Read(//c//**)",
+      "Bash(wsl ls *)",
+      "Bash(wsl find *)"
+    ]
+  }
+}
