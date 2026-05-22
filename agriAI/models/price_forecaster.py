@@ -8,9 +8,7 @@ import numpy as np
 import pandas as pd
 
 
-GROUP_COLUMNS = ["Crop Name", "Region"]
-LAG_WEEKS = (1, 2, 4, 8, 12)
-ROLLING_WINDOWS = (4, 8, 12)
+GROUP_COLUMNS = ["crop_name", "region"]
 
 
 @dataclass
@@ -27,42 +25,18 @@ class DatasetBundle:
 
 
 def load_price_data(csv_path: str | Path) -> pd.DataFrame:
-    data = pd.read_csv(csv_path, parse_dates=["Date"])
+    data = pd.read_csv(csv_path)
+    data["Date"] = pd.to_datetime(data[["year", "month"]].assign(day=1))
     data = data.sort_values(GROUP_COLUMNS + ["Date"]).reset_index(drop=True)
     return data
 
 
 def build_feature_frame(price_data: pd.DataFrame, forecast_horizon: int = 1) -> pd.DataFrame:
     frame = price_data.copy()
-    frame["week_of_year"] = frame["Date"].dt.isocalendar().week.astype(int)
-    frame["month"] = frame["Date"].dt.month.astype(int)
-    frame["quarter"] = frame["Date"].dt.quarter.astype(int)
-    frame["week_sin"] = np.sin(2 * np.pi * frame["week_of_year"] / 52.0)
-    frame["week_cos"] = np.cos(2 * np.pi * frame["week_of_year"] / 52.0)
-    frame["time_index"] = ((frame["Date"] - frame["Date"].min()).dt.days // 7).astype(np.int64)
-
-    grouped_prices = frame.groupby(GROUP_COLUMNS)["Price"]
-    for lag in LAG_WEEKS:
-        frame[f"price_lag_{lag}"] = grouped_prices.shift(lag)
-
-    shifted_prices = grouped_prices.shift(1)
-    grouped_shifted = shifted_prices.groupby([frame["Crop Name"], frame["Region"]])
-    for window in ROLLING_WINDOWS:
-        frame[f"price_roll_mean_{window}"] = grouped_shifted.transform(
-            lambda values: values.rolling(window).mean()
-        )
-        frame[f"price_roll_std_{window}"] = grouped_shifted.transform(
-            lambda values: values.rolling(window).std()
-        )
-        frame[f"price_roll_min_{window}"] = grouped_shifted.transform(
-            lambda values: values.rolling(window).min()
-        )
-        frame[f"price_roll_max_{window}"] = grouped_shifted.transform(
-            lambda values: values.rolling(window).max()
-        )
-
-    frame["target_price"] = grouped_prices.shift(-forecast_horizon)
-    frame["target_date"] = frame.groupby(GROUP_COLUMNS)["Date"].shift(-forecast_horizon)
+    grouped_prices = frame.groupby(GROUP_COLUMNS)
+    
+    frame["target_price"] = grouped_prices["price_per_kg"].shift(-forecast_horizon)
+    frame["target_date"] = grouped_prices["Date"].shift(-forecast_horizon)
     return frame
 
 
@@ -75,26 +49,22 @@ def prepare_training_data(
     featured = featured.dropna(subset=["target_price"]).copy()
 
     numeric_columns = [
-        "Year",
+        "year",
         "month",
-        "quarter",
-        "week_of_year",
-        "week_sin",
-        "week_cos",
-        "time_index",
-        *[f"price_lag_{lag}" for lag in LAG_WEEKS],
-        *[f"price_roll_mean_{window}" for window in ROLLING_WINDOWS],
-        *[f"price_roll_std_{window}" for window in ROLLING_WINDOWS],
-        *[f"price_roll_min_{window}" for window in ROLLING_WINDOWS],
-        *[f"price_roll_max_{window}" for window in ROLLING_WINDOWS],
+        "inflation_index",
+        "lag_1m",
+        "lag_3m",
+        "lag_6m",
+        "lag_12m",
+        "rolling_3m_avg",
     ]
     model_frame = featured[
-        ["Date", "target_price", "Crop Name", "Region", "Season", *numeric_columns]
+        ["Date", "target_price", "crop_name", "region", *numeric_columns]
     ].dropna()
-    context_frame = model_frame[["Date", "Crop Name", "Region", "Season"]].copy()
+    context_frame = model_frame[["Date", "crop_name", "region"]].copy()
     encoded_frame = pd.get_dummies(
         model_frame,
-        columns=["Crop Name", "Region", "Season"],
+        columns=["crop_name", "region"],
         dtype=float,
     )
 
@@ -132,8 +102,8 @@ def identify_feature_gaps(price_data: pd.DataFrame) -> list[str]:
         "This is enough for a baseline forecaster, but it cannot explain shocks from weather, transport, or input-cost changes.",
     ]
 
-    crop_count = price_data["Crop Name"].nunique()
-    region_count = price_data["Region"].nunique()
+    crop_count = price_data["crop_name"].nunique()
+    region_count = price_data["region"].nunique()
     notes.append(
         f"The model learns {crop_count} crop patterns across {region_count} regions using lagged price history."
     )
@@ -170,7 +140,7 @@ def save_training_metadata(
         "train_rows": train_rows,
         "valid_rows": valid_rows,
         "train_end_date": train_end_date,
-        "forecast_horizon_weeks": forecast_horizon,
+        "forecast_horizon_months": forecast_horizon,
         "feature_notes": feature_notes,
     }
     Path(output_path).write_text(json.dumps(payload, indent=2), encoding="utf-8")

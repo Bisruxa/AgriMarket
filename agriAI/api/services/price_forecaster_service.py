@@ -10,8 +10,6 @@ import torch
 import xgboost as xgb
 
 from models.price_forecaster import (
-    LAG_WEEKS,
-    ROLLING_WINDOWS,
     build_feature_frame,
     load_price_data,
 )
@@ -38,7 +36,7 @@ class PriceForecasterService(InferenceService):
         data_path = Path(
             os.getenv(
                 "AGRIAI_PRICE_DATA",
-                str(root / "data" / "synthetic" / "crop_price_data.csv"),
+                str(root / "data" / "processed" / "crop_price_history_v2.csv"),
             )
         )
         return cls(
@@ -66,7 +64,7 @@ class PriceForecasterService(InferenceService):
 
         self.metadata = json.loads(self.metadata_path.read_text(encoding="utf-8"))
         self.feature_columns = self.metadata.get("feature_columns", [])
-        self.forecast_horizon_weeks = int(self.metadata.get("forecast_horizon_weeks", 1))
+        self.forecast_horizon_months = int(self.metadata.get("forecast_horizon_months", 1))
         self.feature_notes = self.metadata.get("feature_notes", [])
         self.model_version = self.metadata.get("model_version", "price_forecaster_xgboost")
         self.supported_crops = self.metadata.get("crops", [])
@@ -79,28 +77,24 @@ class PriceForecasterService(InferenceService):
             raise FileNotFoundError(f"Missing price data file: {self.data_path}")
 
         self.price_data = load_price_data(self.data_path)
-        self.available_crops = sorted(self.price_data["Crop Name"].unique().tolist())
-        self.available_regions = sorted(self.price_data["Region"].unique().tolist())
+        self.available_crops = sorted(self.price_data["crop_name"].unique().tolist())
+        self.available_regions = sorted(self.price_data["region"].unique().tolist())
         self.feature_frame = build_feature_frame(
             self.price_data,
-            forecast_horizon=self.forecast_horizon_weeks,
+            forecast_horizon=self.forecast_horizon_months,
         )
         self.numeric_columns = self._build_numeric_columns()
 
     def _build_numeric_columns(self) -> list[str]:
         return [
-            "Year",
+            "year",
             "month",
-            "quarter",
-            "week_of_year",
-            "week_sin",
-            "week_cos",
-            "time_index",
-            *[f"price_lag_{lag}" for lag in LAG_WEEKS],
-            *[f"price_roll_mean_{window}" for window in ROLLING_WINDOWS],
-            *[f"price_roll_std_{window}" for window in ROLLING_WINDOWS],
-            *[f"price_roll_min_{window}" for window in ROLLING_WINDOWS],
-            *[f"price_roll_max_{window}" for window in ROLLING_WINDOWS],
+            "inflation_index",
+            "lag_1m",
+            "lag_3m",
+            "lag_6m",
+            "lag_12m",
+            "rolling_3m_avg",
         ]
 
     def _resolve_crop_name(self, requested: str) -> str:
@@ -113,11 +107,11 @@ class PriceForecasterService(InferenceService):
         )
 
     def _encode_features(self, rows: pd.DataFrame) -> pd.DataFrame:
-        base_columns = ["Date", "Crop Name", "Region", "Season", *self.numeric_columns]
+        base_columns = ["Date", "crop_name", "region", *self.numeric_columns]
         model_frame = rows[base_columns].copy()
         encoded = pd.get_dummies(
             model_frame,
-            columns=["Crop Name", "Region", "Season"],
+            columns=["crop_name", "region"],
             dtype=float,
         )
 
@@ -141,7 +135,7 @@ class PriceForecasterService(InferenceService):
             raise ValueError("start_date must be less than or equal to end_date")
 
         rows = self.feature_frame[
-            (self.feature_frame["Crop Name"] == crop_name)
+            (self.feature_frame["crop_name"] == crop_name)
             & (self.feature_frame["target_date"] >= start_date)
             & (self.feature_frame["target_date"] <= end_date)
         ].copy()
@@ -173,7 +167,7 @@ class PriceForecasterService(InferenceService):
     def get_metadata(self) -> Dict[str, Any]:
         return {
             "crops": self.supported_crops or self.available_crops,
-            "forecast_horizon_weeks": self.forecast_horizon_weeks,
+            "forecast_horizon_months": self.forecast_horizon_months,
             "feature_notes": self.feature_notes,
             "model_version": self.model_version,
         }

@@ -24,7 +24,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Train an XGBoost crop price forecaster.")
     parser.add_argument(
         "--data",
-        default=str(PROJECT_ROOT / "data" / "synthetic" / "crop_price_data.csv"),
+        default=str(PROJECT_ROOT / "data" / "processed" / "crop_price_history_v2.csv"),
         help="Path to the crop price CSV file.",
     )
     parser.add_argument(
@@ -41,7 +41,7 @@ def parse_args() -> argparse.Namespace:
         "--forecast-horizon",
         type=int,
         default=1,
-        help="Number of weeks ahead to predict.",
+        help="Number of months ahead to predict.",
     )
     parser.add_argument("--num-round", type=int, default=300, help="Number of boosting rounds.")
     parser.add_argument("--eta", type=float, default=0.05, help="Learning rate.")
@@ -112,7 +112,7 @@ def main() -> int:
         feature_notes=dataset.feature_notes,
         train_end_date=args.train_end_date,
         forecast_horizon=args.forecast_horizon,
-        crops=price_data["Crop Name"].unique().tolist(),
+        crops=price_data["crop_name"].unique().tolist(),
     )
 
     dataset.valid_context["prediction"] = predictions
