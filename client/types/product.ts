@@ -1,6 +1,4 @@
 export interface Product {
-  location: string;
-  harvestDate: string;
   id: string;
   name: string;
   category: string;
