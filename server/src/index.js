@@ -55,6 +55,10 @@ app.use('/api/auth', require('./routes/auth.routes'));
 app.use('/api/user', require('./routes/user.routes'));
 app.use('/api/products', require('./routes/product.routes'));
 app.use('/api/admin', require('./routes/admin.routes'));
+app.use('/api/farms', require('./routes/farm.routes'));
+app.use('/api/weather', require('./routes/weather.routes'));
+app.use('/api/market', require('./routes/market.routes'));
+app.use('/api/agriai', require('./routes/agriai.routes'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
