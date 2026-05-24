@@ -11,7 +11,7 @@ dev-client:
 	cd client && npm run dev
 
 dev-ai:
-	cd agriAI && venv/bin/python -m uvicorn api.main:app --reload --port 8000
+	cd agriAI && ~/venvwsl/bin/python -m uvicorn api.main:app --reload --port 8000
 
 # ── Install everything ──
 install: install-js install-py
