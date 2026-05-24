@@ -53,7 +53,7 @@ def load_all_services() -> None:
             "crop_recommender",
             model_path=os.getenv(
                 "RECOMMENDER_MODEL_PATH",
-                "models/crop_recommender/xgboost_crop_recommender.json",
+                "models/crop_recommender/xgboost_crop_recommender.joblib",
             ),
             encoder_path=os.getenv(
                 "RECOMMENDER_ENCODER_PATH", "models/crop_recommender/label_encoder.joblib"

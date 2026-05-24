@@ -31,5 +31,8 @@ db-reset:
 	cd server && npx prisma migrate reset
 
 # ── ML model training ──
-train:
-	cd agriAI && venv/bin/python scripts/train_all.py
+train-price:
+	cd agriAI && ~/venvwsl/bin/python scripts/ml_service/train_price_predictor.py
+
+train-recomm:
+	cd agriAI && ~/venvwsl/bin/python scripts/ml_service/train_crop_recommender.py

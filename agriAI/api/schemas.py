@@ -46,6 +46,10 @@ class CropRecommendationRequest(BaseModel):
     humidity: float
     ph: float
     rainfall: float
+    soil_color: Optional[str] = Field(
+        default="brown",
+        description="Optional soil color category. Defaults to brown if omitted.",
+    )
 
 
 class CropRecommendation(BaseModel):
