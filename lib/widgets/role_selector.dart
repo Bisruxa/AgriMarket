@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/user_model.dart';
+import '../theme/app_theme.dart';
 
 class RoleSelector extends StatelessWidget {
   final UserRole selectedRole;
@@ -14,82 +15,123 @@ class RoleSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'I want to register as',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF2A5A2A),
-          ),
+        _RoleCard(
+          role: UserRole.farmer,
+          selectedRole: selectedRole,
+          onTap: onRoleSelected,
+          icon: Icons.agriculture_rounded,
+          label: 'Farmer',
+          description: 'Sell crops, get AI recommendations',
+          gradient: AppColors.primaryGradient,
         ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            Expanded(child: _buildRoleCard(
-              role: UserRole.farmer,
-              icon: Icons.agriculture,
-              label: 'Farmer',
-            )),
-            const SizedBox(width: 16),
-            Expanded(child: _buildRoleCard(
-              role: UserRole.trader,
-              icon: Icons.business_center,
-              label: 'Trader',
-            )),
-          ],
+        const SizedBox(height: 14),
+        _RoleCard(
+          role: UserRole.trader,
+          selectedRole: selectedRole,
+          onTap: onRoleSelected,
+          icon: Icons.storefront_rounded,
+          label: 'Trader',
+          description: 'Buy from farmers, manage orders',
+          gradient: AppColors.traderGradient,
         ),
       ],
     );
   }
+}
 
-  Widget _buildRoleCard({
-    required UserRole role,
-    required IconData icon,
-    required String label,
-  }) {
+class _RoleCard extends StatelessWidget {
+  final UserRole role;
+  final UserRole selectedRole;
+  final Function(UserRole) onTap;
+  final IconData icon;
+  final String label;
+  final String description;
+  final LinearGradient gradient;
+
+  const _RoleCard({
+    required this.role,
+    required this.selectedRole,
+    required this.onTap,
+    required this.icon,
+    required this.label,
+    required this.description,
+    required this.gradient,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     final isSelected = selectedRole == role;
-    
+
     return GestureDetector(
-      onTap: () => onRoleSelected(role),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 20),
+      onTap: () => onTap(role),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(18),
         decoration: BoxDecoration(
-          gradient: isSelected
-              ? const LinearGradient(
-                  colors: [Color(0xFF2A5A2A), Color(0xFF4CAF50)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                )
-              : null,
+          gradient: isSelected ? gradient : null,
           color: isSelected ? null : Colors.white,
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: isSelected ? Colors.transparent : Colors.grey.shade300,
+            color: isSelected ? Colors.transparent : AppColors.border,
             width: 1.5,
           ),
-          borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: isSelected 
-                  ? const Color(0xFF2A5A2A).withOpacity(0.2)
-                  : Colors.grey.withOpacity(0.1),
-              blurRadius: 8,
+              color: (isSelected ? AppColors.primary : Colors.black)
+                  .withValues(alpha: isSelected ? 0.18 : 0.05),
+              blurRadius: isSelected ? 16 : 8,
               offset: const Offset(0, 4),
             ),
           ],
         ),
-        child: Column(
+        child: Row(
           children: [
-            Icon(icon, size: 36, color: isSelected ? Colors.white : const Color(0xFF2A5A2A)),
-            const SizedBox(height: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: isSelected ? Colors.white : Colors.black87,
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? Colors.white.withValues(alpha: 0.2)
+                    : AppColors.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(14),
               ),
+              child: Icon(
+                icon,
+                size: 28,
+                color: isSelected ? Colors.white : AppColors.primary,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w700,
+                      color: isSelected ? Colors.white : AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    description,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isSelected
+                          ? Colors.white.withValues(alpha: 0.9)
+                          : AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              isSelected
+                  ? Icons.check_circle_rounded
+                  : Icons.radio_button_unchecked,
+              color: isSelected ? Colors.white : AppColors.textSecondary,
             ),
           ],
         ),

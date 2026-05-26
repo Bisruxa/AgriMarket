@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/product_model.dart';
+import '../theme/app_theme.dart';
 
 class ProductCard extends StatelessWidget {
   final Product product;
@@ -15,42 +16,60 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 2,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildImagePlaceholder(),
-              const SizedBox(width: 16),
-              Expanded(child: _buildProductInfo()),
-              _buildDeleteButton(),
-            ],
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(18),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(
+                    Icons.eco_rounded,
+                    size: 36,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(child: _buildProductInfo(context)),
+                IconButton(
+                  onPressed: onDelete,
+                  icon: const Icon(Icons.delete_outline_rounded),
+                  color: AppColors.error,
+                  tooltip: 'Delete',
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildImagePlaceholder() {
-    return Container(
-      width: 80,
-      height: 80,
-      decoration: BoxDecoration(
-        color: Colors.green.shade50,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: const Icon(Icons.agriculture_outlined, size: 40, color: Colors.green),
-    );
-  }
-
-  Widget _buildProductInfo() {
+  Widget _buildProductInfo(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -59,7 +78,10 @@ class ProductCard extends StatelessWidget {
             Expanded(
               child: Text(
                 product.name,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -70,74 +92,67 @@ class ProductCard extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           product.description ?? 'No description',
-          style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 13),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
         ),
+        const SizedBox(height: 10),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: AppColors.primary,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            'ETB ${product.price.toStringAsFixed(2)}/${product.unit}',
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+            ),
+          ),
+        ),
         const SizedBox(height: 8),
-        _buildPriceAndMeta(),
-        const SizedBox(height: 4),
-        _buildStockAndDate(),
+        Row(
+          children: [
+            Icon(Icons.location_on_outlined, size: 14, color: Colors.grey.shade500),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Text(
+                product.location,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 12),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 8),
+            Icon(Icons.inventory_2_outlined, size: 14, color: Colors.grey.shade500),
+            const SizedBox(width: 4),
+            Text(
+              '${product.stock} ${product.unit}',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 12),
+            ),
+          ],
+        ),
       ],
     );
   }
 
   Widget _buildOrganicBadge() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      margin: const EdgeInsets.only(left: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: Colors.green.shade100,
-        borderRadius: BorderRadius.circular(12),
+        color: AppColors.accent.withValues(alpha: 0.2),
+        borderRadius: BorderRadius.circular(8),
       ),
-      child: const Text('Organic', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Colors.green)),
-    );
-  }
-
-  Widget _buildPriceAndMeta() {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          decoration: BoxDecoration(
-            color: Colors.green.shade700,
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: Text(
-            'ETB ${product.price.toStringAsFixed(2)}/${product.unit}',
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
-          ),
+      child: const Text(
+        'Organic',
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          color: AppColors.primaryDark,
         ),
-        const SizedBox(width: 8),
-        Icon(Icons.location_on, size: 14, color: Colors.grey.shade500),
-        const SizedBox(width: 4),
-        Text(product.location, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
-        const SizedBox(width: 8),
-        // Icon(Icons.category, size: 14, color: Colors.grey.shade500),
-        const SizedBox(width: 4),
-        // Text(product.category, style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
-      ],
-    );
-  }
-
-  Widget _buildStockAndDate() {
-    return Row(
-      children: [
-        Icon(Icons.inventory, size: 14, color: Colors.grey.shade500),
-        const SizedBox(width: 4),
-        Text('Stock: ${product.stock} ${product.unit}s', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
-        const SizedBox(width: 16),
-        // Icon(Icons.calendar_today, size: 14, color: Colors.grey.shade500),
-        // const SizedBox(width: 4),
-        // Text('Harvest: ${product.harvestDate.split('T')[0]}', style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
-      ],
-    );
-  }
-
-  Widget _buildDeleteButton() {
-    return IconButton(
-      icon: const Icon(Icons.delete_outline, color: Colors.red),
-      onPressed: onDelete,
-      tooltip: 'Delete Product',
+      ),
     );
   }
 }

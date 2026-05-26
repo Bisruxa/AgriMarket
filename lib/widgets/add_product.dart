@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/product_model.dart';
+import '../theme/app_theme.dart';
+import 'custom_button.dart';
 
 class AddProductDialog extends StatefulWidget {
   final Function(Product) onAdd;
@@ -19,20 +21,30 @@ class _AddProductDialogState extends State<AddProductDialog> {
   final _locationController = TextEditingController();
   final _harvestDateController = TextEditingController();
   final _expiryDateController = TextEditingController();
-  
+
   String _unit = 'KG';
   String _category = 'VEGETABLES';
-  bool _isOrganic = false;
   bool _isLoading = false;
 
   static const _units = ['KG', 'G', 'TON', 'PIECE', 'BUNCH', 'BOX'];
-  static const _categories = ['VEGETABLES', 'FRUITS', 'GRAINS', 'DAIRY', 'MEAT', 'OTHER'];
+  static const _categories = [
+    'VEGETABLES',
+    'FRUITS',
+    'GRAINS',
+    'DAIRY',
+    'MEAT',
+    'OTHER',
+  ];
 
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 20),
       child: Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.85,
+        ),
         padding: const EdgeInsets.all(24),
         child: SingleChildScrollView(
           child: Form(
@@ -41,31 +53,43 @@ class _AddProductDialogState extends State<AddProductDialog> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Add New Product', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 12),
-                _buildTextField(_nameController, 'Product Name', true),
-                const SizedBox(height: 12),
-                _buildTextField(_descriptionController, 'Description', false, maxLines: 2),
-                const SizedBox(height: 12),
-                _buildPriceUnitRow(),
-                const SizedBox(height: 12),
-                _buildCategoryStockRow(),
-                const SizedBox(height: 12),
-                _buildTextField(_locationController, 'Location', true),
-                const SizedBox(height: 12),
-                _buildDateField(_harvestDateController, 'Harvest Date', true),
-                const SizedBox(height: 12),
-                _buildDateField(_expiryDateController, 'Expiry Date (optional)', false),
-                const SizedBox(height: 12),
-                // SwitchListTile(
-                //   title: const Text('Organic Product'),
-                //   value: _isOrganic,
-                //   onChanged: (v) => setState(() => _isOrganic = v),
-                //   activeColor: Colors.green,
-                //   contentPadding: EdgeInsets.zero,
-                // ),
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(Icons.add_box_outlined, color: AppColors.primary),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        'Add New Product',
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 16),
-                _buildButtons(),
+                _buildTextField(_nameController, 'Product Name', true),
+                _buildTextField(_descriptionController, 'Description', false, maxLines: 2),
+                _buildPriceUnitRow(),
+                _buildCategoryStockRow(),
+                _buildTextField(_locationController, 'Location', true),
+                _buildDateField(_harvestDateController, 'Harvest Date', true),
+                _buildDateField(_expiryDateController, 'Expiry Date (optional)', false),
+                const SizedBox(height: 8),
+                CustomButton(
+                  text: 'Add Product',
+                  isLoading: _isLoading,
+                  onPressed: _submitForm,
+                ),
               ],
             ),
           ),
@@ -74,27 +98,45 @@ class _AddProductDialogState extends State<AddProductDialog> {
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, String label, bool required, {int maxLines = 1}) {
-    return TextFormField(
-      controller: controller,
-      decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
-      maxLines: maxLines,
-      validator: required ? (v) => v?.isEmpty == true ? '$label is required' : null : null,
+  Widget _buildTextField(
+    TextEditingController controller,
+    String label,
+    bool required, {
+    int maxLines = 1,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: TextFormField(
+        controller: controller,
+        maxLines: maxLines,
+        decoration: InputDecoration(labelText: label),
+        validator: required
+            ? (v) => v?.isEmpty == true ? '$label is required' : null
+            : null,
+      ),
     );
   }
 
-  Widget _buildDateField(TextEditingController controller, String label, bool required) {
-    return TextFormField(
-      controller: controller,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: 'YYYY-MM-DD',
-        border: const OutlineInputBorder(),
-        suffixIcon: const Icon(Icons.calendar_today),
+  Widget _buildDateField(
+    TextEditingController controller,
+    String label,
+    bool required,
+  ) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: TextFormField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: label,
+          hintText: 'YYYY-MM-DD',
+          suffixIcon: const Icon(Icons.calendar_today_outlined),
+        ),
+        readOnly: true,
+        onTap: () => _selectDate(controller),
+        validator: required
+            ? (v) => v?.isEmpty == true ? '$label is required' : null
+            : null,
       ),
-      readOnly: true,
-      onTap: () async => await _selectDate(controller),
-      validator: required ? (v) => v?.isEmpty == true ? '$label is required' : null : null,
     );
   }
 
@@ -106,7 +148,10 @@ class _AddProductDialogState extends State<AddProductDialog> {
       lastDate: DateTime(2030),
       builder: (context, child) => Theme(
         data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.light(primary: Color(0xFF2A5A2A), onPrimary: Colors.white),
+          colorScheme: const ColorScheme.light(
+            primary: AppColors.primary,
+            onPrimary: Colors.white,
+          ),
         ),
         child: child!,
       ),
@@ -117,79 +162,71 @@ class _AddProductDialogState extends State<AddProductDialog> {
   }
 
   Widget _buildPriceUnitRow() {
-    return Row(
-      children: [
-        Expanded(
-          child: TextFormField(
-            controller: _priceController,
-            decoration: const InputDecoration(labelText: 'Price', border: OutlineInputBorder(), prefixText: 'ETB '),
-            keyboardType: TextInputType.number,
-            validator: (v) {
-              if (v?.isEmpty == true) return 'Price required';
-              if (double.tryParse(v!) == null) return 'Invalid price';
-              return null;
-            },
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextFormField(
+              controller: _priceController,
+              decoration: const InputDecoration(
+                labelText: 'Price',
+                prefixText: 'ETB ',
+              ),
+              keyboardType: TextInputType.number,
+              validator: (v) {
+                if (v?.isEmpty == true) return 'Price required';
+                if (double.tryParse(v!) == null) return 'Invalid price';
+                return null;
+              },
+            ),
           ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: DropdownButtonFormField(
-            value: _unit,
-            decoration: const InputDecoration(labelText: 'Unit', border: OutlineInputBorder()),
-            items: _units.map((u) => DropdownMenuItem(value: u, child: Text(u))).toList(),
-            onChanged: (v) => setState(() => _unit = v!),
+          const SizedBox(width: 12),
+          Expanded(
+            child: DropdownButtonFormField(
+              initialValue: _unit,
+              decoration: const InputDecoration(labelText: 'Unit'),
+              items: _units
+                  .map((u) => DropdownMenuItem(value: u, child: Text(u)))
+                  .toList(),
+              onChanged: (v) => setState(() => _unit = v!),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
   Widget _buildCategoryStockRow() {
-    return Row(
-      children: [
-        Expanded(
-          child: DropdownButtonFormField(
-            value: _category,
-            decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
-            items: _categories.map((c) => DropdownMenuItem(value: c, child: Text(c))).toList(),
-            onChanged: (v) => setState(() => _category = v!),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: DropdownButtonFormField(
+              initialValue: _category,
+              decoration: const InputDecoration(labelText: 'Category'),
+              items: _categories
+                  .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                  .toList(),
+              onChanged: (v) => setState(() => _category = v!),
+            ),
           ),
-        ),
-        const SizedBox(width: 20),
-        Expanded(
-          child: TextFormField(
-            controller: _stockController,
-            decoration: const InputDecoration(labelText: 'Stock', border: OutlineInputBorder()),
-            keyboardType: TextInputType.number,
-            validator: (v) {
-              if (v?.isEmpty == true) return 'Stock required';
-              if (int.tryParse(v!) == null) return 'Invalid stock';
-              return null;
-            },
+          const SizedBox(width: 12),
+          Expanded(
+            child: TextFormField(
+              controller: _stockController,
+              decoration: const InputDecoration(labelText: 'Stock'),
+              keyboardType: TextInputType.number,
+              validator: (v) {
+                if (v?.isEmpty == true) return 'Stock required';
+                if (int.tryParse(v!) == null) return 'Invalid stock';
+                return null;
+              },
+            ),
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildButtons() {
-    return Row(
-      children: [
-        Expanded(
-          child: TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: ElevatedButton(
-            onPressed: _isLoading ? null : _submitForm,
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2A5A2A)),
-            child: _isLoading ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Add Product'),
-          ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -200,19 +237,21 @@ class _AddProductDialogState extends State<AddProductDialog> {
     final product = Product(
       id: '',
       name: _nameController.text,
-      description: _descriptionController.text.isEmpty ? null : _descriptionController.text,
+      description: _descriptionController.text.isEmpty
+          ? null
+          : _descriptionController.text,
       price: double.parse(_priceController.text),
       unit: _unit,
       category: _category,
       stock: int.parse(_stockController.text),
       images: [],
       location: _locationController.text,
-      isOrganic: _isOrganic,
+      isOrganic: false,
       harvestDate: _harvestDateController.text,
-      expiryDate: _expiryDateController.text.isEmpty ? null : _expiryDateController.text,
+      expiryDate: _expiryDateController.text.isEmpty
+          ? null
+          : _expiryDateController.text,
       farmerId: '',
-      // createdAt: DateTime.now(),
-      // updatedAt: DateTime.now(),
     );
 
     await widget.onAdd(product);

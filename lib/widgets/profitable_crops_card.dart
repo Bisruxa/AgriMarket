@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/crop_model.dart';
+import '../theme/app_theme.dart';
 
 class ProfitableCropsCard extends StatelessWidget {
   final List<Crop> crops;
@@ -14,56 +15,56 @@ class ProfitableCropsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Top Profitable Crops',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              TextButton(
-                onPressed: onViewAll,
-                child: const Text(
-                  'View All',
-                  style: TextStyle(
-                    color: Color(0xFF2A5A2A),
-                    fontWeight: FontWeight.w600,
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(
+                      Icons.trending_up_rounded,
+                      color: AppColors.primary,
+                      size: 20,
+                    ),
                   ),
-                ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Top Profitable Crops',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                ],
               ),
+              TextButton(onPressed: onViewAll, child: const Text('View All')),
             ],
           ),
           const SizedBox(height: 12),
-
-          // Crop List
           ListView.separated(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: crops.length > 3 ? 3 : crops.length,
-            separatorBuilder: (context, index) => const Divider(height: 16),
-            itemBuilder: (context, index) {
-              final crop = crops[index];
-              return _buildCropItem(crop);
-            },
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            itemBuilder: (context, index) => _buildCropItem(crops[index]),
           ),
         ],
       ),
@@ -73,51 +74,38 @@ class ProfitableCropsCard extends StatelessWidget {
   Widget _buildCropItem(Crop crop) {
     return Row(
       children: [
-        // Crop Image Placeholder
         Container(
-          width: 40,
-          height: 50,
+          width: 44,
+          height: 44,
           decoration: BoxDecoration(
-            color: Colors.green.shade50,
-            borderRadius: BorderRadius.circular(10),
+            color: AppColors.primary.withValues(alpha: 0.08),
+            borderRadius: BorderRadius.circular(12),
           ),
-          child: Icon(
-            Icons.grass,
-            color: Colors.green.shade700,
-            size: 30,
-          ),
+          child: const Icon(Icons.eco_rounded, color: AppColors.primary, size: 24),
         ),
         const SizedBox(width: 12),
-
-        // Crop Details
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 crop.name,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 16,
-                ),
+                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
               ),
               const SizedBox(height: 4),
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 2,
-                    ),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                     decoration: BoxDecoration(
-                      color: Colors.green.shade50,
-                      borderRadius: BorderRadius.circular(12),
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
                       '${crop.profitMargin.toStringAsFixed(1)}% profit',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.green.shade700,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppColors.primary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -125,9 +113,9 @@ class ProfitableCropsCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text(
                     '${crop.avgPricePerQuintal} ETB/qtl',
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 12,
-                      color: Colors.grey.shade600,
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ],
@@ -135,25 +123,20 @@ class ProfitableCropsCard extends StatelessWidget {
             ],
           ),
         ),
-
-        // Recommended Badge
         if (crop.isRecommended)
           Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 8,
-              vertical: 4,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
               color: Colors.orange.shade50,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
               border: Border.all(color: Colors.orange.shade200),
             ),
             child: Text(
-              'Recommended',
+              'Top',
               style: TextStyle(
                 fontSize: 10,
-                color: Colors.orange.shade700,
-                fontWeight: FontWeight.w600,
+                color: Colors.orange.shade800,
+                fontWeight: FontWeight.w700,
               ),
             ),
           ),

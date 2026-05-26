@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/crop_model.dart';
+import '../../theme/app_theme.dart';
 
 class CropRecommendation extends StatelessWidget {
   const CropRecommendation({super.key});
@@ -7,128 +8,175 @@ class CropRecommendation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
-      appBar: AppBar(
-        title: const Text('Crop Recommendations'),
-        backgroundColor: Colors.white,
-        elevation: 0,
-        foregroundColor: const Color(0xFF2A5A2A),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // AI Recommendation Banner
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF2A5A2A), Color(0xFF4CAF50)],
+      backgroundColor: AppColors.surface,
+      body: SafeArea(
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                child: Text(
+                  'Crop Insights',
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        fontSize: 26,
+                      ),
                 ),
-                borderRadius: BorderRadius.circular(16),
               ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'AI-Powered Recommendations',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        gradient: AppColors.primaryGradient,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.2),
+                            blurRadius: 16,
+                            offset: const Offset(0, 6),
                           ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Based on your soil type, location, and market trends',
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.9),
-                            fontSize: 12,
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'AI-Powered Recommendations',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Based on soil, location, and market trends',
+                                  style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.9),
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: const Icon(
+                              Icons.auto_awesome_rounded,
+                              color: Colors.white,
+                              size: 28,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      shape: BoxShape.circle,
+                    const SizedBox(height: 24),
+                    Text(
+                      'Top Recommendations',
+                      style: Theme.of(context).textTheme.titleLarge,
                     ),
-                    child: const Icon(
-                      Icons.auto_awesome,
-                      color: Colors.white,
-                      size: 30,
+                    const SizedBox(height: 12),
+                    ...topProfitableCrops.map(
+                      (crop) => _RecommendationCard(crop: crop, featured: true),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 24),
+                    Text(
+                      'All Crops',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 12),
+                    ...topProfitableCrops.map(
+                      (crop) => _RecommendationCard(crop: crop, featured: false),
+                    ),
+                  ],
+                ),
               ),
             ),
-
-            const SizedBox(height: 20),
-
-            // Top Recommendations
-            const Text(
-              'Top Recommendations for You',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            ...topProfitableCrops.map((crop) => _buildRecommendationCard(crop)),
-
-            const SizedBox(height: 20),
-
-            // All Crops
-            const Text(
-              'All Crops',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            ...topProfitableCrops.map((crop) => _buildCropCard(crop)),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildRecommendationCard(Crop crop) {
+class _RecommendationCard extends StatelessWidget {
+  final Crop crop;
+  final bool featured;
+
+  const _RecommendationCard({required this.crop, required this.featured});
+
+  @override
+  Widget build(BuildContext context) {
+    if (!featured) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: ListTile(
+          leading: CircleAvatar(
+            backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+            child: const Icon(Icons.grass_rounded, color: AppColors.primary, size: 20),
+          ),
+          title: Text(
+            crop.name,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+          subtitle: Text('${crop.profitMargin}% profit • ${crop.season}'),
+          trailing: Text(
+            '${crop.avgPricePerQuintal} ETB',
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              color: AppColors.primary,
+            ),
+          ),
+        ),
+      );
+    }
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.green.shade200),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: AppColors.primary.withValues(alpha: 0.2),
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.green.withOpacity(0.1),
-            blurRadius: 10,
+            color: AppColors.primary.withValues(alpha: 0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
           ),
         ],
       ),
       child: Row(
         children: [
           Container(
-            width: 60,
-            height: 60,
+            width: 56,
+            height: 56,
             decoration: BoxDecoration(
-              color: Colors.green.shade100,
-              borderRadius: BorderRadius.circular(12),
+              color: AppColors.primary.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(14),
             ),
-            child: const Icon(Icons.grass, color: Color(0xFF2A5A2A), size: 40),
+            child: const Icon(Icons.eco_rounded, color: AppColors.primary, size: 32),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -136,44 +184,31 @@ class CropRecommendation extends StatelessWidget {
                 Text(
                   crop.name,
                   style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-                const SizedBox(height: 4),
-                Row(
+                const SizedBox(height: 6),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 4,
                   children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.green.shade50,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        '${crop.profitMargin}% profit',
-                        style: TextStyle(
-                          color: Colors.green.shade700,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
+                    _Chip(label: '${crop.profitMargin}% profit'),
                     Text(
                       '${crop.avgPricePerQuintal} ETB/qtl',
-                      style: const TextStyle(fontWeight: FontWeight.w600),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 4),
                 Text(
                   'Best season: ${crop.season} • ${crop.region}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
-                  ),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontSize: 12,
+                      ),
                 ),
               ],
             ),
@@ -182,30 +217,28 @@ class CropRecommendation extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildCropCard(Crop crop) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        leading: Container(
-          width: 40,
-          height: 40,
-          decoration: BoxDecoration(
-            color: Colors.green.shade100,
-            shape: BoxShape.circle,
-          ),
-          child: Icon(Icons.grass, color: Colors.green.shade700),
+class _Chip extends StatelessWidget {
+  final String label;
+
+  const _Chip({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          color: AppColors.primary,
+          fontWeight: FontWeight.w600,
+          fontSize: 12,
         ),
-        title: Text(crop.name),
-        subtitle: Text('${crop.profitMargin}% profit • ${crop.season}'),
-        trailing: Text(
-          '${crop.avgPricePerQuintal} ETB',
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF2A5A2A),
-          ),
-        ),
-        onTap: () {},
       ),
     );
   }

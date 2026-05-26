@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../services/api_service.dart';
 import '../../models/product_model.dart';
+import '../../theme/app_theme.dart';
 import '../../widgets/product_card.dart';
 import '../../widgets/add_product.dart';
 import '../auth/login_screen.dart';
@@ -29,24 +30,32 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
 
   Future<void> fetchProducts({bool loadMore = false}) async {
     if (loadMore && (isLoadingMore || currentPage >= totalPages)) return;
-    
+
     setState(() {
-      if (loadMore) isLoadingMore = true;
-      else isLoading = true;
+      if (loadMore) {
+        isLoadingMore = true;
+      } else {
+        isLoading = true;
+      }
       errorMessage = null;
     });
 
     try {
-      final response = await _apiService.get('/products/my-products?page=$currentPage&limit=10');
-      
+      final response = await _apiService.get(
+        '/products/my-products?page=$currentPage&limit=10',
+      );
+
       if (response.statusCode == 200 && response.data['success']) {
         final newProducts = (response.data['data'] as List)
             .map((json) => Product.fromJson(json))
             .toList();
-        
+
         setState(() {
-          if (loadMore) products.addAll(newProducts);
-          else products = newProducts;
+          if (loadMore) {
+            products.addAll(newProducts);
+          } else {
+            products = newProducts;
+          }
           totalPages = response.data['pagination']?['pages'] ?? 1;
           currentPage = response.data['pagination']?['page'] ?? 1;
           isLoading = isLoadingMore = false;
@@ -58,7 +67,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
       }
     } catch (e) {
       setState(() => errorMessage = e.toString());
-      _showSnackBar('Error: $e', Colors.red);
+      _showSnackBar('Error: $e', AppColors.error);
     } finally {
       if (mounted) setState(() => isLoading = isLoadingMore = false);
     }
@@ -68,17 +77,17 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     setState(() => isLoading = true);
     try {
       final response = await _apiService.post('/products', product.toJson());
-      
+
       if (response.statusCode == 201 && response.data['success']) {
         currentPage = 1;
         await fetchProducts();
-        Navigator.pop(context);
-        _showSnackBar('✅ Product added successfully', Colors.green);
+        if (mounted) Navigator.pop(context);
+        _showSnackBar('Product added successfully', AppColors.primary);
       } else {
         throw Exception(response.data['message'] ?? 'Failed to add product');
       }
     } catch (e) {
-      _showSnackBar('Error: $e', Colors.red);
+      _showSnackBar('Error: $e', AppColors.error);
     } finally {
       if (mounted) setState(() => isLoading = false);
     }
@@ -89,23 +98,31 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
       final response = await _apiService.delete('/products/$id');
       if (response.statusCode == 200 && response.data['success']) {
         await fetchProducts();
-        _showSnackBar('✅ Product deleted', Colors.green);
+        _showSnackBar('Product deleted', AppColors.primary);
       }
     } catch (e) {
-      _showSnackBar('Error deleting: $e', Colors.red);
+      _showSnackBar('Error deleting: $e', AppColors.error);
     }
   }
 
   Future<void> _handleUnauthorized() async {
     await _apiService.logout();
     if (mounted) {
-      Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const LoginScreen()), (route) => false);
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (route) => false,
+      );
     }
   }
 
   void _showSnackBar(String msg, Color color) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: color, behavior: SnackBarBehavior.floating, duration: const Duration(seconds: 2)),
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: color,
+        behavior: SnackBarBehavior.floating,
+      ),
     );
   }
 
@@ -113,11 +130,22 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Delete Product'),
-        content: const Text('Are you sure?'),
+        content: const Text('Are you sure you want to remove this listing?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          TextButton(onPressed: () { Navigator.pop(context); deleteProduct(id); }, style: TextButton.styleFrom(foregroundColor: Colors.red), child: const Text('Delete')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              deleteProduct(id);
+            },
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('Delete'),
+          ),
         ],
       ),
     );
@@ -126,53 +154,180 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Products'),
-        backgroundColor: Colors.green.shade700,
-        actions: [
-          IconButton(icon: const Icon(Icons.add), onPressed: () => showDialog(context: context, builder: (_) => AddProductDialog(onAdd: addProduct))),
-          IconButton(icon: const Icon(Icons.refresh), onPressed: () { currentPage = 1; fetchProducts(); }),
-        ],
-      ),
-      body: RefreshIndicator(
-        onRefresh: () async { currentPage = 1; await fetchProducts(); },
-        child: _buildBody(),
+      backgroundColor: AppColors.surface,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 12, 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'My Marketplace',
+                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                fontSize: 24,
+                              ),
+                        ),
+                        Text(
+                          'Manage your product listings',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      currentPage = 1;
+                      fetchProducts();
+                    },
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        side: const BorderSide(color: AppColors.border),
+                      ),
+                    ),
+                    icon: const Icon(Icons.refresh_rounded),
+                  ),
+                  const SizedBox(width: 4),
+                  FloatingActionButton.small(
+                    heroTag: 'add_product',
+                    backgroundColor: AppColors.primary,
+                    onPressed: () => showDialog(
+                      context: context,
+                      builder: (_) => AddProductDialog(onAdd: addProduct),
+                    ),
+                    child: const Icon(Icons.add, color: Colors.white),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: () async {
+                  currentPage = 1;
+                  await fetchProducts();
+                },
+                color: AppColors.primary,
+                child: _buildBody(),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildBody() {
     if (isLoading && products.isEmpty) {
-      return const Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [CircularProgressIndicator(), SizedBox(height: 16), Text('Loading...')]));
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(color: AppColors.primary),
+            SizedBox(height: 16),
+            Text('Loading your products...'),
+          ],
+        ),
+      );
     }
-    
+
     if (errorMessage != null && products.isEmpty) {
-      return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        Icon(Icons.error_outline, size: 64, color: Colors.grey.shade400),
-        const SizedBox(height: 16),
-        Text(errorMessage!, style: TextStyle(color: Colors.grey.shade600)),
-        const SizedBox(height: 16),
-        ElevatedButton(onPressed: () { currentPage = 1; fetchProducts(); }, style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2A5A2A)), child: const Text('Retry')),
-      ]));
+      return _EmptyState(
+        icon: Icons.cloud_off_outlined,
+        title: 'Could not load products',
+        subtitle: errorMessage!,
+        actionLabel: 'Retry',
+        onAction: () {
+          currentPage = 1;
+          fetchProducts();
+        },
+      );
     }
-    
+
     if (products.isEmpty) {
-      return Center(child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        Icon(Icons.inventory_2_outlined, size: 80, color: Colors.grey.shade400),
-        const SizedBox(height: 16),
-        Text('No products found', style: TextStyle(fontSize: 18, color: Colors.grey.shade600)),
-        const SizedBox(height: 8),
-        Text('Tap + to add your first product', style: TextStyle(fontSize: 14, color: Colors.grey.shade500)),
-      ]));
+      return _EmptyState(
+        icon: Icons.inventory_2_outlined,
+        title: 'No products yet',
+        subtitle: 'Tap + to list your first product on the marketplace',
+        actionLabel: 'Add Product',
+        onAction: () => showDialog(
+          context: context,
+          builder: (_) => AddProductDialog(onAdd: addProduct),
+        ),
+      );
     }
-    
+
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
       itemCount: products.length + (isLoadingMore ? 1 : 0),
       itemBuilder: (context, index) {
-        if (index == products.length) return const Center(child: Padding(padding: EdgeInsets.all(16), child: CircularProgressIndicator()));
-        return ProductCard(product: products[index], onDelete: () => _confirmDelete(products[index].id));
+        if (index == products.length) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: CircularProgressIndicator(color: AppColors.primary),
+            ),
+          );
+        }
+        return ProductCard(
+          product: products[index],
+          onDelete: () => _confirmDelete(products[index].id),
+        );
       },
+    );
+  }
+}
+
+class _EmptyState extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final String actionLabel;
+  final VoidCallback onAction;
+
+  const _EmptyState({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.actionLabel,
+    required this.onAction,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      children: [
+        SizedBox(height: MediaQuery.of(context).size.height * 0.2),
+        Icon(icon, size: 72, color: AppColors.textSecondary.withValues(alpha: 0.5)),
+        const SizedBox(height: 16),
+        Text(
+          title,
+          textAlign: TextAlign.center,
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+        const SizedBox(height: 8),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 40),
+          child: Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.bodyMedium,
+          ),
+        ),
+        const SizedBox(height: 24),
+        Center(
+          child: ElevatedButton(
+            onPressed: onAction,
+            child: Text(actionLabel),
+          ),
+        ),
+      ],
     );
   }
 }

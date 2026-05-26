@@ -1,6 +1,8 @@
 import 'package:agrimatketapp/screens/auth/login_screen.dart';
 import 'package:agrimatketapp/screens/farmer/farmer_dashboard.dart';
+import 'package:agrimatketapp/screens/trader/trader_dashboard.dart';
 import 'package:flutter/material.dart';
+import 'package:agrimatketapp/theme/app_theme.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/auth/signup_screen.dart';
 import 'screens/farmer_signup_screen.dart';
@@ -18,15 +20,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'AgriMarket',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        primaryColor: const Color(0xFF2A5A2A),
-        fontFamily: 'Poppins',
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF2A5A2A),
-          primary: const Color(0xFF2A5A2A),
-        ),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.light,
       initialRoute: '/',
       routes: {
         '/onboarding': (context) => const OnboardingScreen(),
@@ -35,6 +29,7 @@ class MyApp extends StatelessWidget {
         '/trader-signup': (context) => const TraderSignupScreen(),
         '/login': (context) => const LoginScreen(),
         '/farmer-dashboard': (context) => const FarmerDashboard(),
+        '/trader-dashboard': (context) => const TraderDashboard(),
       },
       home: const OnboardingScreen(),
     );
