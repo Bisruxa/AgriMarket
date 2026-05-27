@@ -10,24 +10,26 @@ venv/
 # Jupyter Notebooks
 .ipynb_checkpoints
 
-# Data (Don't commit large datasets)
+# Data — generated locally, don't commit
 data/raw/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
 data/processed/*
 data/synthetic/*
-!data/synthetic/.gitkeep  # Keep the folder structure, ignore contents
 
-# Models (Don't commit large model weights)
+# Models — ignore large binary formats
 models/*.pt
 models/*.pth
 models/*.pkl
 models/*.bin
-models/*.json
 
-models/*/*.json
+# Allow trained XGBoost model + metadata so frontend devs can serve without training (~2 MB)
+models/*.json
 models/*/*.csv
 models/*/*.joblib
-
-models/.gitkeep  # Keep the folder structure, ignore contents
+models/*/*.json
+!models/price_forecaster/xgboost_price_forecaster.json
+!models/price_forecaster/training_metadata.json
 
 # IDEs
 .vscode/
