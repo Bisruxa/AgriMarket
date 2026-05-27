@@ -4,9 +4,16 @@ import '../theme/app_theme.dart';
 import 'custom_button.dart';
 
 class AddProductDialog extends StatefulWidget {
-  final Function(Product) onAdd;
+  final Product? product;
+  final Future<void> Function(Product) onSubmit;
 
-  const AddProductDialog({super.key, required this.onAdd});
+  const AddProductDialog({
+    super.key,
+    this.product,
+    required this.onSubmit,
+  });
+
+  bool get isEditing => product != null;
 
   @override
   State<AddProductDialog> createState() => _AddProductDialogState();
@@ -14,16 +21,17 @@ class AddProductDialog extends StatefulWidget {
 
 class _AddProductDialogState extends State<AddProductDialog> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
-  final _descriptionController = TextEditingController();
-  final _priceController = TextEditingController();
-  final _stockController = TextEditingController();
-  final _locationController = TextEditingController();
-  final _harvestDateController = TextEditingController();
-  final _expiryDateController = TextEditingController();
+  late final TextEditingController _nameController;
+  late final TextEditingController _descriptionController;
+  late final TextEditingController _priceController;
+  late final TextEditingController _stockController;
+  late final TextEditingController _locationController;
+  late final TextEditingController _harvestDateController;
+  late final TextEditingController _expiryDateController;
 
-  String _unit = 'KG';
-  String _category = 'VEGETABLES';
+  late String _unit;
+  late String _category;
+  late bool _isOrganic;
   bool _isLoading = false;
 
   static const _units = ['KG', 'G', 'TON', 'PIECE', 'BUNCH', 'BOX'];
@@ -35,6 +43,39 @@ class _AddProductDialogState extends State<AddProductDialog> {
     'MEAT',
     'OTHER',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    final p = widget.product;
+    _nameController = TextEditingController(text: p?.name ?? '');
+    _descriptionController = TextEditingController(text: p?.description ?? '');
+    _priceController = TextEditingController(
+      text: p != null ? p.price.toString() : '',
+    );
+    _stockController = TextEditingController(
+      text: p != null ? p.stock.toString() : '',
+    );
+    _locationController = TextEditingController(text: p?.location ?? '');
+    _harvestDateController = TextEditingController(
+      text: p != null ? _formatDateForField(p.harvestDate) : '',
+    );
+    _expiryDateController = TextEditingController(
+      text: p?.expiryDate != null ? _formatDateForField(p!.expiryDate!) : '',
+    );
+    _unit = p?.unit ?? 'KG';
+    _category = p?.category.isNotEmpty == true ? p!.category : 'VEGETABLES';
+    if (p != null && _categories.contains(p.category)) {
+      _category = p.category;
+    }
+    _isOrganic = p?.isOrganic ?? false;
+  }
+
+  static String _formatDateForField(String value) {
+    if (value.isEmpty) return '';
+    if (value.length >= 10) return value.substring(0, 10);
+    return value;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,13 +102,21 @@ class _AddProductDialogState extends State<AddProductDialog> {
                         color: AppColors.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
-                      child: const Icon(Icons.add_box_outlined, color: AppColors.primary),
+                      child: Icon(
+                        widget.isEditing
+                            ? Icons.edit_outlined
+                            : Icons.add_box_outlined,
+                        color: AppColors.primary,
+                      ),
                     ),
                     const SizedBox(width: 12),
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'Add New Product',
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                        widget.isEditing ? 'Edit Product' : 'Add New Product',
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ),
                     IconButton(
@@ -78,15 +127,31 @@ class _AddProductDialogState extends State<AddProductDialog> {
                 ),
                 const SizedBox(height: 16),
                 _buildTextField(_nameController, 'Product Name', true),
-                _buildTextField(_descriptionController, 'Description', false, maxLines: 2),
+                _buildTextField(
+                  _descriptionController,
+                  'Description',
+                  false,
+                  maxLines: 2,
+                ),
                 _buildPriceUnitRow(),
                 _buildCategoryStockRow(),
                 _buildTextField(_locationController, 'Location', true),
                 _buildDateField(_harvestDateController, 'Harvest Date', true),
-                _buildDateField(_expiryDateController, 'Expiry Date (optional)', false),
+                _buildDateField(
+                  _expiryDateController,
+                  'Expiry Date (optional)',
+                  false,
+                ),
+                SwitchListTile(
+                  title: const Text('Organic product'),
+                  value: _isOrganic,
+                  onChanged: (v) => setState(() => _isOrganic = v),
+                  activeThumbColor: AppColors.primary,
+                  contentPadding: EdgeInsets.zero,
+                ),
                 const SizedBox(height: 8),
                 CustomButton(
-                  text: 'Add Product',
+                  text: widget.isEditing ? 'Save Changes' : 'Add Product',
                   isLoading: _isLoading,
                   onPressed: _submitForm,
                 ),
@@ -157,7 +222,8 @@ class _AddProductDialogState extends State<AddProductDialog> {
       ),
     );
     if (date != null) {
-      controller.text = date.toIso8601String();
+      controller.text =
+          '${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
     }
   }
 
@@ -184,7 +250,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
           const SizedBox(width: 12),
           Expanded(
             child: DropdownButtonFormField(
-              initialValue: _unit,
+              value: _unit,
               decoration: const InputDecoration(labelText: 'Unit'),
               items: _units
                   .map((u) => DropdownMenuItem(value: u, child: Text(u)))
@@ -204,7 +270,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
         children: [
           Expanded(
             child: DropdownButtonFormField(
-              initialValue: _category,
+              value: _categories.contains(_category) ? _category : 'VEGETABLES',
               decoration: const InputDecoration(labelText: 'Category'),
               items: _categories
                   .map((c) => DropdownMenuItem(value: c, child: Text(c)))
@@ -230,31 +296,32 @@ class _AddProductDialogState extends State<AddProductDialog> {
     );
   }
 
-  void _submitForm() async {
+  Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isLoading = true);
 
     final product = Product(
-      id: '',
-      name: _nameController.text,
-      description: _descriptionController.text.isEmpty
+      id: widget.product?.id ?? '',
+      name: _nameController.text.trim(),
+      description: _descriptionController.text.trim().isEmpty
           ? null
-          : _descriptionController.text,
+          : _descriptionController.text.trim(),
       price: double.parse(_priceController.text),
       unit: _unit,
       category: _category,
       stock: int.parse(_stockController.text),
-      images: [],
-      location: _locationController.text,
-      isOrganic: false,
+      images: widget.product?.images ?? [],
+      location: _locationController.text.trim(),
+      isOrganic: _isOrganic,
       harvestDate: _harvestDateController.text,
       expiryDate: _expiryDateController.text.isEmpty
           ? null
           : _expiryDateController.text,
-      farmerId: '',
+      farmerId: widget.product?.farmerId ?? '',
+      isAvailable: widget.product?.isAvailable ?? true,
     );
 
-    await widget.onAdd(product);
+    await widget.onSubmit(product);
     if (mounted) setState(() => _isLoading = false);
   }
 

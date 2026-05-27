@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../models/product_model.dart';
+import '../../models/profile_model.dart';
+import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/logout_helper.dart';
 import '../../widgets/common/app_bottom_nav.dart';
+import '../../widgets/profile_details_card.dart';
 import '../../widgets/welcome_card.dart';
-
+import 'trader_products_screen.dart';
 class TraderDashboard extends StatefulWidget {
   const TraderDashboard({super.key});
 
@@ -13,9 +17,13 @@ class TraderDashboard extends StatefulWidget {
 
 class _TraderDashboardState extends State<TraderDashboard> {
   int _selectedIndex = 0;
+  final ApiService _apiService = ApiService();
+  UserProfile? _profile;
+  bool _isLoadingProfile = true;
+  List<Product> _previewProducts = [];
+  bool _isLoadingPreview = true;
 
-  final String traderName = 'Abebe Trading Co.';
-  final String businessName = 'Addis Grain Traders';
+  static const _defaultImage = 'assets/images/welcome.jpg';
 
   static const _navItems = [
     AppNavItem(
@@ -41,6 +49,48 @@ class _TraderDashboardState extends State<TraderDashboard> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+    _loadPreviewProducts();
+  }
+
+  Future<void> _loadPreviewProducts() async {
+    try {
+      final response = await _apiService.getProducts(
+        available: true,
+        page: 1,
+        limit: 3,
+      );
+
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        final list = response.data['data'] as List? ?? [];
+        if (mounted) {
+          setState(() {
+            _previewProducts =
+                list.map((json) => Product.fromJson(json)).toList();
+            _isLoadingPreview = false;
+          });
+        }
+      } else if (mounted) {
+        setState(() => _isLoadingPreview = false);
+      }
+    } catch (_) {
+      if (mounted) setState(() => _isLoadingPreview = false);
+    }
+  }
+
+  Future<void> _loadProfile() async {
+    final profile = await _apiService.getProfile();
+    if (mounted) {
+      setState(() {
+        _profile = profile;
+        _isLoadingProfile = false;
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.surface,
@@ -48,17 +98,13 @@ class _TraderDashboardState extends State<TraderDashboard> {
         index: _selectedIndex,
         children: [
           _buildHomeTab(),
-          _buildBrowseTab(),
+          const SafeArea(child: TraderProductsScreen()),
           _buildPlaceholderTab(
             icon: Icons.receipt_long_rounded,
             title: 'Your Orders',
             subtitle: 'Track purchases and deliveries from farmers',
           ),
-          _buildPlaceholderTab(
-            icon: Icons.person_rounded,
-            title: 'Trader Profile',
-            subtitle: 'Manage your business info and verification status',
-          ),
+          _buildProfileTab(),
         ],
       ),
       bottomNavigationBar: AppBottomNav(
@@ -108,9 +154,11 @@ class _TraderDashboardState extends State<TraderDashboard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   WelcomeCard(
-                    farmerName: traderName,
-                    farmName: businessName,
-                    profileImageUrl: 'assets/images/welcome.jpg',
+                    farmerName: _profile?.name ?? 'Trader',
+                    farmName: _profile?.displaySubtitle.isNotEmpty == true
+                        ? _profile!.displaySubtitle
+                        : 'Your business',
+                    profileImageUrl: _profile?.avatarUrl ?? _defaultImage,
                     gradient: AppColors.traderGradient,
                     onViewProfile: () => setState(() => _selectedIndex = 3),
                   ),
@@ -147,14 +195,28 @@ class _TraderDashboardState extends State<TraderDashboard> {
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   const SizedBox(height: 16),
-                  ...mockProducts.take(3).map(
-                        (p) => Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: _ListingRow(product: p),
+                  if (_isLoadingPreview)
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 24),
+                        child: CircularProgressIndicator(
+                          color: AppColors.traderAccent,
                         ),
                       ),
-                  const SizedBox(height: 8),
-                  SizedBox(
+                    )
+                  else if (_previewProducts.isEmpty)
+                    Text(
+                      'No listings available right now',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    )
+                  else
+                    ..._previewProducts.map(
+                      (p) => Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: TraderProductRow(product: p),
+                      ),
+                    ),
+                  const SizedBox(height: 8),                  SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
                       onPressed: () => setState(() => _selectedIndex = 1),
@@ -179,51 +241,66 @@ class _TraderDashboardState extends State<TraderDashboard> {
     );
   }
 
-  Widget _buildBrowseTab() {
+  Widget _buildProfileTab() {
+    if (_isLoadingProfile) {
+      return const SafeArea(
+        child: Center(
+          child: CircularProgressIndicator(color: AppColors.traderAccent),
+        ),
+      );
+    }
+
     return SafeArea(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Browse Market',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontSize: 24,
-                      ),
-                ),
-                const SizedBox(height: 12),
-                TextField(
-                  decoration: InputDecoration(
-                    hintText: 'Search crops, farmers, regions...',
-                    prefixIcon: const Icon(Icons.search),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(14),
-                      borderSide: const BorderSide(color: AppColors.border),
-                    ),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            const SizedBox(height: 16),
+            CircleAvatar(
+              radius: 44,
+              backgroundColor: AppColors.traderAccent.withValues(alpha: 0.1),
+              backgroundImage: _profile?.avatarUrl != null
+                  ? NetworkImage(_profile!.avatarUrl!)
+                  : null,
+              child: _profile?.avatarUrl == null
+                  ? const Icon(
+                      Icons.person_rounded,
+                      size: 44,
+                      color: AppColors.traderAccent,
+                    )
+                  : null,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              _profile?.name ?? 'Trader',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 20),
+            ),
+            if (_profile?.displaySubtitle.isNotEmpty == true)
+              Text(
+                _profile!.displaySubtitle,
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            const SizedBox(height: 24),
+            if (_profile != null) ProfileDetailsCard(profile: _profile!),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => logoutAndRedirect(context),
+                icon: const Icon(Icons.logout_rounded),
+                label: const Text('Logout'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.error,
+                  side: const BorderSide(color: AppColors.error),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              itemCount: mockProducts.length,
-              itemBuilder: (context, index) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _ListingRow(product: mockProducts[index]),
-                );
-              },
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -326,84 +403,6 @@ class _StatCard extends StatelessWidget {
           const SizedBox(height: 4),
           Text(label, style: Theme.of(context).textTheme.bodyMedium),
         ],
-      ),
-    );
-  }
-}
-
-class _ListingRow extends StatelessWidget {
-  final Product product;
-
-  const _ListingRow({required this.product});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: () {},
-        child: Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Icon(Icons.eco_rounded, color: AppColors.primary),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      product.name,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 15,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      product.location,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontSize: 12,
-                          ),
-                    ),
-                  ],
-                ),
-              ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    'ETB ${product.price.toStringAsFixed(0)}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.traderAccent,
-                    ),
-                  ),
-                  Text(
-                    '/${product.unit}',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontSize: 11,
-                        ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

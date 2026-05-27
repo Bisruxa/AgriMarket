@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:agrimatketapp/config/api_config.dart';
 import 'package:agrimatketapp/services/api_service.dart';
+import 'package:agrimatketapp/services/auth_session.dart';
 import 'package:agrimatketapp/screens/farmer/farmer_dashboard.dart';
 import 'package:agrimatketapp/screens/trader/trader_dashboard.dart';
 import 'package:agrimatketapp/screens/auth/signup_screen.dart';
@@ -149,7 +151,7 @@ class _LoginScreenState extends State<LoginScreen> {
       final email = _emailController.text.trim();
       final password = _passwordController.text;
 
-      final response = await _apiService.post('/auth/login', {
+      final response = await _apiService.post(ApiConfig.login, {
         'email': email,
         'password': password,
       });
@@ -160,17 +162,37 @@ class _LoginScreenState extends State<LoginScreen> {
         final responseData = response.data as Map<String, dynamic>;
 
         if (responseData['success'] == true) {
-          final user = responseData['user'];
+          await AuthSession.saveFromLoginResponse(responseData);
+
+          Map<String, dynamic>? user;
+          final directUser = responseData['user'];
+          if (directUser is Map<String, dynamic>) {
+            user = directUser;
+          } else {
+            final nested = responseData['data'];
+            if (nested is Map<String, dynamic>) {
+              final nestedUser = nested['user'];
+              if (nestedUser is Map<String, dynamic>) {
+                user = nestedUser;
+              } else {
+                // Some APIs return the user object directly in `data`.
+                user = nested;
+              }
+            }
+          }
 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Welcome back, ${user['name']}!'),
+              content: Text('Welcome back, ${user?['name'] ?? 'User'}!'),
               backgroundColor: AppColors.primary,
             ),
           );
 
           if (mounted) {
-            final isTrader = user['role'] == 'trader';
+            final roleRaw =
+                (user?['role'] ?? responseData['role'] ?? '').toString();
+            final role = roleRaw.toLowerCase().trim();
+            final isTrader = role == 'trader' || role.contains('trader');
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(

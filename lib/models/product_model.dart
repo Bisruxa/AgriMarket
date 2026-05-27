@@ -99,6 +99,33 @@ class Product {
       'expiryDate': expiryDate,
     };
   }
+
+  /// Payload for POST /products (farmer create product).
+  Map<String, dynamic> toCreateJson() {
+    final payload = <String, dynamic>{
+      'name': name,
+      'price': price,
+      'unit': unit,
+      'category': category,
+      'stock': stock,
+      'images': images,
+      'location': location,
+      'isOrganic': isOrganic,
+      'harvestDate': harvestDate,
+    };
+
+    if (description != null && description!.trim().isNotEmpty) {
+      payload['description'] = description!.trim();
+    }
+    if (expiryDate != null && expiryDate!.trim().isNotEmpty) {
+      payload['expiryDate'] = expiryDate;
+    }
+
+    return payload;
+  }
+
+  /// Payload for PUT /products/:id (farmer update product).
+  Map<String, dynamic> toUpdateJson() => toCreateJson();
 }
 
 // Mock products for marketplace

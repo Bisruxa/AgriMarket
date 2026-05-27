@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../models/crop_model.dart';
 import '../../models/product_model.dart';
+import '../../models/profile_model.dart';
+import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/logout_helper.dart';
 import '../../widgets/common/app_bottom_nav.dart';
 import '../../widgets/welcome_card.dart';
 import '../../widgets/profitable_crops_card.dart';
@@ -17,10 +20,11 @@ class FarmerDashboard extends StatefulWidget {
 
 class _FarmerDashboardState extends State<FarmerDashboard> {
   int _selectedIndex = 0;
+  final ApiService _apiService = ApiService();
+  UserProfile? _profile;
+  bool _isLoadingProfile = true;
 
-  final String farmerName = 'Bisrat Alemayehu';
-  final String farmName = 'Green Valley Farm';
-  final String profileImage = 'assets/images/welcome.jpg';
+  static const _defaultImage = 'assets/images/welcome.jpg';
 
   static const _navItems = [
     AppNavItem(
@@ -40,7 +44,23 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
     ),
   ];
 
-  late final List<Widget> _screens = [
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  Future<void> _loadProfile() async {
+    final profile = await _apiService.getProfile();
+    if (mounted) {
+      setState(() {
+        _profile = profile;
+        _isLoadingProfile = false;
+      });
+    }
+  }
+
+  List<Widget> get _screens => [
     _buildHomeScreen(),
     const CropRecommendation(),
     const MarketplaceScreen(),
@@ -78,16 +98,31 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
                           fontSize: 26,
                         ),
                   ),
-                  IconButton(
-                    onPressed: () {},
-                    style: IconButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: const BorderSide(color: AppColors.border),
+                  PopupMenuButton<String>(
+                    onSelected: (value) {
+                      if (value == 'logout') logoutAndRedirect(context);
+                    },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'logout',
+                        child: Row(
+                          children: [
+                            Icon(Icons.logout_rounded, size: 20),
+                            SizedBox(width: 10),
+                            Text('Logout'),
+                          ],
+                        ),
                       ),
+                    ],
+                    child: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: const Icon(Icons.more_vert_rounded),
                     ),
-                    icon: const Icon(Icons.notifications_outlined),
                   ),
                 ],
               ),
@@ -99,12 +134,22 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  WelcomeCard(
-                    farmerName: farmerName,
-                    farmName: farmName,
-                    profileImageUrl: profileImage,
-                    onViewProfile: () {},
-                  ),
+                  if (_isLoadingProfile)
+                    const Center(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 24),
+                        child: CircularProgressIndicator(color: AppColors.primary),
+                      ),
+                    )
+                  else
+                    WelcomeCard(
+                      farmerName: _profile?.name ?? 'Farmer',
+                      farmName: _profile?.displaySubtitle.isNotEmpty == true
+                          ? _profile!.displaySubtitle
+                          : 'Your farm',
+                      profileImageUrl: _profile?.avatarUrl ?? _defaultImage,
+                      onViewProfile: () {},
+                    ),
                   const SizedBox(height: 20),
                   _QuickActions(
                     onCrops: () => setState(() => _selectedIndex = 1),

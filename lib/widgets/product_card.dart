@@ -5,12 +5,14 @@ import '../theme/app_theme.dart';
 class ProductCard extends StatelessWidget {
   final Product product;
   final VoidCallback onDelete;
+  final VoidCallback? onEdit;
   final VoidCallback? onTap;
 
   const ProductCard({
     super.key,
     required this.product,
     required this.onDelete,
+    this.onEdit,
     this.onTap,
   });
 
@@ -33,7 +35,7 @@ class ProductCard extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: onTap,
+          onTap: onEdit ?? onTap,
           borderRadius: BorderRadius.circular(18),
           child: Padding(
             padding: const EdgeInsets.all(14),
@@ -55,6 +57,13 @@ class ProductCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 14),
                 Expanded(child: _buildProductInfo(context)),
+                if (onEdit != null)
+                  IconButton(
+                    onPressed: onEdit,
+                    icon: const Icon(Icons.edit_outlined),
+                    color: AppColors.primary,
+                    tooltip: 'Edit',
+                  ),
                 IconButton(
                   onPressed: onDelete,
                   icon: const Icon(Icons.delete_outline_rounded),
