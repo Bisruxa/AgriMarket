@@ -8,7 +8,7 @@ Quick Start — AgriAI
 **1. Activate your project venv (PowerShell)**
 
 ```powershell
-cd D:\@cs\AgriMarket\agriAI
+cd AgriMarket\agriAI
 .\venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip setuptools wheel
 ```
