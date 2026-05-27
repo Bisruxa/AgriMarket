@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment files and environment variables
+venv/
+.env
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+
+# Data — generated locally, don't commit
+data/raw/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+data/processed/*
+data/synthetic/*
+
+# Models — ignore large binary formats
+models/*.pt
+models/*.pth
+models/*.pkl
+models/*.bin
+
+# Allow trained XGBoost model + metadata so frontend devs can serve without training (~2 MB)
+models/*.json
+models/*/*.csv
+models/*/*.joblib
+models/*/*.json
+!models/price_forecaster/xgboost_price_forecaster.json
+!models/price_forecaster/training_metadata.json
+
+# IDEs
+.vscode/
+.idea/
