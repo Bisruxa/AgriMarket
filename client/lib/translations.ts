@@ -215,6 +215,7 @@ support:string;
 cropRecommendations:string;
 purchases:string;
 myspace:string;
+myFarms:string;
   };
   welcomeCard:{
     title:string;
@@ -580,9 +581,10 @@ const en: Translations = {
     accountPages: "Account Pages",
     support: "Support",
      cropRecommendations: "Crop Recommendations", 
-  purchases: "Purchases",
-  myspace:"My Space"
-  },
+   purchases: "Purchases",
+   myspace:"My Space",
+   myFarms: "My Farms"
+   },
   welcomeCard:{
     title:"Welcome to AgriMarket",
     name:"Bisrat Alemayehu",
@@ -946,9 +948,10 @@ const am: Translations = {
     accountPages: "መለያ ገጾች",
     support: "ድጋፍ",
      cropRecommendations: "የሰብል ምክሮች", 
-  purchases: "ግዢዎች",
-  myspace:"ፖርትፎሊዮዬ"
-  },
+   purchases: "ግዢዎች",
+   myspace:"ፖርትፎሊዮዬ",
+   myFarms: "እርሻዎቼ"
+   },
  welcomeCard: {
   title: "እንኳን ወደ አግሪማርኬት በደህና መጡ",
   name: "ብስራት አለማየሁ",
