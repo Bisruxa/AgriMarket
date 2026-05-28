@@ -132,8 +132,18 @@ model Farm {
   
   // Farm details
   soilType      String?
+  soilColor     String?   // e.g., "Black", "Red", "Brown", "Gray" (used by AI model)
   waterSource   String?   // e.g., "Rain-fed", "Irrigation", "Well"
   crops         String[]  // Array of crops grown on this farm
+
+  // Technical soil & climate data (auto-filled from APIs)
+  nitrogen      Float?
+  phosphorus    Float?
+  potassium     Float?
+  ph            Float?
+  temperature   Float?
+  humidity      Float?
+  rainfall      Float?
   
   isActive      Boolean   @default(true)
   

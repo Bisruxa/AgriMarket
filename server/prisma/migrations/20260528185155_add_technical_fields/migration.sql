@@ -1,0 +1,9 @@
+-- AlterTable
+ALTER TABLE "farms" ADD COLUMN     "humidity" DOUBLE PRECISION,
+ADD COLUMN     "nitrogen" DOUBLE PRECISION,
+ADD COLUMN     "ph" DOUBLE PRECISION,
+ADD COLUMN     "phosphorus" DOUBLE PRECISION,
+ADD COLUMN     "potassium" DOUBLE PRECISION,
+ADD COLUMN     "rainfall" DOUBLE PRECISION,
+ADD COLUMN     "soilColor" TEXT,
+ADD COLUMN     "temperature" DOUBLE PRECISION;

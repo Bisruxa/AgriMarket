@@ -1,9 +1,7 @@
 'use client'
 import  { useState, useEffect } from 'react'
-import { LanguageButton } from '@/components/ui/languageButton'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from '../hooks/useTranlations'
-import LogOutSection from '../SideBar/LogOut'
 import { Button } from '../ui/button'
 import { Bell } from 'lucide-react'
 function Header() {
@@ -60,11 +58,9 @@ const getPageTranslationKey = (path: string): string => {
           </div>
 
           <div className="flex items-center">
-             <LanguageButton />
-              <Button className='bg-white text-black hover:bg-[#2A5A2A] hover:text-white  '>
-            <Bell size={20} />
-          </Button>
-           
+            <Button className='bg-white text-black hover:bg-[#2A5A2A] hover:text-white'>
+              <Bell size={20} />
+            </Button>
           </div>
         </div>
       </div>
