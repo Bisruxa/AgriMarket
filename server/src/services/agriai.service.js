@@ -77,8 +77,13 @@ async function predictPrice(payload) {
   });
 }
 
+async function getPriceForecasterMetadata() {
+  return requestAgriAI('/price-forecaster/metadata', { method: 'GET' });
+}
+
 module.exports = {
   getHealth,
   recommendCrop,
   predictPrice,
+  getPriceForecasterMetadata,
 };

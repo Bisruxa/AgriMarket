@@ -126,6 +126,14 @@ export const farmsApi = {
   delete: (id: string) => api.delete(`/farms/${id}`),
 };
 
+export const agriaiApi = {
+  predictPrice: (data: { crop_name: string; region: string; year: number; month: number }) =>
+    api.post('/agriai/predict/price', data),
+
+  getPriceForecasterMetadata: () =>
+    api.get<{ crops: string[]; regions: string[] }>('/agriai/price-forecaster/metadata'),
+};
+
 export const productsApi = {
   getMyProducts: (page: number, limit: number) => 
     api.get<Product[]>(`/products/my-products?page=${page}&limit=${limit}`),

@@ -7,6 +7,7 @@ import {
   ChartNoAxesCombined,
   Store,
   Sprout,
+  TrendingUp,
 } from "lucide-react";
 import { useTranslations } from "@/components/hooks/useTranlations";
 
@@ -27,6 +28,11 @@ const FarmerSidebar = () => {
       name: t.sidebar.cropRecommendations,
       icon: <ReceiptText className="mr-2" size={20} />,
       to: "/farmer/cropdetail",
+    },
+    {
+      name: t.sidebar.priceForecast,
+      icon: <TrendingUp className="mr-2" size={20} />,
+      to: "/farmer/price-forecast",
     },
     {
       name: t.sidebar.trends,

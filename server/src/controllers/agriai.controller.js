@@ -73,12 +73,12 @@ exports.recommendCropFromAI = async (req, res, next) => {
   }
 };
 
-// @desc    Get crop price forecast from AgriAI
+// @desc    Get crop price forecast from AgriAI (single point)
 // @route   POST /api/agriai/predict/price
 // @access  Private
 exports.predictPriceFromAI = async (req, res, next) => {
   try {
-    const requiredFields = ['crop', 'start_date', 'end_date'];
+    const requiredFields = ['crop_name', 'region', 'year', 'month'];
     const missing = requireFields(req.body, requiredFields);
     if (missing.length) {
       return res.status(400).json({
@@ -88,15 +88,34 @@ exports.predictPriceFromAI = async (req, res, next) => {
     }
 
     const payload = {
-      crop: String(req.body.crop),
-      start_date: String(req.body.start_date),
-      end_date: String(req.body.end_date),
+      crop_name: String(req.body.crop_name),
+      region: String(req.body.region),
+      year: Number(req.body.year),
+      month: Number(req.body.month),
     };
 
     const data = await predictPrice(payload);
     res.status(200).json({
       success: true,
-      count: Array.isArray(data) ? data.length : 0,
+      data,
+    });
+  } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({ success: false, message: error.message });
+    }
+    next(error);
+  }
+};
+
+// @desc    Get price forecaster metadata (available crops & regions)
+// @route   GET /api/agriai/price-forecaster/metadata
+// @access  Private
+exports.getPriceForecasterMetadata = async (req, res, next) => {
+  try {
+    const { getPriceForecasterMetadata: fetchMeta } = require('../services/agriai.service');
+    const data = await fetchMeta();
+    res.status(200).json({
+      success: true,
       data,
     });
   } catch (error) {
