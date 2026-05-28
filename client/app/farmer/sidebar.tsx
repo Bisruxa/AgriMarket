@@ -6,6 +6,7 @@ import {
   ReceiptText,
   ChartNoAxesCombined,
   Store,
+  Sprout,
 } from "lucide-react";
 import { useTranslations } from "@/components/hooks/useTranlations";
 
@@ -16,6 +17,11 @@ const FarmerSidebar = () => {
       name: t.sidebar.dashboard,
       icon: <House className="mr-2" size={20} />,
       to: "/farmer/dashboard",
+    },
+    {
+      name: t.sidebar.myFarms,
+      icon: <Sprout className="mr-2" size={20} />,
+      to: "/farmer/farms",
     },
     {
       name: t.sidebar.cropRecommendations,
