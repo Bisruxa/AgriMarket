@@ -216,6 +216,7 @@ cropRecommendations:string;
 purchases:string;
 myspace:string;
 myFarms:string;
+priceForecast:string;
   };
   welcomeCard:{
     title:string;
@@ -583,7 +584,8 @@ const en: Translations = {
      cropRecommendations: "Crop Recommendations", 
    purchases: "Purchases",
    myspace:"My Space",
-   myFarms: "My Farms"
+   myFarms: "My Farms",
+   priceForecast: "Price Forecast"
    },
   welcomeCard:{
     title:"Welcome to AgriMarket",
@@ -950,7 +952,8 @@ const am: Translations = {
      cropRecommendations: "የሰብል ምክሮች", 
    purchases: "ግዢዎች",
    myspace:"ፖርትፎሊዮዬ",
-   myFarms: "እርሻዎቼ"
+   myFarms: "እርሻዎቼ",
+   priceForecast: "የዋጋ ትንበያ"
    },
  welcomeCard: {
   title: "እንኳን ወደ አግሪማርኬት በደህና መጡ",
