@@ -57,6 +57,7 @@ exports.recommendCropFromAI = async (req, res, next) => {
       humidity: Number(req.body.humidity),
       ph: Number(req.body.ph),
       rainfall: Number(req.body.rainfall),
+      ...(req.body.soil_color && { soil_color: req.body.soil_color }),
     };
 
     const data = await recommendCrop(payload);

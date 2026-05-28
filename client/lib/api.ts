@@ -1,6 +1,7 @@
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 // smtg
 import { Product } from '@/types/product';
+import { Farm, CreateFarmData, UpdateFarmData } from '@/types/farm';
 
 export type ApiResponse<T> = {
   success: boolean;
@@ -17,6 +18,7 @@ export type ApiResponse<T> = {
   total?: number;
   pages?: number;
   length?: number;
+  count?: number;
 };
 
 class ApiClient {
@@ -110,6 +112,18 @@ export const authApi = {
   getMe: () => api.get('/auth/me'),
 
   logout: () => api.post('/auth/logout', {}),
+};
+
+export const farmsApi = {
+  getMyFarms: () => api.get<Farm[]>('/farms'),
+
+  getFarm: (id: string) => api.get<Farm>(`/farms/${id}`),
+
+  create: (data: CreateFarmData) => api.post<Farm>('/farms', data),
+
+  update: (id: string, data: UpdateFarmData) => api.put<Farm>(`/farms/${id}`, data),
+
+  delete: (id: string) => api.delete(`/farms/${id}`),
 };
 
 export const productsApi = {

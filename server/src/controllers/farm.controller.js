@@ -1,4 +1,5 @@
 const { prisma } = require('../config/db');
+const { enrichFarmData } = require('../services/soilData.service');
 
 // @desc    Get all farms for the logged-in farmer
 // @route   GET /api/farms
@@ -72,6 +73,7 @@ exports.createFarm = async (req, res, next) => {
       latitude,
       longitude,
       soilType,
+      soilColor,
       waterSource,
       crops
     } = req.body;
@@ -100,6 +102,17 @@ exports.createFarm = async (req, res, next) => {
       });
     }
 
+    // Auto-fill technical soil & climate data from APIs
+    const enriched = await enrichFarmData({
+      region: region || undefined,
+      woreda: woreda || undefined,
+      kebele: kebele || undefined,
+      latitude: latitude ? parseFloat(latitude) : undefined,
+      longitude: longitude ? parseFloat(longitude) : undefined,
+      soilColor: soilColor || undefined,
+      soilType: soilType || undefined,
+    });
+
     const farm = await prisma.farm.create({
       data: {
         name: name.trim(),
@@ -109,11 +122,19 @@ exports.createFarm = async (req, res, next) => {
         region,
         woreda,
         kebele,
-        latitude: latitude ? parseFloat(latitude) : null,
-        longitude: longitude ? parseFloat(longitude) : null,
+        latitude: enriched.latitude,
+        longitude: enriched.longitude,
         soilType,
+        soilColor: enriched.soilColor,
         waterSource,
         crops: crops || [],
+        nitrogen: enriched.nitrogen,
+        phosphorus: enriched.phosphorus,
+        potassium: enriched.potassium,
+        ph: enriched.ph,
+        temperature: enriched.temperature,
+        humidity: enriched.humidity,
+        rainfall: enriched.rainfall,
         farmerId: req.user.id
       }
     });
@@ -144,6 +165,7 @@ exports.updateFarm = async (req, res, next) => {
       latitude,
       longitude,
       soilType,
+      soilColor,
       waterSource,
       crops
     } = req.body;
@@ -186,6 +208,23 @@ exports.updateFarm = async (req, res, next) => {
       }
     }
 
+    // If location fields changed, re-fetch technical data
+    const locationChanged = region !== undefined || woreda !== undefined ||
+      latitude !== undefined || longitude !== undefined;
+
+    let enriched = {};
+    if (locationChanged) {
+      enriched = await enrichFarmData({
+        region: region ?? farm.region,
+        woreda: woreda ?? farm.woreda,
+        kebele: kebele ?? farm.kebele,
+        latitude: latitude !== undefined ? parseFloat(latitude) : farm.latitude,
+        longitude: longitude !== undefined ? parseFloat(longitude) : farm.longitude,
+        soilColor: soilColor ?? farm.soilColor,
+        soilType: soilType ?? farm.soilType,
+      });
+    }
+
     farm = await prisma.farm.update({
       where: { id: req.params.id },
       data: {
@@ -199,8 +238,19 @@ exports.updateFarm = async (req, res, next) => {
         ...(latitude !== undefined && { latitude: latitude ? parseFloat(latitude) : null }),
         ...(longitude !== undefined && { longitude: longitude ? parseFloat(longitude) : null }),
         ...(soilType !== undefined && { soilType }),
+        ...(soilColor !== undefined && { soilColor }),
         ...(waterSource !== undefined && { waterSource }),
-        ...(crops !== undefined && { crops })
+        ...(crops !== undefined && { crops }),
+        ...(locationChanged && enriched.nitrogen != null && { nitrogen: enriched.nitrogen }),
+        ...(locationChanged && enriched.phosphorus != null && { phosphorus: enriched.phosphorus }),
+        ...(locationChanged && enriched.potassium != null && { potassium: enriched.potassium }),
+        ...(locationChanged && enriched.ph != null && { ph: enriched.ph }),
+        ...(locationChanged && enriched.temperature != null && { temperature: enriched.temperature }),
+        ...(locationChanged && enriched.humidity != null && { humidity: enriched.humidity }),
+        ...(locationChanged && enriched.rainfall != null && { rainfall: enriched.rainfall }),
+        ...(locationChanged && enriched.latitude != null && { latitude: enriched.latitude }),
+        ...(locationChanged && enriched.longitude != null && { longitude: enriched.longitude }),
+        ...(locationChanged && enriched.soilColor != null && { soilColor: enriched.soilColor }),
       }
     });
 
