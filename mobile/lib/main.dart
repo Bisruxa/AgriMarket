@@ -1,5 +1,6 @@
 import 'package:agrimatketapp/screens/auth/login_screen.dart';
 import 'package:agrimatketapp/screens/farmer/farmer_dashboard.dart';
+import 'package:agrimatketapp/screens/farmer/farmer.chat.dart';
 import 'package:agrimatketapp/screens/trader/trader_dashboard.dart';
 import 'package:flutter/material.dart';
 import 'package:agrimatketapp/theme/app_theme.dart';
@@ -29,6 +30,7 @@ class MyApp extends StatelessWidget {
         '/trader-signup': (context) => const TraderSignupScreen(),
         '/login': (context) => const LoginScreen(),
         '/farmer-dashboard': (context) => const FarmerDashboard(),
+        '/farmer-chat': (context) => const FarmerChatScreen(),
         '/trader-dashboard': (context) => const TraderDashboard(),
       },
       home: const OnboardingScreen(),

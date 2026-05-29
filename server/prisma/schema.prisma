@@ -80,8 +80,35 @@ model User {
   // Relations
   products    Product[]
   farms       Farm[]      // One farmer can have multiple farm lands
+  chats       Chat[]
   
   @@map("users")
+}
+
+model Chat {
+  id        String    @id @default(cuid())
+  title     String    @default("New Chat")
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages  Message[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("chats")
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  chatId    String
+  chat      Chat     @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  role      String   // "user" | "assistant" | "function_call" | "function_result"
+  content   String
+  metadata  Json?    // function name, args, result, tool calls
+  createdAt DateTime @default(now())
+
+  @@index([chatId])
+  @@map("messages")
 }
 
 model Product {

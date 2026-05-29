@@ -1,8 +1,10 @@
 const express = require('express');
+const http = require('http');
 const cors = require('cors');
 const morgan = require('morgan');
 const dotenv = require('dotenv');
 const cookieParser = require('cookie-parser');
+const { Server } = require('socket.io');
 const { connectDB } = require('./config/db');
 
 // Load environment variables
@@ -12,34 +14,25 @@ dotenv.config();
 connectDB();
 
 const app = express();
+const httpServer = http.createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: function (origin, callback) {
+      if (!origin || process.env.NODE_ENV !== 'production') return callback(null, true);
+      return callback(null, true);
+    },
+    credentials: true,
+  },
+});
 
 // CORS configuration
 const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (mobile apps, curl, Postman)
-    if (!origin) return callback(null, true);
-    
-    // In production, allow all origins or specify your frontend URLs
-    if (process.env.NODE_ENV === 'production') {
-      // Allow any origin in production (you can restrict this later)
-      return callback(null, true);
-    }
-    
-    // List of allowed origins for development
-    const allowedOrigins = [
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'http://localhost:3002',
-      'http://localhost:54474',
-      'http://localhost:61667',
-      process.env.CLIENT_URL
-    ].filter(Boolean);
-    
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
+    // and all origins in development for convenience
+    if (!origin || process.env.NODE_ENV !== 'production') return callback(null, true);
+    // In production, allow any origin (restrict later if needed)
+    return callback(null, true);
   },
   credentials: true
 };
@@ -60,6 +53,11 @@ app.use('/api/farms', require('./routes/farm.routes'));
 app.use('/api/weather', require('./routes/weather.routes'));
 app.use('/api/market', require('./routes/market.routes'));
 app.use('/api/agriai', require('./routes/agriai.routes'));
+app.use('/api/chat', require('./routes/chat.routes'));
+
+// Socket.IO chat namespace
+const { setupChatSocket } = require('./chat.socket');
+setupChatSocket(io);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -90,6 +88,6 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`🚀 Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
 });

@@ -8,6 +8,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from .schemas import (
+    ChatRequest,
+    ChatResponse,
     CropRecommendationRequest,
     CropRecommendationResponse,
     PriceForecastRequest,
@@ -15,6 +17,7 @@ from .schemas import (
     PriceForecasterMetadataResponse,
 )
 from .services.service_factory import service_factory
+from .services.gemini_service import send_message as gemini_send_message
 
 load_dotenv()
 
@@ -130,4 +133,24 @@ def recommend_crop(request: CropRecommendationRequest) -> Dict[str, Any]:
     except Exception as exc:
         raise HTTPException(
             status_code=500, detail=f"An unexpected error occurred: {exc}"
+        ) from exc
+
+
+# ── Gemini AI Chat ────────────────────────────────────────────────────
+
+@app.post("/chat", response_model=ChatResponse)
+def chat(request: ChatRequest) -> Dict[str, Any]:
+    try:
+        result = gemini_send_message(
+            message=request.message,
+            conversation_history=request.conversation_history,
+            user_id=request.user_id,
+        )
+        return {
+            "text": result.get("text", ""),
+            "functionCalls": result.get("functionCalls", []),
+        }
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500, detail=f"Chat error: {exc}"
         ) from exc

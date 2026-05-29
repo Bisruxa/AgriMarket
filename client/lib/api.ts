@@ -134,6 +134,15 @@ export const agriaiApi = {
     api.get<{ crops: string[]; regions: string[] }>('/agriai/price-forecaster/metadata'),
 };
 
+export const chatApi = {
+  getChats: () => api.get('/chat'),
+  getChat: (id: string) => api.get(`/chat/${id}`),
+  createChat: (title?: string) => api.post('/chat', { title: title || 'New Chat' }),
+  deleteChat: (id: string) => api.delete(`/chat/${id}`),
+  sendMessage: (chatId: string, content: string) =>
+    api.post(`/chat/${chatId}/messages`, { content }),
+};
+
 export const productsApi = {
   getMyProducts: (page: number, limit: number) => 
     api.get<Product[]>(`/products/my-products?page=${page}&limit=${limit}`),
