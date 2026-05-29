@@ -1,0 +1,119 @@
+{
+  "feature_descriptions": {
+    "nitrogen": "Soil nitrogen level derived from the source datasets.",
+    "phosphorus": "Soil phosphorus level derived from the source datasets.",
+    "potassium": "Soil potassium level derived from the source datasets.",
+    "temperature": "Annual average temperature in Celsius.",
+    "humidity": "Average relative humidity in percent.",
+    "ph": "Soil pH.",
+    "rainfall": "Annual rainfall in millimeters.",
+    "soil_color": "Categorical soil color inferred from source or imputed using Random Forest.",
+    "crop_name": "Crop recommendation label."
+  },
+  "imputation": {
+    "model": "RandomForestClassifier",
+    "accuracy": 0.5594315245478036,
+    "rows_imputed": 2200,
+    "threshold": 0.6
+  },
+  "augmentation": {
+    "method": "SMOTE + gaussian noise",
+    "original_rows": 6067,
+    "augmented_rows": 15907,
+    "target_total": 20000
+  },
+  "realistic_range_constraints": {
+    "nitrogen": [
+      0.0,
+      250.0
+    ],
+    "phosphorus": [
+      0.0,
+      250.0
+    ],
+    "potassium": [
+      0.0,
+      250.0
+    ],
+    "temperature": [
+      -5.0,
+      45.0
+    ],
+    "humidity": [
+      0.0,
+      100.0
+    ],
+    "ph": [
+      3.0,
+      10.0
+    ],
+    "rainfall": [
+      0.0,
+      4000.0
+    ]
+  },
+  "final_class_distribution": {
+    "teff": 4564,
+    "maize": 3002,
+    "wheat": 2592,
+    "barley": 1824,
+    "bean": 917,
+    "rice": 363,
+    "chickpea": 363,
+    "kidneybeans": 363,
+    "pigeonpeas": 363,
+    "pomegranate": 363,
+    "banana": 363,
+    "mango": 363,
+    "grapes": 363,
+    "mothbeans": 363,
+    "mungbean": 363,
+    "blackgram": 363,
+    "lentil": 363,
+    "orange": 363,
+    "apple": 363,
+    "muskmelon": 363,
+    "watermelon": 363,
+    "jute": 363,
+    "cotton": 363,
+    "papaya": 363,
+    "coconut": 363,
+    "coffee": 363,
+    "pea": 337,
+    "sorghum": 260,
+    "dagussa": 254,
+    "niger seed": 231,
+    "potato": 173,
+    "red pepper": 104,
+    "fallow": 93
+  },
+  "final_rows": 21974,
+  "soil_color_distribution": {
+    "brown": 11501,
+    "black": 6595,
+    "red": 3322,
+    "red brown": 209,
+    "other": 161,
+    "gray": 103,
+    "dark gray": 50,
+    "grayish brown": 12,
+    "very dark brown": 11,
+    "yellowish brown": 7,
+    "reddish gray": 2,
+    "light red": 1
+  },
+  "soil_color_categories": [
+    "black",
+    "brown",
+    "dark gray",
+    "gray",
+    "grayish brown",
+    "light red",
+    "other",
+    "red",
+    "red brown",
+    "reddish gray",
+    "very dark brown",
+    "yellowish brown"
+  ]
+}
