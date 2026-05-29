@@ -47,7 +47,9 @@ class UserProfile {
       farmLocation: json['farmLocation']?.toString(),
       farmSize: _parseDouble(json['farmSize']),
       tinNumber: json['tinNumber']?.toString(),
-      avatarUrl: json['avatarUrl']?.toString() ?? json['profileImage']?.toString(),
+      avatarUrl: json['avatarUrl']?.toString() ??
+          json['avatar']?.toString() ??
+          json['profileImage']?.toString(),
     );
   }
 

@@ -9,6 +9,8 @@ import '../../widgets/common/app_bottom_nav.dart';
 import '../../widgets/welcome_card.dart';
 import '../../widgets/profitable_crops_card.dart';
 import 'crop_recommendation.dart';
+import 'farms_screen.dart';
+import 'farmer_profile.dart';
 import 'marketplace.dart';
 
 class FarmerDashboard extends StatefulWidget {
@@ -31,6 +33,11 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
       icon: Icons.home_outlined,
       activeIcon: Icons.home_rounded,
       label: 'Home',
+    ),
+    AppNavItem(
+      icon: Icons.agriculture_outlined,
+      activeIcon: Icons.agriculture_rounded,
+      label: 'Farms',
     ),
     AppNavItem(
       icon: Icons.auto_awesome_outlined,
@@ -60,8 +67,19 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
     }
   }
 
+  Future<void> _openProfile() async {
+    final updated = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => const FarmerProfileScreen()),
+    );
+    if (updated == true && mounted) {
+      _loadProfile();
+    }
+  }
+
   List<Widget> get _screens => [
     _buildHomeScreen(),
+    const FarmsScreen(),
     const CropRecommendation(),
     const MarketplaceScreen(),
   ];
@@ -100,9 +118,23 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
                   ),
                   PopupMenuButton<String>(
                     onSelected: (value) {
-                      if (value == 'logout') logoutAndRedirect(context);
+                      if (value == 'profile') {
+                        _openProfile();
+                      } else if (value == 'logout') {
+                        logoutAndRedirect(context);
+                      }
                     },
                     itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'profile',
+                        child: Row(
+                          children: [
+                            Icon(Icons.person_outline_rounded, size: 20),
+                            SizedBox(width: 10),
+                            Text('Profile'),
+                          ],
+                        ),
+                      ),
                       const PopupMenuItem(
                         value: 'logout',
                         child: Row(
@@ -148,17 +180,18 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
                           ? _profile!.displaySubtitle
                           : 'Your farm',
                       profileImageUrl: _profile?.avatarUrl ?? _defaultImage,
-                      onViewProfile: () {},
+                      onViewProfile: _openProfile,
                     ),
                   const SizedBox(height: 20),
                   _QuickActions(
-                    onCrops: () => setState(() => _selectedIndex = 1),
-                    onMarket: () => setState(() => _selectedIndex = 2),
+                    onFarms: () => setState(() => _selectedIndex = 1),
+                    onCrops: () => setState(() => _selectedIndex = 2),
+                    onMarket: () => setState(() => _selectedIndex = 3),
                   ),
                   const SizedBox(height: 20),
                   ProfitableCropsCard(
                     crops: topProfitableCrops,
-                    onViewAll: () => setState(() => _selectedIndex = 1),
+                    onViewAll: () => setState(() => _selectedIndex = 2),
                   ),
                   const SizedBox(height: 24),
                   Row(
@@ -169,7 +202,7 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       TextButton(
-                        onPressed: () => setState(() => _selectedIndex = 2),
+                        onPressed: () => setState(() => _selectedIndex = 3),
                         child: const Text('View All'),
                       ),
                     ],
@@ -188,7 +221,7 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
                     itemBuilder: (context, index) {
                       return _CompactProductTile(
                         product: mockProducts[index],
-                        onTap: () => setState(() => _selectedIndex = 2),
+                        onTap: () => setState(() => _selectedIndex = 3),
                       );
                     },
                   ),
@@ -204,10 +237,15 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
 }
 
 class _QuickActions extends StatelessWidget {
+  final VoidCallback onFarms;
   final VoidCallback onCrops;
   final VoidCallback onMarket;
 
-  const _QuickActions({required this.onCrops, required this.onMarket});
+  const _QuickActions({
+    required this.onFarms,
+    required this.onCrops,
+    required this.onMarket,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -215,9 +253,18 @@ class _QuickActions extends StatelessWidget {
       children: [
         Expanded(
           child: _ActionChip(
+            icon: Icons.agriculture_rounded,
+            label: 'My Farms',
+            color: AppColors.primary,
+            onTap: onFarms,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _ActionChip(
             icon: Icons.auto_awesome_rounded,
             label: 'Crop Tips',
-            color: AppColors.primary,
+            color: AppColors.primaryLight,
             onTap: onCrops,
           ),
         ),
@@ -225,8 +272,8 @@ class _QuickActions extends StatelessWidget {
         Expanded(
           child: _ActionChip(
             icon: Icons.add_shopping_cart_rounded,
-            label: 'Sell Produce',
-            color: AppColors.primaryLight,
+            label: 'Sell',
+            color: AppColors.accent,
             onTap: onMarket,
           ),
         ),
