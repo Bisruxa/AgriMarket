@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
-import '../theme/app_theme.dart';
+import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
+import '../services/token_storage.dart';
+import '../utils/ethiopian_phone_validator.dart';
+import '../utils/password_strength.dart';
 import '../widgets/common/auth_shell.dart';
 import '../widgets/common/section_title.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/custom_dropdown.dart';
 import '../widgets/custom_button.dart';
-import '../widgets/location_picker.dart';
+import '../widgets/password_strength_indicator.dart';
+import '../theme/app_theme.dart';
 
 class FarmerSignupScreen extends StatefulWidget {
   const FarmerSignupScreen({super.key});
@@ -15,18 +20,19 @@ class FarmerSignupScreen extends StatefulWidget {
 }
 
 class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
+  final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final _farmLocationController = TextEditingController();
   final _farmSizeController = TextEditingController();
   final _cropsController = TextEditingController();
 
-  String? _selectedRegion;
-  String? _selectedWoreda;
   String? _selectedExperience;
+  PasswordStrength _passwordStrength = PasswordStrength.none;
+  bool _isLocating = true;
+  String? _locationStatus;
 
   final List<String> _experienceLevels = [
     'Beginner (0-2 years)',
@@ -34,6 +40,96 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
     'Advanced (6-10 years)',
     'Expert (10+ years)',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _passwordController.addListener(_onPasswordChanged);
+    _captureLocation();
+  }
+
+  Future<void> _captureLocation() async {
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        setState(() {
+          _isLocating = false;
+          _locationStatus = 'Location services are off';
+        });
+        return;
+      }
+
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        setState(() {
+          _isLocating = false;
+          _locationStatus = 'Location permission denied';
+        });
+        return;
+      }
+
+      final pos = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+      await TokenStorage.saveFarmerLocation(lat: pos.latitude, lng: pos.longitude);
+
+      if (!mounted) return;
+      setState(() {
+        _isLocating = false;
+        _locationStatus = 'Location saved';
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isLocating = false;
+        _locationStatus = 'Could not get location';
+      });
+    }
+  }
+
+  void _onPasswordChanged() {
+    setState(() {
+      _passwordStrength =
+          PasswordStrengthEvaluator.evaluate(_passwordController.text);
+    });
+  }
+
+  Future<void> _register() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final name = _nameController.text.trim();
+    final cropsText = _cropsController.text.trim();
+    final crops = cropsText
+        .split(',')
+        .map((c) => c.trim())
+        .where((c) => c.isNotEmpty)
+        .toList();
+
+    await TokenStorage.saveUserName(name);
+    await TokenStorage.saveRole('farmer');
+    if (crops.isNotEmpty) {
+      await TokenStorage.savePlantedCrops(crops);
+      await TokenStorage.saveFarmSubtitle(crops.join(', '));
+    }
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Registration successful! Pending approval.'),
+      ),
+    );
+    Navigator.pushNamedAndRemoveUntil(
+      context,
+      '/farmer-dashboard',
+      (route) => false,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +141,7 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
       child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
         child: Form(
+          key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -58,6 +155,12 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
                 hint: 'Enter your full name',
                 controller: _nameController,
                 prefixIcon: Icons.person_outline,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Full name is required';
+                  }
+                  return null;
+                },
               ),
               CustomTextField(
                 label: 'Email Address',
@@ -65,13 +168,62 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 prefixIcon: Icons.email_outlined,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Email is required';
+                  }
+                  if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value.trim())) {
+                    return 'Enter a valid email';
+                  }
+                  return null;
+                },
               ),
               CustomTextField(
                 label: 'Phone Number',
-                hint: 'Enter your phone number',
+                hint: '912345678',
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
                 prefixIcon: Icons.phone_outlined,
+                prefixText: '+251 ',
+                inputFormatters: [
+                  FilteringTextInputFormatter.digitsOnly,
+                  LengthLimitingTextInputFormatter(9),
+                ],
+                validator: EthiopianPhoneValidator.validate,
+              ),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.my_location_rounded,
+                      size: 16,
+                      color: _isLocating ? AppColors.textSecondary : AppColors.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _isLocating
+                            ? 'Getting your current location...'
+                            : (_locationStatus ?? 'Location'),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: _isLocating
+                              ? AppColors.textSecondary
+                              : (_locationStatus == 'Location saved'
+                                  ? AppColors.primary
+                                  : AppColors.error),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    if (!_isLocating)
+                      TextButton(
+                        onPressed: _captureLocation,
+                        child: const Text('Retry'),
+                      ),
+                  ],
+                ),
               ),
               CustomTextField(
                 label: 'Password',
@@ -79,42 +231,34 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
                 controller: _passwordController,
                 obscureText: true,
                 prefixIcon: Icons.lock_outline,
+                onChanged: (_) => _onPasswordChanged(),
+                validator: (value) =>
+                    PasswordStrengthEvaluator.validationMessage(value ?? ''),
               ),
+              if (_passwordController.text.isNotEmpty) ...[
+                PasswordStrengthIndicator(strength: _passwordStrength),
+                const SizedBox(height: 8),
+              ],
               CustomTextField(
                 label: 'Confirm Password',
                 hint: 'Confirm your password',
                 controller: _confirmPasswordController,
                 obscureText: true,
                 prefixIcon: Icons.lock_outline,
-              ),
-              const SectionTitle(
-                title: 'Your Location',
-                subtitle: 'Region and woreda',
-                icon: Icons.location_on_outlined,
-              ),
-              LocationPicker(
-                selectedRegion: _selectedRegion,
-                selectedWoreda: _selectedWoreda,
-                onRegionChanged: (value) {
-                  setState(() {
-                    _selectedRegion = value;
-                    _selectedWoreda = null;
-                  });
-                },
-                onWoredaChanged: (value) {
-                  setState(() => _selectedWoreda = value);
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please confirm your password';
+                  }
+                  if (value != _passwordController.text) {
+                    return 'Passwords do not match';
+                  }
+                  return null;
                 },
               ),
               const SectionTitle(
                 title: 'Farm Information',
                 subtitle: 'Help us personalize recommendations',
                 icon: Icons.grass_rounded,
-              ),
-              CustomTextField(
-                label: 'Farm Location',
-                hint: 'Specific area or village',
-                controller: _farmLocationController,
-                prefixIcon: Icons.map_outlined,
               ),
               CustomTextField(
                 label: 'Farm Size (hectares)',
@@ -128,6 +272,13 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
                 hint: 'e.g. Teff, Wheat, Maize',
                 controller: _cropsController,
                 prefixIcon: Icons.eco_outlined,
+                maxLines: 2,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Please enter the crops you plant';
+                  }
+                  return null;
+                },
               ),
               CustomDropdown<String>(
                 label: 'Farming Experience',
@@ -142,16 +293,7 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
               const SizedBox(height: 8),
               CustomButton(
                 text: 'Register as Farmer',
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Registration successful! Pending approval.',
-                      ),
-                    ),
-                  );
-                  Navigator.pushReplacementNamed(context, '/login');
-                },
+                onPressed: _register,
               ),
             ],
           ),
@@ -162,12 +304,12 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
 
   @override
   void dispose() {
+    _passwordController.removeListener(_onPasswordChanged);
     _nameController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
-    _farmLocationController.dispose();
     _farmSizeController.dispose();
     _cropsController.dispose();
     super.dispose();

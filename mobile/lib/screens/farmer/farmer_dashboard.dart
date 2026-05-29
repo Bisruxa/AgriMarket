@@ -1,16 +1,15 @@
 import 'package:flutter/material.dart';
 import '../../models/crop_model.dart';
-import '../../models/product_model.dart';
 import '../../models/profile_model.dart';
 import '../../services/api_service.dart';
+import '../../services/token_storage.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/logout_helper.dart';
 import '../../widgets/common/app_bottom_nav.dart';
-import '../../widgets/welcome_card.dart';
-import '../../widgets/profitable_crops_card.dart';
+import '../../widgets/farmer/farmer_dashboard_header.dart';
+import '../../widgets/farmer/farmer_dashboard_sections.dart';
+import '../../widgets/farmer/farmer_weather_card.dart';
 import 'crop_recommendation.dart';
-import 'farms_screen.dart';
-import 'farmer_profile.dart';
 import 'marketplace.dart';
 
 class FarmerDashboard extends StatefulWidget {
@@ -35,11 +34,6 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
       label: 'Home',
     ),
     AppNavItem(
-      icon: Icons.agriculture_outlined,
-      activeIcon: Icons.agriculture_rounded,
-      label: 'Farms',
-    ),
-    AppNavItem(
       icon: Icons.auto_awesome_outlined,
       activeIcon: Icons.auto_awesome_rounded,
       label: 'Crops',
@@ -51,6 +45,31 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
     ),
   ];
 
+  static const _activeListings = [
+    ActiveListingItem(
+      name: 'Premium Teff',
+      priceLine: 'ETB 6200/qtl',
+      statusLine: '15 qtl',
+    ),
+    ActiveListingItem(
+      name: 'White Maize',
+      priceLine: 'ETB 2950/qtl',
+      statusLine: '20 qtl',
+    ),
+    ActiveListingItem(
+      name: 'Sorghum',
+      priceLine: 'ETB 3200/qtl',
+      statusLine: '10 qtl',
+      statusHighlight: true,
+    ),
+    ActiveListingItem(
+      name: 'Wheat',
+      priceLine: 'ETB 3500/qtl',
+      statusLine: 'Offer Received',
+      statusHighlight: true,
+    ),
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -59,30 +78,74 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
 
   Future<void> _loadProfile() async {
     final profile = await _apiService.getProfile();
+    final storedName = await TokenStorage.getUserName();
+    final storedFarm = await TokenStorage.getFarmSubtitle();
+
     if (mounted) {
       setState(() {
-        _profile = profile;
+        final resolvedName = (profile?.name.isNotEmpty == true)
+            ? profile!.name
+            : (storedName?.isNotEmpty == true ? storedName! : 'Farmer');
+
+        if (profile != null) {
+          _profile = UserProfile(
+            id: profile.id,
+            name: resolvedName,
+            email: profile.email,
+            role: profile.role,
+            phone: profile.phone,
+            region: profile.region,
+            woreda: profile.woreda,
+            farmLocation: profile.farmLocation ?? storedFarm,
+            farmSize: profile.farmSize,
+            tinNumber: profile.tinNumber,
+            avatarUrl: profile.avatarUrl,
+          );
+        } else if (storedName != null && storedName.isNotEmpty) {
+          _profile = UserProfile(
+            name: storedName,
+            email: '',
+            role: 'farmer',
+            farmLocation: storedFarm,
+          );
+        }
         _isLoadingProfile = false;
       });
     }
   }
 
-  Future<void> _openProfile() async {
-    final updated = await Navigator.push<bool>(
-      context,
-      MaterialPageRoute(builder: (_) => const FarmerProfileScreen()),
-    );
-    if (updated == true && mounted) {
-      _loadProfile();
-    }
+  String get _farmerName => _profile?.name ?? 'Farmer';
+
+  String get _firstName {
+    final parts = _farmerName.trim().split(RegExp(r'\s+'));
+    return parts.isNotEmpty ? parts.first : 'Farmer';
   }
 
+  String get _farmLine {
+    final farm = _profile?.farmLocation?.trim();
+    final region = _profile?.region?.trim();
+    final farmLabel = (farm != null && farm.isNotEmpty) ? farm : 'Your farm';
+    if (region != null && region.isNotEmpty) {
+      return 'Farm: $farmLabel, Region: $region';
+    }
+    return 'Farm: $farmLabel';
+  }
+
+  String get _weatherLocation {
+    final farm = _profile?.farmLocation?.trim();
+    if (farm != null && farm.isNotEmpty) return farm;
+    return _profile?.region?.trim() ?? 'Ethiopia';
+  }
+
+  String get _cropRegion => _profile?.region?.trim() ?? 'Oromia';
+
   List<Widget> get _screens => [
-    _buildHomeScreen(),
-    const FarmsScreen(),
-    const CropRecommendation(),
-    const MarketplaceScreen(),
-  ];
+        _buildHomeScreen(),
+        const CropRecommendation(),
+        _selectedIndex == 2
+            ? const MarketplaceScreen()
+            : const SizedBox.shrink(),
+      ];
 
   @override
   Widget build(BuildContext context) {
@@ -101,308 +164,60 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
   }
 
   Widget _buildHomeScreen() {
-    return SafeArea(
+    if (_isLoadingProfile) {
+      return const ColoredBox(
+        color: AppColors.surface,
+        child: Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+      );
+    }
+
+    final featuredCrop = topProfitableCrops.firstWhere(
+      (c) => c.isRecommended,
+      orElse: () => topProfitableCrops.first,
+    );
+
+    return ColoredBox(
+      color: AppColors.surface,
       child: CustomScrollView(
         slivers: [
           SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Dashboard',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontSize: 26,
-                        ),
-                  ),
-                  PopupMenuButton<String>(
-                    onSelected: (value) {
-                      if (value == 'profile') {
-                        _openProfile();
-                      } else if (value == 'logout') {
-                        logoutAndRedirect(context);
-                      }
-                    },
-                    itemBuilder: (context) => [
-                      const PopupMenuItem(
-                        value: 'profile',
-                        child: Row(
-                          children: [
-                            Icon(Icons.person_outline_rounded, size: 20),
-                            SizedBox(width: 10),
-                            Text('Profile'),
-                          ],
-                        ),
-                      ),
-                      const PopupMenuItem(
-                        value: 'logout',
-                        child: Row(
-                          children: [
-                            Icon(Icons.logout_rounded, size: 20),
-                            SizedBox(width: 10),
-                            Text('Logout'),
-                          ],
-                        ),
-                      ),
-                    ],
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: const Icon(Icons.more_vert_rounded),
-                    ),
-                  ),
-                ],
-              ),
+            child: FarmerDashboardHeader(
+              farmerName: _farmerName,
+              farmLine: _farmLine,
+              profileImageUrl: _profile?.avatarUrl ?? _defaultImage,
+              onLogout: () => logoutAndRedirect(context),
             ),
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  if (_isLoadingProfile)
-                    const Center(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 24),
-                        child: CircularProgressIndicator(color: AppColors.primary),
-                      ),
-                    )
-                  else
-                    WelcomeCard(
-                      farmerName: _profile?.name ?? 'Farmer',
-                      farmName: _profile?.displaySubtitle.isNotEmpty == true
-                          ? _profile!.displaySubtitle
-                          : 'Your farm',
-                      profileImageUrl: _profile?.avatarUrl ?? _defaultImage,
-                      onViewProfile: _openProfile,
-                    ),
-                  const SizedBox(height: 20),
-                  _QuickActions(
-                    onFarms: () => setState(() => _selectedIndex = 1),
-                    onCrops: () => setState(() => _selectedIndex = 2),
-                    onMarket: () => setState(() => _selectedIndex = 3),
+                  FarmerWeatherCard(
+                    greetingName: _firstName,
+                    location: _weatherLocation,
                   ),
-                  const SizedBox(height: 20),
-                  ProfitableCropsCard(
-                    crops: topProfitableCrops,
+                  const SizedBox(height: 16),
+                  const FarmerVerificationBanner(),
+                  const SizedBox(height: 16),
+                  const MarketplaceAnalyticsCard(),
+                  const CommodityTickerCard(),
+                  AiCropRecommendationsCard(
+                    region: _cropRegion,
+                    featuredCrop: featuredCrop,
+                  ),
+                  ActiveListingsSection(
+                    listings: _activeListings,
                     onViewAll: () => setState(() => _selectedIndex = 2),
                   ),
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Recent Listings',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      TextButton(
-                        onPressed: () => setState(() => _selectedIndex = 3),
-                        child: const Text('View All'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 0.72,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                    ),
-                    itemCount: mockProducts.length > 4 ? 4 : mockProducts.length,
-                    itemBuilder: (context, index) {
-                      return _CompactProductTile(
-                        product: mockProducts[index],
-                        onTap: () => setState(() => _selectedIndex = 3),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 24),
                 ],
               ),
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _QuickActions extends StatelessWidget {
-  final VoidCallback onFarms;
-  final VoidCallback onCrops;
-  final VoidCallback onMarket;
-
-  const _QuickActions({
-    required this.onFarms,
-    required this.onCrops,
-    required this.onMarket,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _ActionChip(
-            icon: Icons.agriculture_rounded,
-            label: 'My Farms',
-            color: AppColors.primary,
-            onTap: onFarms,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _ActionChip(
-            icon: Icons.auto_awesome_rounded,
-            label: 'Crop Tips',
-            color: AppColors.primaryLight,
-            onTap: onCrops,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _ActionChip(
-            icon: Icons.add_shopping_cart_rounded,
-            label: 'Sell',
-            color: AppColors.accent,
-            onTap: onMarket,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ActionChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _ActionChip({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: color, size: 24),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _CompactProductTile extends StatelessWidget {
-  final Product product;
-  final VoidCallback onTap;
-
-  const _CompactProductTile({required this.product, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.08),
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(15),
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.eco_rounded,
-                    color: AppColors.primary,
-                    size: 40,
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(10),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      product.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'ETB ${product.price.toStringAsFixed(0)}/${product.unit}',
-                      style: const TextStyle(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
