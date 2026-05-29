@@ -81,7 +81,7 @@ class _TraderProductsScreenState extends State<TraderProductsScreen> {
           isLoading = false;
         });
       } else if (response.statusCode == 401) {
-        if (mounted) await logoutAndRedirect(context);
+        if (mounted) await logoutAndRedirectIfAuthenticated(context);
       } else {
         throw Exception(response.data['message'] ?? 'Failed to load products');
       }
