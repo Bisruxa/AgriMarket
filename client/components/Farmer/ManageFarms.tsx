@@ -1,67 +1,31 @@
 'use client';
 import React, { useState } from 'react';
+import Link from 'next/link';
 import {
   Card, CardContent, CardHeader, CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog';
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from '@/components/ui/select';
 import { useFarms, useFarmMutations } from '@/components/hooks/useFarms';
-import { ETHIOPIAN_REGIONS, WOREDAS_BY_REGION } from '@/lib/regon_n_woreda';
 import { Farm } from '@/types/farm';
 import { Plus, Pencil, Trash2, MapPin, Sprout, Loader2 } from 'lucide-react';
-
-const SOIL_TYPES = [
-  { value: 'clay', label: 'Clay' },
-  { value: 'sandy', label: 'Sandy' },
-  { value: 'loam', label: 'Loam' },
-  { value: 'silt', label: 'Silt' },
-  { value: 'peaty', label: 'Peaty' },
-  { value: 'chalky', label: 'Chalky' },
-  { value: 'laterite', label: 'Laterite' },
-];
-
-const SOIL_COLORS = [
-  { value: 'black', label: 'Black' },
-  { value: 'red', label: 'Red' },
-  { value: 'brown', label: 'Brown' },
-  { value: 'gray', label: 'Gray' },
-  { value: 'yellowish', label: 'Yellowish' },
-];
-
-interface FarmFormData {
-  name: string;
-  soilType: string;
-  soilColor: string;
-  region: string;
-  woreda: string;
-  kebele: string;
-}
-
-const emptyForm: FarmFormData = {
-  name: '', soilType: '', soilColor: 'brown', region: '', woreda: '', kebele: '',
-};
+import {
+  FarmFormFields,
+  emptyFarmForm,
+  FarmFormData,
+} from '@/components/Farmer/FarmFormFields';
 
 const ManageFarms = () => {
   const { data, isLoading } = useFarms();
-  const { createMutation, updateMutation, deleteMutation } = useFarmMutations();
+  const { updateMutation, deleteMutation } = useFarmMutations();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [deleteDialog, setDeleteDialog] = useState<Farm | null>(null);
   const [editingFarm, setEditingFarm] = useState<Farm | null>(null);
-  const [form, setForm] = useState<FarmFormData>(emptyForm);
+  const [form, setForm] = useState<FarmFormData>(emptyFarmForm);
 
   const farms = data?.farms || [];
-
-  const openAddDialog = () => {
-    setEditingFarm(null);
-    setForm(emptyForm);
-    setDialogOpen(true);
-  };
 
   const openEditDialog = (farm: Farm) => {
     setEditingFarm(farm);
@@ -88,10 +52,8 @@ const ManageFarms = () => {
     };
     if (editingFarm) {
       updateMutation.mutate({ id: editingFarm.id, data: payload });
-    } else {
-      createMutation.mutate(payload);
+      setDialogOpen(false);
     }
-    setDialogOpen(false);
   };
 
   const handleDelete = () => {
@@ -100,17 +62,16 @@ const ManageFarms = () => {
     setDeleteDialog(null);
   };
 
-  const isPending = createMutation.isPending || updateMutation.isPending;
-
-  const selectedRegion = form.region;
-  const woredas = selectedRegion ? WOREDAS_BY_REGION[selectedRegion] || [] : [];
+  const isPending = updateMutation.isPending;
 
   return (
     <div className="mt-6">
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-bold text-[#2A5A2A]">Manage Your Farms</h2>
-        <Button onClick={openAddDialog} className="bg-[#2A5A2A] hover:bg-[#1E431E] text-white">
-          <Plus className="mr-1 h-4 w-4" /> Add Farm
+        <Button asChild className="bg-[#2A5A2A] hover:bg-[#1E431E] text-white">
+          <Link href="/farmer/farms/add">
+            <Plus className="mr-1 h-4 w-4" /> Add Farm
+          </Link>
         </Button>
       </div>
 
@@ -162,95 +123,11 @@ const ManageFarms = () => {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingFarm ? 'Edit Farm' : 'Add Farm'}</DialogTitle>
-            <DialogDescription>
-              {editingFarm ? 'Update your farm details.' : 'Tell us about your farm land.'}
-            </DialogDescription>
+            <DialogTitle>Edit Farm</DialogTitle>
+            <DialogDescription>Update your farm details.</DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium text-black/70 mb-1 block">Farm Name *</label>
-              <Input
-                placeholder="e.g. North Field, Riverside Plot"
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-sm font-medium text-black/70 mb-1 block">Soil Type</label>
-                <Select value={form.soilType} onValueChange={(v) => setForm({ ...form, soilType: v })}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SOIL_TYPES.map((t) => (
-                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-black/70 mb-1 block">Soil Color</label>
-                <Select value={form.soilColor} onValueChange={(v) => setForm({ ...form, soilColor: v })}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {SOIL_COLORS.map((c) => (
-                      <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-sm font-medium text-black/70 mb-1 block">Region</label>
-                <Select value={form.region} onValueChange={(v) => setForm({ ...form, region: v, woreda: '' })}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select region" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ETHIOPIAN_REGIONS.map((r) => (
-                      <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-black/70 mb-1 block">Woreda</label>
-                <Select
-                  value={form.woreda}
-                  onValueChange={(v) => setForm({ ...form, woreda: v })}
-                  disabled={!selectedRegion}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder={selectedRegion ? 'Select woreda' : 'Select region first'} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {woredas.map((w) => (
-                      <SelectItem key={w.value} value={w.value}>{w.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-black/70 mb-1 block">Kebele (optional)</label>
-              <Input
-                placeholder="e.g. Kebele 01"
-                value={form.kebele}
-                onChange={(e) => setForm({ ...form, kebele: e.target.value })}
-              />
-            </div>
-          </div>
+          <FarmFormFields form={form} onChange={setForm} />
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
@@ -260,7 +137,7 @@ const ManageFarms = () => {
               className="bg-[#2A5A2A] hover:bg-[#1E431E] text-white"
             >
               {isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
-              {editingFarm ? 'Update' : 'Save Farm'}
+              Update
             </Button>
           </DialogFooter>
         </DialogContent>

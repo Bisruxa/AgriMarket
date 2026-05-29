@@ -18,4 +18,7 @@ class ApiConfig {
 
   // Farms
   static const farms = '/farms';
+
+  // AgriAI
+  static const cropRecommend = '/agriai/recommend/crop';
 }
