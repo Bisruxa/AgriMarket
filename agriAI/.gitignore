@@ -26,8 +26,8 @@ models/*.bin
 # Allow trained XGBoost model + metadata so frontend devs can serve without training (~2 MB)
 models/*.json
 models/*/*.csv
-models/*/*.joblib
-models/*/*.json
+!models/*/*.joblib
+!models/*/*.json
 !models/price_forecaster/xgboost_price_forecaster.json
 !models/price_forecaster/training_metadata.json
 
