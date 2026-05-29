@@ -12,6 +12,7 @@ import 'crop_recommendation.dart';
 import 'farms_screen.dart';
 import 'farmer_profile.dart';
 import 'marketplace.dart';
+import 'farmer.chat.dart';
 
 class FarmerDashboard extends StatefulWidget {
   const FarmerDashboard({super.key});
@@ -96,6 +97,17 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
         currentIndex: _selectedIndex,
         onTap: (index) => setState(() => _selectedIndex = index),
         items: _navItems,
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const FarmerChatScreen()),
+          );
+        },
+        backgroundColor: AppColors.primary,
+        elevation: 4,
+        child: const Icon(Icons.auto_awesome_rounded, color: Colors.white),
       ),
     );
   }

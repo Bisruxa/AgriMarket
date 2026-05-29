@@ -557,6 +557,65 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>> predictPrice({
+    required String cropName,
+    required String region,
+    required int year,
+    required int month,
+  }) async {
+    final response = await post(ApiConfig.pricePredict, {
+      'crop_name': cropName,
+      'region': region,
+      'year': year,
+      'month': month,
+    });
+    return response.data is Map<String, dynamic>
+        ? response.data as Map<String, dynamic>
+        : {};
+  }
+
+  Future<Map<String, dynamic>> getChats() async {
+    final response = await get(ApiConfig.chat);
+    return response.data is Map<String, dynamic>
+        ? response.data as Map<String, dynamic>
+        : {};
+  }
+
+  Future<Map<String, dynamic>> getChat(String chatId) async {
+    final response = await get('${ApiConfig.chat}/$chatId');
+    return response.data is Map<String, dynamic>
+        ? response.data as Map<String, dynamic>
+        : {};
+  }
+
+  Future<Map<String, dynamic>> createChat({String? title}) async {
+    final response = await post(ApiConfig.chat, {
+      'title': title ?? 'New Chat',
+    });
+    return response.data is Map<String, dynamic>
+        ? response.data as Map<String, dynamic>
+        : {};
+  }
+
+  Future<Map<String, dynamic>> sendMessage(String chatId, String content) async {
+    final response = await post(
+      '${ApiConfig.chat}/$chatId/messages',
+      {'content': content},
+    );
+    return response.data is Map<String, dynamic>
+        ? response.data as Map<String, dynamic>
+        : {};
+  }
+
+  Future<bool> deleteChat(String chatId) async {
+    try {
+      final response = await delete('${ApiConfig.chat}/$chatId');
+      return response.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
   String? _messageFromBody(dynamic data) {
     if (data is Map<String, dynamic>) {
       return data['message']?.toString();

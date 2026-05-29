@@ -68,3 +68,20 @@ class MetadataResponse(BaseModel):
     model_type: str
     model_version: str
     crops: List[str]
+
+
+class ChatRequest(BaseModel):
+    message: str = Field(..., description="User's message")
+    conversation_history: Optional[List[Dict[str, str]]] = Field(default=[], description="Previous conversation messages")
+    user_id: Optional[str] = Field(default=None, description="User identifier for context")
+
+
+class FunctionCallInfo(BaseModel):
+    name: str
+    args: Dict[str, Any]
+    result: Optional[Dict[str, Any]] = None
+
+
+class ChatResponse(BaseModel):
+    text: str
+    functionCalls: Optional[List[FunctionCallInfo]] = Field(default=[])
