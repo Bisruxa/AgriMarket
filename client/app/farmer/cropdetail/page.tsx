@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import { MapPin, Loader2, Sprout, FlaskConical, Thermometer, Droplets, BarChart3 } from 'lucide-react';
+import { MapPin, Loader2, Sprout, FlaskConical, Thermometer, Droplets } from 'lucide-react';
 import Header from '@/components/common/Header';
 import { Button } from '@/components/ui/button';
 import { useFarms } from '@/components/hooks/useFarms';
@@ -175,7 +175,7 @@ const CropDetail = () => {
                   <Card key={i} className={`border-l-4 ${rank === 1 ? 'border-l-[#2A5A2A]' : 'border-l-black/10'}`}>
                     <CardContent className="p-4">
                       <div className="flex items-start gap-3">
-                        <span className="text-2xl mt-0.5">{getCropEmoji(rec.crop)}</span>
+                        <span className="w-8 h-8 mt-0.5 flex items-center justify-center rounded-full bg-[#2A5A2A]/10 text-[#2A5A2A] font-bold text-sm flex-shrink-0">{rank}</span>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-1">
                             <div className="flex items-center gap-2">
