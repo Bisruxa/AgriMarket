@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:geolocator/geolocator.dart';
 import '../services/token_storage.dart';
 import '../utils/ethiopian_phone_validator.dart';
 import '../utils/password_strength.dart';
@@ -32,6 +33,8 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
   PasswordStrength _passwordStrength = PasswordStrength.none;
   Set<String> _selectedCrops = {};
   String? _cropsError;
+  bool _isLocating = true;
+  String? _locationStatus;
 
   final List<String> _experienceLevels = [
     'Beginner (0-2 years)',
@@ -44,6 +47,51 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
   void initState() {
     super.initState();
     _passwordController.addListener(_onPasswordChanged);
+    _captureLocation();
+  }
+
+  Future<void> _captureLocation() async {
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        setState(() {
+          _isLocating = false;
+          _locationStatus = 'Location services are off';
+        });
+        return;
+      }
+
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        setState(() {
+          _isLocating = false;
+          _locationStatus = 'Location permission denied';
+        });
+        return;
+      }
+
+      final pos = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+      await TokenStorage.saveFarmerLocation(lat: pos.latitude, lng: pos.longitude);
+
+      if (!mounted) return;
+      setState(() {
+        _isLocating = false;
+        _locationStatus = 'Location saved';
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _isLocating = false;
+        _locationStatus = 'Could not get location';
+      });
+    }
   }
 
   void _onPasswordChanged() {
@@ -142,6 +190,40 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
                   LengthLimitingTextInputFormatter(9),
                 ],
                 validator: EthiopianPhoneValidator.validate,
+              ),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.my_location_rounded,
+                      size: 16,
+                      color: _isLocating ? AppColors.textSecondary : AppColors.primary,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        _isLocating
+                            ? 'Getting your current location...'
+                            : (_locationStatus ?? 'Location'),
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: _isLocating
+                              ? AppColors.textSecondary
+                              : (_locationStatus == 'Location saved'
+                                  ? AppColors.primary
+                                  : AppColors.error),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                    if (!_isLocating)
+                      TextButton(
+                        onPressed: _captureLocation,
+                        child: const Text('Retry'),
+                      ),
+                  ],
+                ),
               ),
               CustomTextField(
                 label: 'Password',

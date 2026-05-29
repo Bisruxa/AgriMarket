@@ -107,78 +107,90 @@ class CropSelectorFieldState extends State<CropSelectorField> {
           const SizedBox(height: 6),
           GestureDetector(
             onTap: () => _focusNode.requestFocus(),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: _focusNode.hasFocus
-                      ? AppColors.primary
-                      : AppColors.border,
-                  width: _focusNode.hasFocus ? 2 : 1,
-                ),
-              ),
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(top: 6),
-                    child: Icon(
-                      Icons.eco_outlined,
-                      size: 20,
-                      color: AppColors.primary.withValues(alpha: 0.9),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color:
+                          _focusNode.hasFocus ? AppColors.primary : AppColors.border,
+                      width: _focusNode.hasFocus ? 2 : 1,
                     ),
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: [
-                        ...sortedSelected.map(_buildInlineChip),
-                        ConstrainedBox(
-                          constraints: BoxConstraints(
-                            minWidth: sortedSelected.isEmpty ? 160 : 72,
-                            maxWidth: MediaQuery.sizeOf(context).width - 120,
-                          ),
-                          child: TextField(
-                            controller: _searchController,
-                            focusNode: _focusNode,
-                            onTap: () =>
-                                setState(() => _showSuggestions = true),
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: AppColors.textPrimary,
-                            ),
-                            decoration: InputDecoration(
-                              isDense: true,
-                              border: InputBorder.none,
-                              enabledBorder: InputBorder.none,
-                              focusedBorder: InputBorder.none,
-                              hintText: sortedSelected.isEmpty
-                                  ? 'Type to search crops...'
-                                  : 'Add more...',
-                              hintStyle: const TextStyle(
-                                color: AppColors.textSecondary,
-                                fontSize: 14,
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(
-                                vertical: 6,
-                                horizontal: 0,
-                              ),
-                            ),
-                          ),
+                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(top: 6),
+                        child: Icon(
+                          Icons.eco_outlined,
+                          size: 20,
+                          color: AppColors.primary.withValues(alpha: 0.9),
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            // Chips INSIDE the same field
+                            ...sortedSelected.map(_buildInlineChip),
+                            // Text input always has usable width (no negative maxWidth)
+                            SizedBox(
+                              width: sortedSelected.isEmpty ? 220 : 140,
+                              child: TextField(
+                                controller: _searchController,
+                                focusNode: _focusNode,
+                                onTap: () => setState(() => _showSuggestions = true),
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: AppColors.textPrimary,
+                                ),
+                                decoration: InputDecoration(
+                                  isDense: true,
+                                  border: InputBorder.none,
+                                  enabledBorder: InputBorder.none,
+                                  focusedBorder: InputBorder.none,
+                                  hintText: sortedSelected.isEmpty
+                                      ? 'Type to search crops...'
+                                      : 'Add more...',
+                                  hintStyle: const TextStyle(
+                                    color: AppColors.textSecondary,
+                                    fontSize: 14,
+                                  ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    vertical: 6,
+                                    horizontal: 0,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
+                );
+              },
             ),
           ),
+
+          // Fallback: also show selected crops right under the field
+          // so they are always visible even if the Wrap can't lay out as expected.
+          if (sortedSelected.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: sortedSelected.map(_buildInlineChip).toList(),
+            ),
+          ],
           if (showList) ...[
             const SizedBox(height: 8),
             Container(

@@ -8,6 +8,8 @@ class TokenStorage {
   static const _userNameKey = 'user_name';
   static const _farmSubtitleKey = 'farm_subtitle';
   static const _plantedCropsKey = 'planted_crops';
+  static const _farmerLatKey = 'farmer_lat';
+  static const _farmerLngKey = 'farmer_lng';
 
   static Future<void> saveToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
@@ -64,6 +66,20 @@ class TokenStorage {
     return prefs.getStringList(_plantedCropsKey) ?? [];
   }
 
+  static Future<void> saveFarmerLocation({
+    required double lat,
+    required double lng,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble(_farmerLatKey, lat);
+    await prefs.setDouble(_farmerLngKey, lng);
+  }
+
+  static Future<(double? lat, double? lng)> getFarmerLocation() async {
+    final prefs = await SharedPreferences.getInstance();
+    return (prefs.getDouble(_farmerLatKey), prefs.getDouble(_farmerLngKey));
+  }
+
   static Future<void> clear() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);
@@ -71,5 +87,7 @@ class TokenStorage {
     await prefs.remove(_userNameKey);
     await prefs.remove(_farmSubtitleKey);
     await prefs.remove(_plantedCropsKey);
+    await prefs.remove(_farmerLatKey);
+    await prefs.remove(_farmerLngKey);
   }
 }
