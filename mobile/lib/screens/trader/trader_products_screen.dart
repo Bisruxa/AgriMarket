@@ -3,6 +3,7 @@ import '../../models/product_model.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/logout_helper.dart';
+import '../../widgets/farmer_info_popup.dart';
 
 class TraderProductsScreen extends StatefulWidget {
   const TraderProductsScreen({super.key});
@@ -58,6 +59,13 @@ class _TraderProductsScreenState extends State<TraderProductsScreen> {
     }).toList();
   }
 
+  void _showFarmerInfoDialog(Product product) {
+    showDialog<void>(
+      context: context,
+      builder: (_) => FarmerInfoPopup(product: product),
+    );
+  }
+
   Future<void> fetchProducts() async {
     setState(() {
       isLoading = true;
@@ -76,12 +84,12 @@ class _TraderProductsScreenState extends State<TraderProductsScreen> {
         final list = response.data['data'] as List? ?? [];
         setState(() {
           products = list.map((json) => Product.fromJson(json)).toList();
-          totalPages = response.data['pagination']?['pages'] ?? 1;
+          totalPages = response.data['pagination']?['totalPages'] ?? 1;
           currentPage = response.data['pagination']?['page'] ?? 1;
           isLoading = false;
         });
       } else if (response.statusCode == 401) {
-        if (mounted) await logoutAndRedirectIfAuthenticated(context);
+        if (mounted) await logoutAndRedirect(context);
       } else {
         throw Exception(response.data['message'] ?? 'Failed to load products');
       }
@@ -227,7 +235,10 @@ class _TraderProductsScreenState extends State<TraderProductsScreen> {
         itemBuilder: (context, index) {
           return Padding(
             padding: const EdgeInsets.only(bottom: 12),
-            child: TraderProductRow(product: items[index]),
+            child: TraderProductRow(
+              product: items[index],
+              onTap: () => _showFarmerInfoDialog(items[index]),
+            ),
           );
         },
       ),
@@ -237,8 +248,13 @@ class _TraderProductsScreenState extends State<TraderProductsScreen> {
 
 class TraderProductRow extends StatelessWidget {
   final Product product;
+  final VoidCallback? onTap;
 
-  const TraderProductRow({super.key, required this.product});
+  const TraderProductRow({
+    super.key,
+    required this.product,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -247,7 +263,7 @@ class TraderProductRow extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () {},
+        onTap: onTap,
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(

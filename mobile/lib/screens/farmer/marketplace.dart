@@ -4,7 +4,6 @@ import '../../models/product_model.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/product_card.dart';
 import '../../widgets/add_product.dart';
-import '../../services/token_storage.dart';
 import '../../utils/logout_helper.dart';
 
 class MarketplaceScreen extends StatefulWidget {
@@ -39,16 +38,6 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
   @override
   void initState() {
     super.initState();
-    _loadProductsIfAuthenticated();
-  }
-
-  Future<void> _loadProductsIfAuthenticated() async {
-    final token = await TokenStorage.getToken();
-    if (!mounted) return;
-    if (token == null || token.isEmpty) {
-      setState(() => isLoading = false);
-      return;
-    }
     fetchProducts();
   }
 
@@ -192,15 +181,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
   }
 
   Future<void> _handleUnauthorized() async {
-    if (!mounted) return;
-    if (!await hasAuthToken()) {
-      setState(() {
-        isLoading = false;
-        errorMessage = 'Sign in to manage your marketplace listings online.';
-      });
-      return;
-    }
-    await logoutAndRedirect(context);
+    if (mounted) await logoutAndRedirect(context);
   }
 
   void _showSnackBar(String msg, Color color) {

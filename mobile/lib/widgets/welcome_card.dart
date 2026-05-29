@@ -63,7 +63,15 @@ class WelcomeCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Welcome back, $farmerName',
+                  'Welcome back,',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  farmerName,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 20,
