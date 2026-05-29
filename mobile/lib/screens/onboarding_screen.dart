@@ -87,7 +87,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         Navigator.pushNamed(context, '/signup');
                       },
                       isOutlined: true,
-                      textColor: Colors.black,
                     ),
                   ],
                 ),

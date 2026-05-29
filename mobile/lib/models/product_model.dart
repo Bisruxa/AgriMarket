@@ -1,3 +1,29 @@
+class ProductFarmer {
+  final String id;
+  final String name;
+  final String? phone;
+  final String? region;
+  final String? woreda;
+
+  ProductFarmer({
+    required this.id,
+    required this.name,
+    this.phone,
+    this.region,
+    this.woreda,
+  });
+
+  factory ProductFarmer.fromJson(Map<String, dynamic> json) {
+    return ProductFarmer(
+      id: json['id'] ?? '',
+      name: json['name'] ?? 'Unknown farmer',
+      phone: json['phone'],
+      region: json['region'],
+      woreda: json['woreda'],
+    );
+  }
+}
+
 class Product {
   final String id;
   final String name;
@@ -13,6 +39,7 @@ class Product {
   final String? expiryDate;
   final String farmerId;
   final bool isAvailable;
+  final ProductFarmer? farmer;
 
   Product({
     required this.id,
@@ -29,6 +56,7 @@ class Product {
     this.expiryDate,
     required this.farmerId,
     this.isAvailable = true,
+    this.farmer,
   });
 
   factory Product.fromJson(Map<String, dynamic> json) {
@@ -55,16 +83,6 @@ class Product {
     return 0;
   }
 
-  // Safe parser for DateTime
-  DateTime parseDateTime(dynamic value) {
-    if (value == null) return DateTime.now();
-    if (value is DateTime) return value;
-    if (value is String) {
-      return DateTime.tryParse(value) ?? DateTime.now();
-    }
-    return DateTime.now();
-  }
-
   return Product(
     id: json['id'] ?? json['_id'] ?? '',
     name: json['name'] ?? '',
@@ -80,7 +98,9 @@ class Product {
     expiryDate: json['expiryDate'],
     farmerId: json['farmerId'] ?? '',
     isAvailable: json['isAvailable'] ?? true,
-   
+    farmer: json['farmer'] != null
+        ? ProductFarmer.fromJson(json['farmer'] as Map<String, dynamic>)
+        : null,
   );
 }
 
