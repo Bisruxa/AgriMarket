@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import { MapPin, Leaf, Loader2, Sprout, TrendingUp } from 'lucide-react';
+import { MapPin, Loader2, Sprout, FlaskConical, Thermometer, Droplets, BarChart3 } from 'lucide-react';
 import Header from '@/components/common/Header';
 import { Button } from '@/components/ui/button';
 import { useFarms } from '@/components/hooks/useFarms';
@@ -17,6 +17,13 @@ interface Recommendation {
 
 interface CropRecommendationResponse {
   recommendations: Recommendation[];
+}
+
+function getSuitabilityLabel(confidence: number): { label: string; color: string; bar: string } {
+  if (confidence >= 0.7) return { label: 'Highly Suitable', color: 'text-green-700', bar: 'bg-green-500' };
+  if (confidence >= 0.4) return { label: 'Moderately Suitable', color: 'text-amber-700', bar: 'bg-amber-500' };
+  if (confidence >= 0.1) return { label: 'Low Suitability', color: 'text-orange-700', bar: 'bg-orange-500' };
+  return { label: 'Not Recommended', color: 'text-red-700', bar: 'bg-red-500' };
 }
 
 const CropDetail = () => {
@@ -65,27 +72,32 @@ const CropDetail = () => {
       <Header />
 
       <div className="flex justify-center items-start flex-1 p-4">
-        <div className="w-full max-w-md space-y-6">
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <h2 className="text-2xl font-bold text-[#2A5A2A] mb-6 text-center">
-              Get Crop Recommendation
-            </h2>
+        <div className="w-full max-w-lg space-y-6">
 
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                  <MapPin className="w-4 h-4 text-[#2A5A2A]" />
-                  Select Your Farm
-                </label>
+          {/* Form Card */}
+          <div className="bg-white rounded-xl shadow-lg p-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 bg-[#2A5A2A]/10 rounded-lg">
+                <Sprout className="w-5 h-5 text-[#2A5A2A]" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-[#2A5A2A]">Crop Recommendation</h2>
+                <p className="text-xs text-black/40">AI-powered suggestions for your farm</p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-black/70">Select Your Farm</label>
                 {farmsLoading ? (
-                  <div className="flex items-center gap-2 text-sm text-black/50">
+                  <div className="flex items-center gap-2 text-sm text-black/40 h-9">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Loading your farms...
+                    Loading farms...
                   </div>
                 ) : (
                   <Select value={selectedFarmId} onValueChange={setSelectedFarmId}>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Choose a farm" />
+                      <SelectValue placeholder="Choose a registered farm" />
                     </SelectTrigger>
                     <SelectContent>
                       {farms.map((farm) => (
@@ -98,64 +110,119 @@ const CropDetail = () => {
                 )}
                 {farms.length === 0 && !farmsLoading && (
                   <p className="text-xs text-amber-600">
-                    No farms registered. Go to Dashboard to add your farm first.
+                    No farms registered. Add one from{" "}
+                    <a href="/farmer/farms" className="underline font-medium">My Farms</a> first.
                   </p>
                 )}
               </div>
 
               {selectedFarm && (
-                <div className="bg-green-50 rounded-lg p-3 space-y-1 text-sm text-black/70">
-                  <p><span className="font-medium">Soil:</span> {selectedFarm.soilType || 'Not set'}</p>
-                  <p><span className="font-medium">Location:</span> {[selectedFarm.region, selectedFarm.woreda].filter(Boolean).join(', ') || 'Not set'}</p>
+                <div className="grid grid-cols-2 gap-2 bg-gray-50 rounded-lg p-3">
+                  <div className="flex items-center gap-1.5 text-xs text-black/60">
+                    <FlaskConical className="w-3.5 h-3.5 text-[#2A5A2A]" />
+                    {selectedFarm.soilType
+                      ? <span className="capitalize">{selectedFarm.soilType} soil</span>
+                      : 'Soil not set'}
+                  </div>
+                  <div className="flex items-center gap-1.5 text-xs text-black/60">
+                    <MapPin className="w-3.5 h-3.5 text-[#2A5A2A]" />
+                    {[selectedFarm.region, selectedFarm.woreda].filter(Boolean).join(', ') || 'Location not set'}
+                  </div>
+                  <div className="flex items-center gap-1.5 text-xs text-black/60">
+                    <Thermometer className="w-3.5 h-3.5 text-[#2A5A2A]" />
+                    {selectedFarm.temperature != null ? `${selectedFarm.temperature}°C` : '—'}
+                  </div>
+                  <div className="flex items-center gap-1.5 text-xs text-black/60">
+                    <Droplets className="w-3.5 h-3.5 text-[#2A5A2A]" />
+                    {selectedFarm.humidity != null ? `${selectedFarm.humidity}%` : '—'}
+                  </div>
                 </div>
               )}
 
               <Button
-                className="w-full bg-[#2A5A2A] hover:bg-[#1e441e] text-white py-6 text-lg"
+                className="w-full bg-[#2A5A2A] hover:bg-[#1e441e] text-white py-5 text-base"
                 disabled={!selectedFarm || loading || farmsLoading}
                 onClick={getRecommendation}
               >
                 {loading ? (
-                  <><Loader2 className="h-5 w-5 animate-spin mr-2" /> Analyzing...</>
+                  <><Loader2 className="h-5 w-5 animate-spin mr-2" /> Analyzing your farm data...</>
                 ) : (
                   'Get Recommendation'
                 )}
               </Button>
 
               {error && (
-                <p className="text-sm text-red-600 text-center">{error}</p>
+                <div className="text-sm text-red-600 bg-red-50 rounded-lg p-3 text-center">{error}</div>
               )}
             </div>
           </div>
 
+          {/* Results */}
           {recommendations && recommendations.length > 0 && (
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <div className="flex items-center gap-2 mb-4">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
                 <Sprout className="w-5 h-5 text-[#2A5A2A]" />
-                <h3 className="text-lg font-bold text-[#2A5A2A]">Recommended Crops</h3>
+                <h3 className="text-lg font-bold text-[#2A5A2A]">Top Crops for Your Farm</h3>
               </div>
-              <div className="space-y-3">
-                {recommendations.map((rec, i) => (
-                  <Card key={i} className="border border-[#2A5A2A]/20">
-                    <CardContent className="flex items-center justify-between p-4">
-                      <div className="flex items-center gap-3">
-                        <span className="text-lg">{['', '🥇', '🥈', '🥉'][i] || ''}</span>
-                        <span className="font-semibold text-black/80 capitalize">{rec.crop}</span>
-                      </div>
-                      <div className="flex items-center gap-1 text-sm text-[#2A5A2A] font-medium">
-                        <TrendingUp className="h-3.5 w-3.5" />
-                        {Math.round(parseFloat(rec.confidence) * 100)}%
+
+              {recommendations.map((rec, i) => {
+                const conf = parseFloat(rec.confidence);
+                const pct = Math.round(conf * 100);
+                const suitability = getSuitabilityLabel(conf);
+                const rank = i + 1;
+
+                return (
+                  <Card key={i} className={`border-l-4 ${rank === 1 ? 'border-l-[#2A5A2A]' : 'border-l-black/10'}`}>
+                    <CardContent className="p-4">
+                      <div className="flex items-start gap-3">
+                        <span className="text-2xl mt-0.5">{getCropEmoji(rec.crop)}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-black/80 capitalize text-base">{rec.crop}</span>
+                              {rank === 1 && (
+                                <span className="text-[10px] bg-[#2A5A2A]/10 text-[#2A5A2A] font-semibold px-1.5 py-0.5 rounded">
+                                  BEST MATCH
+                                </span>
+                              )}
+                            </div>
+                            <span className="text-sm font-semibold text-black/50">{pct}%</span>
+                          </div>
+
+                          {/* Confidence bar */}
+                          <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden mb-1.5">
+                            <div
+                              className={`h-full rounded-full transition-all duration-500 ${suitability.bar}`}
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+
+                          <div className="flex items-center justify-between">
+                            <span className={`text-xs font-medium ${suitability.color}`}>
+                              {suitability.label}
+                            </span>
+                            <span className="text-xs text-black/30">
+                              Based on your farm&apos;s soil &amp; climate data
+                            </span>
+                          </div>
+                        </div>
                       </div>
                     </CardContent>
                   </Card>
-                ))}
+                );
+              })}
+
+              <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 text-xs text-blue-700 leading-relaxed">
+                These recommendations are based on your farm&apos;s soil nutrients (N, P, K), pH level,
+                temperature, humidity, and rainfall patterns. For best results, keep your farm data updated.
               </div>
             </div>
           )}
 
           {recommendations && recommendations.length === 0 && !error && (
-            <div className="bg-white rounded-xl shadow-lg p-6 text-center text-black/50">
-              No recommendations returned. Try adjusting farm details.
+            <div className="bg-white rounded-xl shadow-lg p-8 text-center">
+              <Sprout className="w-10 h-10 mx-auto mb-3 text-black/20" />
+              <p className="text-sm text-black/50">No suitable crops found for this farm profile.</p>
             </div>
           )}
         </div>
