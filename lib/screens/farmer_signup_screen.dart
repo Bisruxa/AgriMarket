@@ -9,7 +9,6 @@ import '../widgets/common/section_title.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/custom_dropdown.dart';
 import '../widgets/custom_button.dart';
-import '../widgets/crop_selector_field.dart';
 import '../widgets/password_strength_indicator.dart';
 import '../theme/app_theme.dart';
 
@@ -28,11 +27,10 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   final _farmSizeController = TextEditingController();
+  final _cropsController = TextEditingController();
 
   String? _selectedExperience;
   PasswordStrength _passwordStrength = PasswordStrength.none;
-  Set<String> _selectedCrops = {};
-  String? _cropsError;
   bool _isLocating = true;
   String? _locationStatus;
 
@@ -102,18 +100,20 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
   }
 
   Future<void> _register() async {
-    final cropsError = CropSelectorField.validateSelection(_selectedCrops);
-    setState(() => _cropsError = cropsError);
-
-    if (!_formKey.currentState!.validate() || cropsError != null) return;
+    if (!_formKey.currentState!.validate()) return;
 
     final name = _nameController.text.trim();
-    final crops = _selectedCrops.toList()..sort();
+    final cropsText = _cropsController.text.trim();
+    final crops = cropsText
+        .split(',')
+        .map((c) => c.trim())
+        .where((c) => c.isNotEmpty)
+        .toList();
 
     await TokenStorage.saveUserName(name);
     await TokenStorage.saveRole('farmer');
-    await TokenStorage.savePlantedCrops(crops);
     if (crops.isNotEmpty) {
+      await TokenStorage.savePlantedCrops(crops);
       await TokenStorage.saveFarmSubtitle(crops.join(', '));
     }
 
@@ -267,27 +267,19 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
                 keyboardType: TextInputType.number,
                 prefixIcon: Icons.square_foot_outlined,
               ),
-              CropSelectorField(
-                selectedCrops: _selectedCrops,
-                onSelectionChanged: (crops) {
-                  setState(() {
-                    _selectedCrops = Set<String>.from(crops);
-                    _cropsError =
-                        CropSelectorField.validateSelection(_selectedCrops);
-                  });
+              CustomTextField(
+                label: 'Crops You Plant',
+                hint: 'e.g. Teff, Wheat, Maize',
+                controller: _cropsController,
+                prefixIcon: Icons.eco_outlined,
+                maxLines: 2,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'Please enter the crops you plant';
+                  }
+                  return null;
                 },
               ),
-              if (_cropsError != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Text(
-                    _cropsError!,
-                    style: const TextStyle(
-                      color: AppColors.error,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
               CustomDropdown<String>(
                 label: 'Farming Experience',
                 value: _selectedExperience,
@@ -319,6 +311,7 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _farmSizeController.dispose();
+    _cropsController.dispose();
     super.dispose();
   }
 }
