@@ -12,6 +12,13 @@ class Farm {
   final String? soilType;
   final String? soilColor;
   final String? waterSource;
+  final double? nitrogen;
+  final double? phosphorus;
+  final double? potassium;
+  final double? ph;
+  final double? temperature;
+  final double? humidity;
+  final double? rainfall;
   final List<String> crops;
   final bool isActive;
   final String farmerId;
@@ -32,6 +39,13 @@ class Farm {
     this.soilType,
     this.soilColor,
     this.waterSource,
+    this.nitrogen,
+    this.phosphorus,
+    this.potassium,
+    this.ph,
+    this.temperature,
+    this.humidity,
+    this.rainfall,
     this.crops = const [],
     this.isActive = true,
     this.farmerId = '',
@@ -63,6 +77,13 @@ class Farm {
       soilType: json['soilType']?.toString(),
       soilColor: json['soilColor']?.toString(),
       waterSource: json['waterSource']?.toString(),
+      nitrogen: _parseDouble(json['nitrogen']),
+      phosphorus: _parseDouble(json['phosphorus']),
+      potassium: _parseDouble(json['potassium']),
+      ph: _parseDouble(json['ph']),
+      temperature: _parseDouble(json['temperature']),
+      humidity: _parseDouble(json['humidity']),
+      rainfall: _parseDouble(json['rainfall']),
       crops: _parseStringList(json['crops']),
       isActive: json['isActive'] == true || json['isActive'] == null,
       farmerId: json['farmerId']?.toString() ?? '',
