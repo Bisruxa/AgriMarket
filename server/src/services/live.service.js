@@ -12,7 +12,7 @@ function createGeminiConnection(clientWs, config = {}) {
     return null;
   }
 
-  const url = `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent?key=${GEMINI_API_KEY}`;
+  const url = `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=${GEMINI_API_KEY}`;
   const geminiWs = new WebSocket(url);
   let setupSent = false;
 
