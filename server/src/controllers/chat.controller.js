@@ -44,8 +44,18 @@ exports.deleteChat = async (req, res, next) => {
 };
 
 exports.sendMessage = async (req, res, next) => {
-  res.status(410).json({
-    success: false,
-    message: 'Text chat is disabled. Please use the live voice feature to chat with AgriAI.',
-  });
+  try {
+    const result = await handleMessage({
+      chatId: req.params.id,
+      userId: req.user.id,
+      content: req.body.content,
+    });
+    res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({ success: false, message: error.message });
+    }
+    console.error('[Chat Error]', error);
+    res.status(500).json({ success: false, message: 'Failed to process message' });
+  }
 };

@@ -2,6 +2,8 @@ const {
   getHealth,
   recommendCrop,
   predictPrice,
+  getToolDefinitions,
+  executeToolFunction,
 } = require('../services/agriai.service');
 
 function requireFields(body, fields) {
