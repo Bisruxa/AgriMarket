@@ -22,7 +22,8 @@ from .schemas import (
 from .services.service_factory import service_factory
 from .services.gemini_service import (
     send_message as gemini_send_message,
-    get_model_config,
+    send_message_stream,
+    
 )
 from .services.function_executor import get_tool_definitions, execute_function
 
@@ -161,6 +162,26 @@ def chat(request: ChatRequest) -> Dict[str, Any]:
         raise HTTPException(
             status_code=500, detail=f"Chat error: {exc}"
         ) from exc
+
+
+@app.post("/chat/stream")
+def chat_stream(request: ChatRequest):
+    async def event_stream():
+        for event in send_message_stream(
+            message=request.message,
+            conversation_history=request.conversation_history,
+        ):
+            yield event
+        yield "event: close\ndata: \n\n"
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @app.get("/chat/models")

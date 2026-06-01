@@ -14,34 +14,6 @@ torch
 torchvision
 torchaudio
 
-# Time-Series Forecasting
-statsmodels
-python-dateutil
-
-# Gradient Boosting Models
-# lightgbm
-
-# NLP + Transformers
-transformers==4.33.3
-sentencepiece
-accelerate
-huggingface_hub
-
-# Amharic NLP Models (AmharicBERT, AfriBERTa)
-tokenizers
-
-# Google Gemini API
-google-generativeai
-
-# Whisper Speech-to-Text (STT)
-openai-whisper
-tiktoken
-
-# Text-to-Speech (TTS) - pinned to compatible versions
-trainer==0.0.32
-TTS==0.21.1
-pyttsx3
-
 # ML API Service
 fastapi
 uvicorn
