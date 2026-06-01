@@ -16,6 +16,8 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "framer-motion": "^12.35.2",
+    "lightningcss": "^1.29.2",
+    "lightningcss-linux-x64-gnu": "^1.29.2",
     "lucide-react": "^0.563.0",
     "next": "^16.2.0",
     "radix-ui": "^1.4.3",

@@ -6,6 +6,7 @@ const dotenv = require('dotenv');
 const cookieParser = require('cookie-parser');
 const { Server } = require('socket.io');
 const { connectDB } = require('./config/db');
+const { setupLiveSocket } = require('./live.socket');
 
 // Load environment variables
 dotenv.config();
@@ -58,6 +59,9 @@ app.use('/api/chat', require('./routes/chat.routes'));
 // Socket.IO chat namespace
 const { setupChatSocket } = require('./chat.socket');
 setupChatSocket(io);
+
+// Live API WebSocket proxy
+const wss = setupLiveSocket(httpServer);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
