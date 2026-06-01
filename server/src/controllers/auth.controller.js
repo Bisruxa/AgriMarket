@@ -37,7 +37,8 @@ exports.getMe = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      data: user
+      data: user,
+      token: generateToken(user)
     });
   } catch (error) {
     next(error);
@@ -105,6 +106,7 @@ const sendTokenResponse = (user, statusCode, res) => {
     .cookie('token', token, cookieOptions)
     .json({
       success: true,
+      token,
       user: {
         id: user.id,
         name: user.name,

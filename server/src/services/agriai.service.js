@@ -83,6 +83,19 @@ async function getPriceForecasterMetadata() {
   return requestAgriAI('/price-forecaster/metadata', { method: 'GET' });
 }
 
+async function getToolDefinitions() {
+  const data = await requestAgriAI('/tools/definitions', { method: 'GET' });
+  return data;
+}
+
+async function executeToolFunction(name, args) {
+  const data = await requestAgriAI('/tools/execute', {
+    method: 'POST',
+    body: JSON.stringify({ name, args }),
+  });
+  return data;
+}
+
 async function sendChatMessage(payload) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), CHAT_TIMEOUT_MS);

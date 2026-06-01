@@ -15,12 +15,16 @@ from .schemas import (
     PriceForecastRequest,
     PriceForecastResponse,
     PriceForecasterMetadataResponse,
+    ToolDefinitionsResponse,
+    ToolExecutionRequest,
+    ToolExecutionResponse,
 )
 from .services.service_factory import service_factory
 from .services.gemini_service import (
     send_message as gemini_send_message,
     get_model_config,
 )
+from .services.function_executor import get_tool_definitions, execute_function
 
 load_dotenv()
 

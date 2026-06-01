@@ -17,26 +17,7 @@ FEATURES KEPT  (10, all available at prediction time, no redundancy):
 
 TARGET:
   price_per_kg         float — ETB per kilogram
-
-FEATURES REMOVED from v1 and why:
-  date (string)        → redundant; year + month cover it
-  gregorian_year       → exact duplicate of year
-  season               → derived from month; zero extra information
-  ethiopian_season     → same
-  crop_category        → subset of crop_name; redundant after encoding
-  unit_of_measure      → constant (KG for every row); adds nothing
-  price_per_unit       → identical to price_per_kg (all kg_equiv = 1.0)
-  regional_multiplier  → deterministically derived from region; leakage
-  is_harvest_month     → derived from month + crop_name; redundant
-  is_lean_season       → same
-  drought_shock        → unavailable at predict time; lags encode its effect
-  covid_shock          → same
-  conflict_shock       → same
-  rolling_6m_avg       → collinear with lag_6m + rolling_3m_avg
-  yoy_pct_change       → LEAKAGE: uses current price as numerator
-  national_monthly_avg → near-leakage: average includes target region
-
-Author: AgriMarket Team (Addis Ababa University, 2026)
+  
 """
 
 import os
