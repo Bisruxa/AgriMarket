@@ -3,10 +3,9 @@
 import * as React from "react";
 import { ChatHistory } from "./ChatHistory";
 import { Chats } from "./Chats";
-import { initSocket, joinChat, leaveChat, sendMessage, disconnectSocket, getSocket } from "@/lib/chat";
-import { API_URL } from "@/lib/api";
-import { chatApi } from "@/lib/api";
-import { createLiveChat } from "@/lib/live-chat";
+import { API_URL, chatApi } from "@/lib/api";
+import { useGeminiLive } from "@/lib/useGeminiLive";
+import { Language, Voice } from "@/types/real-time";
 
 interface Message {
   id: string;
@@ -41,124 +40,94 @@ export default function ChatPage() {
   const [messages, setMessages] = React.useState<Message[]>([]);
   const [currentChatId, setCurrentChatId] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
-  const [isAiTyping, setIsAiTyping] = React.useState(false);
-  const [isLive, setIsLive] = React.useState(false);
   const [liveStatus, setLiveStatus] = React.useState<'idle' | 'connecting' | 'connected' | 'disconnected' | 'error'>('idle');
-  const liveChatRef = React.useRef<ReturnType<typeof createLiveChat> | null>(null);
-
-  function getAuthToken(): string | null {
-    const cookies = document.cookie.split('; ');
-    for (const c of cookies) {
-      if (c.startsWith('token=')) return c.split('=')[1];
+  const [isLive, setIsLive] = React.useState(false);
+  const [liveLanguage, setLiveLanguage] = React.useState<Language>(Language.ENGLISH);
+  const [liveVoice, setLiveVoice] = React.useState<Voice>(() => {
+    if (typeof window !== 'undefined') {
+      return (localStorage.getItem('gemini-voice') as Voice) || 'Zephyr';
     }
-    return null;
-  }
+    return 'Zephyr';
+  });
+
+  React.useEffect(() => {
+    localStorage.setItem('gemini-voice', liveVoice);
+  }, [liveVoice]);
+
+  const GEMINI_API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || '';
+
+  const live = useGeminiLive(GEMINI_API_KEY, liveLanguage, liveVoice, {
+    onTurnComplete: (userText, modelText) => {
+      const newMsgs: Message[] = [];
+      if (userText) {
+        newMsgs.push({
+          id: `live-user-${Date.now()}`,
+          role: 'user',
+          content: userText,
+          timestamp: 'now',
+        });
+      }
+      if (modelText) {
+        newMsgs.push({
+          id: `live-model-${Date.now()}`,
+          role: 'assistant',
+          content: modelText,
+          timestamp: 'now',
+        });
+      }
+      if (newMsgs.length > 0) {
+        setMessages(prev => [...prev, ...newMsgs]);
+      }
+    },
+    onStatusChange: (status) => {
+      setLiveStatus(
+        status === 'connected' ? 'connected' :
+        status === 'idle' ? 'idle' :
+        status === 'error' ? 'error' : 'connecting'
+      );
+      setIsLive(status === 'connected');
+    },
+    onError: (error) => {
+      const errMsg: Message = {
+        id: `live-err-${Date.now()}`,
+        role: 'assistant',
+        content: `Voice error: ${error}`,
+        timestamp: 'now',
+      };
+      setMessages(prev => [...prev, errMsg]);
+    },
+  });
 
   const handleToggleLive = React.useCallback(() => {
     if (isLive) {
-      liveChatRef.current?.disconnect();
-      liveChatRef.current = null;
+      live.closeSession();
       setIsLive(false);
       setLiveStatus('idle');
-      return;
-    }
-
-    const token = getAuthToken();
-    if (!token) {
-      setLiveStatus('error');
-      return;
-    }
-
-    const live = createLiveChat(token, {
-      onMessage: (text, audioChunk) => {
-        const msg: Message = {
-          id: `live-${Date.now()}`,
+    } else {
+      if (!GEMINI_API_KEY) {
+        setLiveStatus('error');
+        const errMsg: Message = {
+          id: `live-err-${Date.now()}`,
           role: 'assistant',
-          content: text || (audioChunk ? '[Audio response received]' : ''),
+          content: 'Error: Gemini API key not set. Set NEXT_PUBLIC_GEMINI_API_KEY in your environment.',
           timestamp: 'now',
         };
-        setMessages((prev) => [...prev, msg]);
-      },
-      onStatus: (status, msg) => {
-        setLiveStatus(status);
-        if (status === 'error') {
-          const errMsg: Message = {
-            id: `live-err-${Date.now()}`,
-            role: 'assistant',
-            content: `Live error: ${msg || 'Connection failed'}`,
-            timestamp: 'now',
-          };
-          setMessages((prev) => [...prev, errMsg]);
-        }
-        if (status === 'disconnected') {
-          setIsLive(false);
-        }
-      },
-    });
-
-    live.connect();
-    liveChatRef.current = live;
-    setIsLive(true);
-  }, [isLive]);
-
-  React.useEffect(() => {
-    if (liveStatus === 'connected') {
-      liveChatRef.current?.startCapture();
+        setMessages(prev => [...prev, errMsg]);
+        return;
+      }
+      live.startSession();
     }
-  }, [liveStatus]);
+  }, [isLive, live, GEMINI_API_KEY]);
 
   React.useEffect(() => {
     return () => {
-      liveChatRef.current?.disconnect();
+      live.closeSession();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   React.useEffect(() => {
-    const token = document.cookie
-      .split("; ")
-      .find((r) => r.startsWith("token="))
-      ?.split("=")[1];
-    if (token) {
-      initSocket(token);
-      loadChats();
-    }
-
-    return () => {
-      disconnectSocket();
-    };
-  }, []);
-
-  React.useEffect(() => {
-    const socket = getSocket();
-    if (!socket) return;
-
-    socket.on("chat:response", (data: { chatId: string; message: any; functionCalls: any[] }) => {
-      setIsAiTyping(false);
-      const msg: Message = {
-        id: data.message.id,
-        role: "assistant",
-        content: data.message.content,
-        timestamp: formatTime(data.message.createdAt),
-      };
-      setMessages((prev) => [...prev, msg]);
-      loadChats();
-    });
-
-    socket.on("chat:error", (data: { message: string }) => {
-      setIsAiTyping(false);
-      const msg: Message = {
-        id: Date.now().toString(),
-        role: "assistant",
-        content: `Error: ${data.message}`,
-        timestamp: "now",
-      };
-      setMessages((prev) => [...prev, msg]);
-    });
-
-    return () => {
-      socket.off("chat:response");
-      socket.off("chat:error");
-    };
+    loadChats();
   }, []);
 
   async function loadChats() {
@@ -213,7 +182,6 @@ export default function ChatPage() {
       if (json.success) {
         const chat = json.data;
         setCurrentChatId(chat.id);
-        joinChat(chat.id);
         setMessages([]);
         setChatItems((prev) => [
           { id: chat.id, title: chat.title, createdAt: chat.createdAt, timestamp: chat.createdAt, isActive: true },
@@ -229,10 +197,9 @@ export default function ChatPage() {
 
   async function handleSelectChat(id: string) {
     if (currentChatId && currentChatId !== id) {
-      leaveChat(currentChatId);
+      // no-op for now, no socket to leave
     }
     setCurrentChatId(id);
-    joinChat(id);
     setChatItems((prev) =>
       prev.map((c) => ({ ...c, isActive: c.id === id }))
     );
@@ -241,16 +208,7 @@ export default function ChatPage() {
 
   async function handleSendMessage(content: string) {
     const chatId = currentChatId || (await handleNewChat());
-    if (!chatId) {
-      const errMsg: Message = {
-        id: Date.now().toString(),
-        role: "assistant",
-        content: "Error: Unable to create a chat session.",
-        timestamp: "now",
-      };
-      setMessages((prev) => [...prev, errMsg]);
-      return;
-    }
+    if (!chatId) return;
 
     const userMsg: Message = {
       id: `temp-${Date.now()}`,
@@ -259,37 +217,20 @@ export default function ChatPage() {
       timestamp: "now",
     };
     setMessages((prev) => [...prev, userMsg]);
-    setIsAiTyping(true);
+    setIsLoading(true);
 
-    const socket = getSocket();
-    if (socket?.connected) {
-      sendMessage(chatId, content);
-      return;
-    }
-
-    // Fallback path for environments where JWT cookie is httpOnly and socket auth token is unavailable in JS.
     const result = await chatApi.sendMessage(chatId, content);
-    setIsAiTyping(false);
+    setIsLoading(false);
 
-    if (!result.success || !result.data) {
+    if (!result.success) {
       const errMsg: Message = {
         id: Date.now().toString(),
         role: "assistant",
-        content: `Error: ${result.message || "Failed to process message"}`,
+        content: result.message || "Text chat is disabled. Please use the live voice feature to talk with AgriAI.",
         timestamp: "now",
       };
       setMessages((prev) => [...prev, errMsg]);
-      return;
     }
-
-    const assistant = (result.data as any).assistantMessage;
-    const assistantMsg: Message = {
-      id: assistant?.id || `${Date.now()}-assistant`,
-      role: "assistant",
-      content: assistant?.content || "No response received.",
-      timestamp: assistant?.createdAt ? formatTime(assistant.createdAt) : "now",
-    };
-    setMessages((prev) => [...prev, assistantMsg]);
     loadChats();
   }
 
@@ -306,11 +247,17 @@ export default function ChatPage() {
       <Chats
         currentChatTitle={currentChatTitle}
         messages={messages}
-        isAiTyping={isAiTyping}
+        isAiTyping={isLoading}
         onSendMessage={handleSendMessage}
         isLive={isLive}
         liveStatus={liveStatus}
         onToggleLive={handleToggleLive}
+        liveLanguage={liveLanguage}
+        onLiveLanguageChange={setLiveLanguage}
+        liveVoice={liveVoice}
+        onLiveVoiceChange={setLiveVoice}
+        isMuted={live.isMuted}
+        onToggleMute={live.toggleMute}
       />
     </div>
   );

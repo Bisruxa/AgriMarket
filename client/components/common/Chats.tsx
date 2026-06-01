@@ -1,6 +1,9 @@
 "use client";
 import * as React from "react";
 import { Leaf, Search, User, Send, MoreVertical, Sparkles, Mic, MicOff, Radio } from "lucide-react";
+import { LanguageSwitcher } from "./LanguageSwitcher";
+import { VoiceSettings } from "./VoiceSettings";
+import { Language, Voice } from "@/types/real-time";
 
 interface Message {
   id: string;
@@ -17,6 +20,12 @@ interface ChatsProps {
   isLive?: boolean;
   liveStatus?: 'idle' | 'connecting' | 'connected' | 'disconnected' | 'error';
   onToggleLive?: () => void;
+  liveLanguage?: Language;
+  onLiveLanguageChange?: (lang: Language) => void;
+  liveVoice?: Voice;
+  onLiveVoiceChange?: (voice: Voice) => void;
+  isMuted?: boolean;
+  onToggleMute?: () => void;
   className?: string;
 }
 
@@ -28,6 +37,12 @@ export function Chats({
   isLive = false,
   liveStatus = 'idle',
   onToggleLive,
+  liveLanguage = Language.ENGLISH,
+  onLiveLanguageChange,
+  liveVoice = 'Zephyr',
+  onLiveVoiceChange,
+  isMuted = false,
+  onToggleMute,
   className,
 }: ChatsProps) {
   const [inputValue, setInputValue] = React.useState("");
@@ -107,6 +122,12 @@ export function Chats({
   };
 
   const hasText = inputValue.trim().length > 0;
+
+  const getLiveStatusText = () => {
+    if (liveStatus === 'connecting') return 'Connecting...';
+    if (isMuted) return 'Muted';
+    return 'Listening...';
+  };
 
   return (
     <div className={`flex-1 flex flex-col bg-white ${className || ""}`}>
@@ -204,9 +225,52 @@ export function Chats({
         <div className={`flex items-center gap-2 rounded-full border bg-[#f3fbf7] pl-5 pr-3 transition-colors ${
           isListening
             ? "border-red-300 ring-1 ring-red-200"
+            : isLive
+            ? "border-[#5e9c78] ring-1 ring-[#cde5d8]"
             : "border-[#cde5d8] focus-within:border-[#8cc2a6]"
         }`}>
-          {isListening ? (
+          {isLive ? (
+            <>
+              <LanguageSwitcher
+                language={liveLanguage}
+                setLanguage={onLiveLanguageChange || (() => {})}
+                disabled={false}
+              />
+              <VoiceSettings
+                voice={liveVoice}
+                onVoiceChange={onLiveVoiceChange || (() => {})}
+                disabled={false}
+              />
+              <div className="flex-1 flex items-center gap-2 py-3">
+                <span className={`w-1.5 h-1.5 rounded-full ${
+                  liveStatus === 'connecting' ? 'bg-yellow-400' : isMuted ? 'bg-gray-400' : 'bg-green-500 animate-pulse'
+                }`} />
+                <span className={`text-xs ${
+                  liveStatus === 'connecting' ? 'text-yellow-600' : isMuted ? 'text-gray-500' : 'text-green-700'
+                }`}>
+                  {getLiveStatusText()}
+                </span>
+              </div>
+              <button
+                onClick={onToggleMute}
+                className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
+                  isMuted
+                    ? 'bg-gray-200 text-gray-500 hover:bg-gray-300'
+                    : 'bg-[#e8f4ef] text-[#5e9c78] hover:bg-[#d4efde]'
+                }`}
+                title={isMuted ? 'Unmute' : 'Mute'}
+              >
+                {isMuted ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+              </button>
+              <button
+                onClick={onToggleLive}
+                className="w-9 h-9 rounded-full flex items-center justify-center bg-red-500 text-white hover:bg-red-600 transition-all animate-pulse"
+                title="Stop live session"
+              >
+                <Radio className="h-4 w-4" />
+              </button>
+            </>
+          ) : isListening ? (
             <div className="flex-1 flex items-center gap-2 py-4 text-sm text-[#1b4027]">
               <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
               <span className="text-red-500 font-medium">Listening...</span>
@@ -222,51 +286,45 @@ export function Chats({
               className="flex-1 bg-transparent border-none py-4 text-sm outline-none text-[#1b4027] placeholder-[#8cb99e]"
             />
           )}
-          {isLive ? (
-            <button
-              onClick={onToggleLive}
-              className="w-9 h-9 rounded-full flex items-center justify-center bg-red-500 text-white hover:bg-red-600 cursor-pointer transition-all animate-pulse"
-              title="Stop live session"
-            >
-              <Radio className="h-4 w-4" />
-            </button>
-          ) : hasText ? (
-            <button
-              onClick={handleSend}
-              className="w-9 h-9 rounded-full flex items-center justify-center bg-[#1b5933] text-white hover:bg-[#247a44] cursor-pointer transition-all"
-            >
-              <Send className="h-4 w-4" />
-            </button>
-          ) : (
-            <div className="flex items-center gap-1">
-              {onToggleLive && (
-                <button
-                  onClick={onToggleLive}
-                  disabled={liveStatus === 'connecting'}
-                  className={`w-9 h-9 rounded-full flex items-center justify-center transition-all cursor-pointer ${
-                    liveStatus === 'connecting'
-                      ? 'bg-yellow-100 text-yellow-600 cursor-wait'
-                      : 'bg-[#e8f4ef] text-[#5e9c78] hover:bg-[#d4efde]'
-                  }`}
-                  title="Live voice conversation"
-                >
-                  <Radio className="h-4 w-4" />
-                </button>
-              )}
-              {isSpeechSupported && (
-                <button
-                  onClick={isListening ? stopListening : startListening}
-                  className={`w-9 h-9 rounded-full flex items-center justify-center transition-all cursor-pointer ${
-                    isListening
-                      ? "bg-red-500 text-white animate-pulse"
-                      : "bg-[#e2f3e9] text-[#5e9c78] hover:bg-[#d4efde]"
-                  }`}
-                  title={isListening ? "Stop listening" : "Voice input"}
-                >
-                  {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-                </button>
-              )}
-            </div>
+          {!isLive && !isListening && (
+            hasText ? (
+              <button
+                onClick={handleSend}
+                className="w-9 h-9 rounded-full flex items-center justify-center bg-[#1b5933] text-white hover:bg-[#247a44] transition-all"
+              >
+                <Send className="h-4 w-4" />
+              </button>
+            ) : (
+              <div className="flex items-center gap-1">
+                {onToggleLive && (
+                  <button
+                    onClick={onToggleLive}
+                    disabled={liveStatus === 'connecting'}
+                    className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
+                      liveStatus === 'connecting'
+                        ? 'bg-yellow-100 text-yellow-600 cursor-wait'
+                        : 'bg-[#e8f4ef] text-[#5e9c78] hover:bg-[#d4efde]'
+                    }`}
+                    title="Live voice conversation"
+                  >
+                    <Radio className="h-4 w-4" />
+                  </button>
+                )}
+                {isSpeechSupported && (
+                  <button
+                    onClick={isListening ? stopListening : startListening}
+                    className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
+                      isListening
+                        ? "bg-red-500 text-white animate-pulse"
+                        : "bg-[#e2f3e9] text-[#5e9c78] hover:bg-[#d4efde]"
+                    }`}
+                    title={isListening ? "Stop listening" : "Voice input"}
+                  >
+                    {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                  </button>
+                )}
+              </div>
+            )
           )}
         </div>
       </div>

@@ -34,17 +34,23 @@ class ApiClient {
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseUrl}${endpoint}`;
     
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('token');
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+    }
+    
     const config: RequestInit = {
       ...options,
       credentials: 'include',
-      headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
+      headers: { ...headers, ...options.headers },
     };
 
     try {
-      console.log('Using cookies')
       const response = await fetch(url, config);
       const data = await response.json();
       

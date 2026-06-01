@@ -15,12 +15,16 @@ from .schemas import (
     PriceForecastRequest,
     PriceForecastResponse,
     PriceForecasterMetadataResponse,
+    ToolDefinitionsResponse,
+    ToolExecutionRequest,
+    ToolExecutionResponse,
 )
 from .services.service_factory import service_factory
 from .services.gemini_service import (
     send_message as gemini_send_message,
     get_model_config,
 )
+from .services.function_executor import get_tool_definitions, execute_function
 
 load_dotenv()
 
@@ -171,3 +175,21 @@ def chat_models() -> Dict[str, Any]:
             "live_model_usage": "Use with Gemini Live API WebSocket for real-time audio/voice",
         },
     }
+
+
+# ── Tool Definitions & Execution ─────────────────────────────────────────
+
+
+@app.get("/tools/definitions", response_model=ToolDefinitionsResponse)
+def get_tool_definitions_endpoint() -> Dict[str, Any]:
+    tools = get_tool_definitions()
+    return {"tools": tools}
+
+
+@app.post("/tools/execute", response_model=ToolExecutionResponse)
+def execute_tool_endpoint(request: ToolExecutionRequest) -> Dict[str, Any]:
+    try:
+        result = execute_function(request.name, request.args)
+        return {"result": result}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc

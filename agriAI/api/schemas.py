@@ -85,3 +85,25 @@ class FunctionCallInfo(BaseModel):
 class ChatResponse(BaseModel):
     text: str
     functionCalls: Optional[List[FunctionCallInfo]] = Field(default=[])
+
+
+# ── Tool Execution ───────────────────────────────────────────────────────
+
+
+class ToolExecutionRequest(BaseModel):
+    name: str = Field(..., description="Tool/function name to execute")
+    args: Dict[str, Any] = Field(default_factory=dict, description="Arguments to pass to the tool")
+
+
+class ToolExecutionResponse(BaseModel):
+    result: Dict[str, Any]
+
+
+class ToolDefinition(BaseModel):
+    name: str
+    description: str
+    parameters: Dict[str, Any]
+
+
+class ToolDefinitionsResponse(BaseModel):
+    tools: List[ToolDefinition]
