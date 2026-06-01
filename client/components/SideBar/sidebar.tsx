@@ -184,7 +184,7 @@ const Sidebar = ({ arr, role }: SidebarProps) => {
       )}
 
       {/* Desktop Sidebar */}
-      <div className="hidden md:flex flex-col min-h-screen py-3 px-4 w-75 lg:w-85 bg-white border-r border-gray-200">
+      <div className="hidden md:flex flex-col min-h-screen py-3 px-4 w-64 lg:w-72 bg-white border-r border-gray-200">
         <SidebarContent arr={arr} role={role} />
       </div>
     </>
