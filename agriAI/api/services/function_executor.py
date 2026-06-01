@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-EXPRESS_BASE_URL = os.getenv("EXPRESS_BASE_URL", "http://localhost:5000/api")
+EXPRESS_BASE_URL = os.getenv("EXPRESS_BASE_URL", "http://localhost:5000/api").rstrip("/")
 
 
 def _call_express(path: str, method: str = "GET", body: Optional[Dict] = None) -> Dict:
@@ -153,16 +153,16 @@ FUNCTION_REGISTRY = {
         "fn": get_recommended_crops,
         "description": "Recommend the best crops to plant based on soil nutrients and climate conditions",
         "parameters": {
-            "type": "object",
+            "type": "OBJECT",
             "properties": {
-                "nitrogen": {"type": "integer", "description": "Nitrogen level in soil"},
-                "phosphorus": {"type": "integer", "description": "Phosphorus level in soil"},
-                "potassium": {"type": "integer", "description": "Potassium level in soil"},
-                "temperature": {"type": "number", "description": "Temperature in Celsius"},
-                "humidity": {"type": "number", "description": "Humidity percentage"},
-                "ph": {"type": "number", "description": "Soil pH level"},
-                "rainfall": {"type": "number", "description": "Rainfall in mm"},
-                "soil_color": {"type": "string", "description": "Soil color (e.g. brown, black, red, gray)", "enum": ["brown", "black", "red", "gray"]},
+                "nitrogen": {"type": "INTEGER", "description": "Nitrogen level in soil"},
+                "phosphorus": {"type": "INTEGER", "description": "Phosphorus level in soil"},
+                "potassium": {"type": "INTEGER", "description": "Potassium level in soil"},
+                "temperature": {"type": "NUMBER", "description": "Temperature in Celsius"},
+                "humidity": {"type": "NUMBER", "description": "Humidity percentage"},
+                "ph": {"type": "NUMBER", "description": "Soil pH level"},
+                "rainfall": {"type": "NUMBER", "description": "Rainfall in mm"},
+                "soil_color": {"type": "STRING", "description": "Soil color (e.g. brown, black, red, gray)", "enum": ["brown", "black", "red", "gray"]},
             },
             "required": ["nitrogen", "phosphorus", "potassium", "temperature", "humidity", "ph", "rainfall"],
         },
@@ -171,12 +171,12 @@ FUNCTION_REGISTRY = {
         "fn": get_price_forecast,
         "description": "Predict future prices for a specific crop in a region",
         "parameters": {
-            "type": "object",
+            "type": "OBJECT",
             "properties": {
-                "crop_name": {"type": "string", "description": "Name of the crop"},
-                "region": {"type": "string", "description": "Region in Ethiopia"},
-                "year": {"type": "integer", "description": "Target year"},
-                "month": {"type": "integer", "description": "Target month (1-12)"},
+                "crop_name": {"type": "STRING", "description": "Name of the crop"},
+                "region": {"type": "STRING", "description": "Region in Ethiopia"},
+                "year": {"type": "INTEGER", "description": "Target year"},
+                "month": {"type": "INTEGER", "description": "Target month (1-12)"},
             },
             "required": ["crop_name", "region", "year", "month"],
         },
@@ -185,10 +185,10 @@ FUNCTION_REGISTRY = {
         "fn": get_weather_forecast,
         "description": "Get 7-day weather forecast for a location",
         "parameters": {
-            "type": "object",
+            "type": "OBJECT",
             "properties": {
-                "latitude": {"type": "number", "description": "Latitude"},
-                "longitude": {"type": "number", "description": "Longitude"},
+                "latitude": {"type": "NUMBER", "description": "Latitude"},
+                "longitude": {"type": "NUMBER", "description": "Longitude"},
             },
             "required": ["latitude", "longitude"],
         },
@@ -197,9 +197,9 @@ FUNCTION_REGISTRY = {
         "fn": get_market_trends,
         "description": "Get current market trends and pricing data for agricultural products",
         "parameters": {
-            "type": "object",
+            "type": "OBJECT",
             "properties": {
-                "category": {"type": "string", "description": "Product category to filter by"},
+                "category": {"type": "STRING", "description": "Product category to filter by"},
             },
         },
     },
@@ -207,13 +207,13 @@ FUNCTION_REGISTRY = {
         "fn": get_soil_analysis,
         "description": "Analyze soil data including nitrogen, phosphorus, potassium, and pH levels",
         "parameters": {
-            "type": "object",
+            "type": "OBJECT",
             "properties": {
-                "region": {"type": "string", "description": "Region name"},
-                "nitrogen": {"type": "number", "description": "Nitrogen level"},
-                "phosphorus": {"type": "number", "description": "Phosphorus level"},
-                "potassium": {"type": "number", "description": "Potassium level"},
-                "ph": {"type": "number", "description": "pH level"},
+                "region": {"type": "STRING", "description": "Region name"},
+                "nitrogen": {"type": "NUMBER", "description": "Nitrogen level"},
+                "phosphorus": {"type": "NUMBER", "description": "Phosphorus level"},
+                "potassium": {"type": "NUMBER", "description": "Potassium level"},
+                "ph": {"type": "NUMBER", "description": "pH level"},
             },
         },
     },

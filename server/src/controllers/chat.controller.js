@@ -64,15 +64,13 @@ exports.sendMessage = async (req, res, next) => {
     const conversationHistory = chat.messages.map(m => ({
       role: m.role,
       content: m.content,
-      ...(m.metadata ? { metadata: m.metadata } : {}),
     }));
-
     conversationHistory.push({ role: 'user', content });
 
     const aiResponse = await agriaiService.sendChatMessage({
       message: content,
-      conversationHistory,
-      userId: req.user.id,
+      conversation_history: conversationHistory,
+      user_id: req.user.id,
     });
 
     const assistantMessage = await chatService.addMessage(
@@ -95,6 +93,10 @@ exports.sendMessage = async (req, res, next) => {
       },
     });
   } catch (error) {
-    next(error);
+    console.error('[Chat Error]', error);
+    res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to process message',
+    });
   }
 };

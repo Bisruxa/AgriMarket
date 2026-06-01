@@ -1,2 +1,8 @@
 .aider*
 check.py
+
+session*.md
+
+deploy/
+
+notes/

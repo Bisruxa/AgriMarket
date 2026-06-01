@@ -5,6 +5,7 @@ import { ChatHistory } from "./ChatHistory";
 import { Chats } from "./Chats";
 import { initSocket, joinChat, leaveChat, sendMessage, disconnectSocket, getSocket } from "@/lib/chat";
 import { API_URL } from "@/lib/api";
+import { chatApi } from "@/lib/api";
 
 interface Message {
   id: string;
@@ -127,7 +128,7 @@ export default function ChatPage() {
     }
   }
 
-  async function handleNewChat() {
+  async function handleNewChat(): Promise<string | null> {
     try {
       const res = await fetch(`${API_URL}/chat`, {
         method: "POST",
@@ -139,18 +140,24 @@ export default function ChatPage() {
       if (json.success) {
         const chat = json.data;
         setCurrentChatId(chat.id);
+        joinChat(chat.id);
         setMessages([]);
         setChatItems((prev) => [
           { id: chat.id, title: chat.title, createdAt: chat.createdAt, isActive: true },
           ...prev.map((c) => ({ ...c, isActive: false })),
         ]);
+        return chat.id;
       }
     } catch (e) {
       console.error("Failed to create chat", e);
     }
+    return null;
   }
 
   async function handleSelectChat(id: string) {
+    if (currentChatId && currentChatId !== id) {
+      leaveChat(currentChatId);
+    }
     setCurrentChatId(id);
     joinChat(id);
     setChatItems((prev) =>
@@ -160,10 +167,17 @@ export default function ChatPage() {
   }
 
   async function handleSendMessage(content: string) {
-    if (!currentChatId) {
-      await handleNewChat();
+    const chatId = currentChatId || (await handleNewChat());
+    if (!chatId) {
+      const errMsg: Message = {
+        id: Date.now().toString(),
+        role: "assistant",
+        content: "Error: Unable to create a chat session.",
+        timestamp: "now",
+      };
+      setMessages((prev) => [...prev, errMsg]);
+      return;
     }
-    const chatId = currentChatId;
 
     const userMsg: Message = {
       id: `temp-${Date.now()}`,
@@ -174,7 +188,36 @@ export default function ChatPage() {
     setMessages((prev) => [...prev, userMsg]);
     setIsAiTyping(true);
 
-    sendMessage(chatId!, content);
+    const socket = getSocket();
+    if (socket?.connected) {
+      sendMessage(chatId, content);
+      return;
+    }
+
+    // Fallback path for environments where JWT cookie is httpOnly and socket auth token is unavailable in JS.
+    const result = await chatApi.sendMessage(chatId, content);
+    setIsAiTyping(false);
+
+    if (!result.success || !result.data) {
+      const errMsg: Message = {
+        id: Date.now().toString(),
+        role: "assistant",
+        content: `Error: ${result.message || "Failed to process message"}`,
+        timestamp: "now",
+      };
+      setMessages((prev) => [...prev, errMsg]);
+      return;
+    }
+
+    const assistant = (result.data as any).assistantMessage;
+    const assistantMsg: Message = {
+      id: assistant?.id || `${Date.now()}-assistant`,
+      role: "assistant",
+      content: assistant?.content || "No response received.",
+      timestamp: assistant?.createdAt ? formatTime(assistant.createdAt) : "now",
+    };
+    setMessages((prev) => [...prev, assistantMsg]);
+    loadChats();
   }
 
   const currentChatTitle =

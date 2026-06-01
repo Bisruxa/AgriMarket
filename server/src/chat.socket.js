@@ -54,8 +54,8 @@ function setupChatSocket(io) {
 
         const aiResponse = await agriaiService.sendChatMessage({
           message: content,
-          conversationHistory,
-          userId: socket.userId,
+          conversation_history: conversationHistory,
+          user_id: socket.userId,
         });
 
         const assistantMessage = await chatService.addMessage(
