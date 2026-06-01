@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, AsyncGenerator
 from dotenv import load_dotenv
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import StreamingResponse
 from google import genai
 from google.genai import types
 
@@ -12,11 +14,11 @@ load_dotenv()
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 TEXT_MODEL_NAME = os.getenv("GEMINI_MODEL_NAME", os.getenv("GEMINI_TEXT_MODEL_NAME", "gemini-3.5-flash"))
-LIVE_MODEL_NAME = os.getenv("GEMINI_LIVE_MODEL_NAME", "gemini-3.1-flash-live-preview")
 
 client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 if not GEMINI_API_KEY:
-    print("WARNING: GEMINI_API_KEY not set. Gemini service will not work.")
+    print("WARNING: GEMINI_API_KEY not set. Chat streaming will not work.")
+
 
 SYSTEM_PROMPT = """You are AgriAI, an expert agricultural assistant for Ethiopian farmers and traders.
 You help with:
@@ -30,24 +32,12 @@ You have access to tools that can provide real data. When a user asks about:
 - What to plant or crop recommendations -> use get_crop_recommendation
 - Price predictions or forecasts -> use get_price_forecast
 - Weather -> use get_weather_forecast
-- Market data or trends -> use get_market_trends
+- Market data or trends -> get_market_trends
 - Soil analysis -> use get_soil_analysis
 
 Always use the appropriate tool when needed. If the user doesn't provide enough parameters,
 ask them for the missing information. Respond in a friendly, conversational manner.
 Format prices in ETB (Ethiopian Birr). Be concise but helpful."""
-
-
-def _get_model_candidates() -> List[str]:
-    # Try the configured text model first, then fall back to known generateContent models.
-    candidates = [TEXT_MODEL_NAME, "gemini-3.5-flash", "gemini-2.5-flash", "gemini-2.0-flash"]
-    seen = set()
-    deduped: List[str] = []
-    for model in candidates:
-        if model and model not in seen:
-            seen.add(model)
-            deduped.append(model)
-    return deduped
 
 
 def _build_tools() -> List[types.Tool]:
@@ -57,27 +47,112 @@ def _build_tools() -> List[types.Tool]:
     return tools
 
 
-def _get_live_model_candidates() -> List[str]:
-    candidates = [
-        LIVE_MODEL_NAME,
-        "gemini-3.1-flash-live-preview",
-        "gemini-2.5-flash-native-audio-preview-12-2025",
-    ]
-    seen = set()
-    deduped: List[str] = []
-    for model in candidates:
-        if model and model not in seen:
-            seen.add(model)
-            deduped.append(model)
-    return deduped
+def send_message_stream(
+    message: str,
+    conversation_history: Optional[List[Dict]] = None,
+) -> AsyncGenerator[str, None]:
+    """Yields SSE tokens from Gemini, handling function calls inline."""
 
+    if not client:
+        yield "event: error\ndata: AI service not configured.\n\n"
+        return
 
-def get_model_config() -> Dict[str, Any]:
-    return {
-        "text_model": TEXT_MODEL_NAME,
-        "live_model": LIVE_MODEL_NAME,
-        "live_model_candidates": _get_live_model_candidates(),
-    }
+    try:
+        history = []
+        for msg in conversation_history or []:
+            role = msg.get("role", "user")
+            if role == "assistant":
+                role = "model"
+            content = msg.get("content", "")
+            if content.strip():
+                history.append(types.Content(
+                    role=role,
+                    parts=[types.Part(text=content)],
+                ))
+
+        model_name = TEXT_MODEL_NAME
+
+        try:
+            response = client.models.generate_content_stream(
+                model=model_name,
+                contents=[types.Content(
+                    role="user",
+                    parts=[types.Part(text=message)],
+                )],
+                config=types.GenerateContentConfig(
+                    system_instruction=SYSTEM_PROMPT,
+                    tools=_build_tools(),
+                    history=history if history else None,
+                ),
+            )
+        except Exception as model_err:
+            err_text = str(model_err).lower()
+            if "not found" in err_text or "not supported" in err_text:
+                model_name = "gemini-2.5-flash"
+                response = client.models.generate_content_stream(
+                    model=model_name,
+                    contents=[types.Content(
+                        role="user",
+                        parts=[types.Part(text=message)],
+                    )],
+                    config=types.GenerateContentConfig(
+                        system_instruction=SYSTEM_PROMPT,
+                        tools=_build_tools(),
+                        history=history if history else None,
+                    ),
+                )
+            else:
+                raise
+
+        function_calls = []
+
+        for chunk in response:
+            for part in (chunk.candidates or [{}])[0].content.parts:
+                if part.function_call:
+                    fn = part.function_call
+                    fn_name = fn.name
+                    fn_args = dict(fn.args) if fn.args else {}
+                    fn_result = execute_function(fn_name, fn_args)
+
+                    function_calls.append({
+                        "name": fn_name,
+                        "args": fn_args,
+                        "result": fn_result,
+                    })
+
+                    yield f"event: function_call\ndata: {fn_name}\n\n"
+
+                    client.models.generate_content(
+                        model=model_name,
+                        contents=[types.Content(
+                            role="user",
+                            parts=[types.Part(
+                                function_response=types.FunctionResponse(
+                                    name=fn_name,
+                                    response={"result": fn_result.get("result", fn_result)},
+                                )
+                            )]
+                        )],
+                        config=types.GenerateContentConfig(
+                            system_instruction=SYSTEM_PROMPT,
+                            tools=_build_tools(),
+                        ),
+                    )
+
+                if part.text:
+                    escaped = part.text.replace("\n", "\\n")
+                    yield f"event: text\ndata: {escaped}\n\n"
+
+        if function_calls:
+            yield f"event: done\ndata: {len(function_calls)} function(s) called\n\n"
+        else:
+            yield "event: done\ndata: \n\n"
+
+    except Exception as e:
+        import traceback
+        err_msg = getattr(e, 'message', str(e))
+        print(f"[Gemini Stream Error] {err_msg}\n{traceback.format_exc()}")
+        yield f"event: error\ndata: AI error: {err_msg}\n\n"
 
 
 def send_message(
@@ -104,10 +179,20 @@ def send_message(
                     parts=[types.Part(text=content)],
                 ))
 
-        chat = None
-        last_model_error: Optional[Exception] = None
-        for model_name in _get_model_candidates():
-            try:
+        model_name = TEXT_MODEL_NAME
+        try:
+            chat = client.chats.create(
+                model=model_name,
+                config=types.GenerateContentConfig(
+                    system_instruction=SYSTEM_PROMPT,
+                    tools=_build_tools(),
+                ),
+                history=history,
+            )
+        except Exception as model_error:
+            err_text = str(model_error).lower()
+            if "not found" in err_text or "not supported" in err_text:
+                model_name = "gemini-2.5-flash"
                 chat = client.chats.create(
                     model=model_name,
                     config=types.GenerateContentConfig(
@@ -116,18 +201,8 @@ def send_message(
                     ),
                     history=history,
                 )
-                break
-            except Exception as model_error:
-                last_model_error = model_error
-                err_text = str(model_error).lower()
-                if "not found" in err_text or "not supported" in err_text:
-                    continue
+            else:
                 raise
-
-        if chat is None:
-            raise RuntimeError(
-                f"No compatible Gemini model available for chat. Last error: {last_model_error}"
-            )
 
         response = chat.send_message(message)
         function_calls = []
@@ -138,7 +213,6 @@ def send_message(
                     fn = part.function_call
                     fn_name = fn.name
                     fn_args = dict(fn.args) if fn.args else {}
-
                     fn_result = execute_function(fn_name, fn_args)
 
                     function_calls.append({
