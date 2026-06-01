@@ -1,4 +1,5 @@
 const chatService = require('../services/chat.service');
+const { handleMessage } = require('../services/chat.handler');
 
 exports.getChats = async (req, res, next) => {
   try {

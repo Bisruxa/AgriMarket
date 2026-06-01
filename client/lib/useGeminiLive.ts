@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { GoogleGenAI, Modality } from '@google/genai';
+import { GoogleGenAI, Modality, FunctionDeclaration } from '@google/genai';
 import { encode, decode, decodeAudioData } from './audioUtils';
 import { Language, Voice } from '../types/real-time';
 import type { LiveStatus } from '../types/real-time';
+import { executeTool, BUILTIN_TOOL_DEFINITIONS } from './toolExecutor';
 
 type LiveSession = any;
 type LiveServerMessage = any;
@@ -14,20 +15,35 @@ interface UseGeminiLiveCallbacks {
   onTurnComplete?: (userText: string, modelText: string) => void;
   onStatusChange?: (status: LiveStatus) => void;
   onError?: (error: string) => void;
+  onToolResult?: (toolName: string, result: Record<string, unknown>) => void;
+  onToolCall?: (toolName: string, args: Record<string, unknown>) => void;
 }
 
 const AGRICULTURE_INSTRUCTION: Record<Language, string> = {
   [Language.ENGLISH]:
     'You are AgriAI, a friendly and helpful agricultural assistant for Ethiopian farmers. ' +
-    'Provide practical advice about crops, farming techniques, pest control, soil management, ' +
-    'weather patterns, and market prices in Ethiopia. Respond conversationally in English. ' +
-    'Keep responses concise and actionable.',
+    'You have access to tools that can get real data. When a user asks about ' +
+    'crop recommendations, price forecasts, weather, or market data, use the appropriate tool. ' +
+    'After getting tool results, explain them in a clear, conversational way. ' +
+    'Format prices in ETB (Ethiopian Birr). Be concise and actionable.',
   [Language.AMHARIC]:
-    'አንተ AgriAI ነህ፣ ለኢትዮጵያ ገበሬዎች ወዳጃዊ እና አጋዥ የእርሻ ረዳት ነህ። ' +
-    'ስለ ሰብሎች፣ የእርሻ ዘዴዎች፣ የተባይ መከላከያ፣ የአፈር አያያዝ፣ ' +
-    'የአየር ንብረት እና የገበያ ዋጋዎች በኢትዮጵያ ውስጥ ተግባራዊ ምክር ስጥ። ' +
-    'በአማርኛ በውይይት መልክ መልስ ስጥ። መልሶችህን አጭር እና ተግባራዊ አድርግ።',
+    'አንተ AgriAI ነህ፣ ለኢትዮጵያ ገበሪዎች ወዳጃዊ እና አጋዥ የእርሻ ረዳት ነህ። ' +
+    'ተግባራዊ ምክር ስጥ - ሰብሎችን ለመመከት እና የገበያ ዋጋዎችን ለማወቅ ተገቢ መሳሪያዎችን ተጠቀም። ' +
+    'ውጤቶቹን ግልጽ በሆነ መልኩ አብራራ። ዋጋዎችን በETB (የኢትዮጵያ ብር) አቅርብ። ' +
+    'መልሶችህን አጭር እና ተግባራዊ አድርግ።',
 };
+
+function buildToolDeclarations(): FunctionDeclaration[] {
+  return BUILTIN_TOOL_DEFINITIONS.map(tool => ({
+    name: tool.name,
+    description: tool.description,
+    parametersJsonSchema: {
+      type: 'object',
+      properties: tool.parameters.properties,
+      required: tool.parameters.required,
+    },
+  }));
+}
 
 export function useGeminiLive(
   apiKey: string,
@@ -142,6 +158,37 @@ export function useGeminiLive(
           callbacksRef.current?.onTurnComplete?.(userInput, geminiResponse);
         }
 
+        const toolCalls = message.serverContent?.toolCall;
+        if (toolCalls && Array.isArray(toolCalls)) {
+          for (const toolCall of toolCalls) {
+            const fn = toolCall.functionCalls?.[0];
+            if (!fn) continue;
+            const fnName = fn.name;
+            const fnArgs = fn.args ?? {};
+            callbacksRef.current?.onToolCall?.(fnName, fnArgs);
+            const result = await executeTool(fnName, fnArgs);
+            const session = await sessionPromiseRef.current;
+            if (session && result.success) {
+              session.sendToolResponse({
+                functionResponses: [{
+                  id: toolCall.id ?? fnName,
+                  name: fnName,
+                  response: { result: result.data ?? {} },
+                }],
+              });
+              callbacksRef.current?.onToolResult?.(fnName, result.data ?? {});
+            } else if (!result.success) {
+              session.sendToolResponse({
+                functionResponses: [{
+                  id: toolCall.id ?? fnName,
+                  name: fnName,
+                  response: { error: result.error ?? 'Tool execution failed' },
+                }],
+              });
+            }
+          }
+        }
+
         const parts = message.serverContent?.modelTurn?.parts;
         const base64Audio = Array.isArray(parts) ? parts[0]?.inlineData?.data : undefined;
         if (base64Audio && outputAudioContextRef.current) {
@@ -253,6 +300,7 @@ export function useGeminiLive(
           systemInstruction: getSystemInstruction(),
           inputAudioTranscription: {},
           outputAudioTranscription: {},
+          tools: [{ functionDeclarations: buildToolDeclarations() }],
         },
       });
     } catch (error) {

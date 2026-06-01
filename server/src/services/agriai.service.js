@@ -151,4 +151,6 @@ module.exports = {
   predictPrice,
   getPriceForecasterMetadata,
   sendChatMessage,
+  getToolDefinitions,
+  executeToolFunction,
 };
