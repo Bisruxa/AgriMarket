@@ -1,4 +1,4 @@
-const DEFAULT_BASE_URL = 'https://apache-resolutions-spreading-asn.trycloudflare.com/api';
+const DEFAULT_BASE_URL = 'https://concept-locate-gallery-richard.trycloudflare.com/';
 const REQUEST_TIMEOUT_MS = Number(process.env.AGRIAI_TIMEOUT_MS || 12000);
 
 function getBaseUrl() {

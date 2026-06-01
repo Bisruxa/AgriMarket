@@ -7,6 +7,8 @@ import { useAuth } from "@/app/context/UserContext";
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
+import { useTranslations } from '@/components/hooks/useTranlations';
+import { useLanguage } from '@/app/context/LanguageContext';
 
 interface AddCropProps {
   productId?: string | null;
@@ -14,8 +16,16 @@ interface AddCropProps {
 }
 
 const AddCrop = ({ productId, onSuccess }: AddCropProps) => {
+  const t = useTranslations();
+  const pf = t.dashboard.market.productForm;
+  const { language } = useLanguage();
   const { user } = useAuth();
-  const { setShow } = useContext(Context)!;
+  const { setShow, setSelectedProductId } = useContext(Context)!;
+
+  const closeModal = () => {
+    setShow(false);
+    setSelectedProductId(null);
+  };
   const queryClient = useQueryClient();
   const [initialData, setInitialData] = useState<CropFormData | undefined>();
   const [isLoading, setIsLoading] = useState(false);
@@ -23,6 +33,11 @@ const AddCrop = ({ productId, onSuccess }: AddCropProps) => {
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!productId) {
+      setInitialData(undefined);
+      return;
+    }
+
     const fetchProductData = async () => {
       if (productId) {
         setIsFetching(true);
@@ -79,10 +94,10 @@ const AddCrop = ({ productId, onSuccess }: AddCropProps) => {
       
       if (productId) {
         response = await productsApi.update(productId, payload);
-        successMessage = 'Product updated successfully!';
+        successMessage = pf.toastUpdated;
       } else {
         response = await productsApi.create(payload);
-        successMessage = 'Product added successfully!';
+        successMessage = pf.toastAdded;
       }
 
       if (response.success) {
@@ -100,9 +115,9 @@ const AddCrop = ({ productId, onSuccess }: AddCropProps) => {
         onSuccess?.();
         
         // Close modal
-        setShow(false);
+        closeModal();
       } else {
-        const errorMsg = response.message || 'Operation failed';
+        const errorMsg = response.message || pf.toastFailed;
         setSubmitError(errorMsg);
         toast.error(errorMsg, {
           duration: 3000,
@@ -110,7 +125,7 @@ const AddCrop = ({ productId, onSuccess }: AddCropProps) => {
         });
       }
     } catch (error) {
-      const errorMsg = 'Network error. Please try again.';
+      const errorMsg = pf.toastNetworkError;
       setSubmitError(errorMsg);
       toast.error(errorMsg, {
         duration: 3000,
@@ -123,10 +138,10 @@ const AddCrop = ({ productId, onSuccess }: AddCropProps) => {
 
   if (isFetching) {
     return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-8">
-          <Loader2 className="h-8 w-8 animate-spin text-[#2a5a2a] mx-auto" />
-          <p className="mt-4">Loading...</p>
+      <div className={`fixed inset-0 z-[111] flex items-center justify-center bg-black/50 ${language === 'am' ? 'amharic' : ''}`}>
+        <div className="rounded-lg bg-white p-8">
+          <Loader2 className="mx-auto h-8 w-8 animate-spin text-[#0B3D2E]" />
+          <p className="mt-4 text-sm text-gray-700">{pf.loading}</p>
         </div>
       </div>
     );
@@ -137,7 +152,7 @@ const AddCrop = ({ productId, onSuccess }: AddCropProps) => {
       initialData={initialData}
       productId={productId || undefined}
       onSubmit={handleSubmit}
-      onClose={() => setShow(false)}
+      onClose={closeModal}
       isLoading={isLoading}
       errorMessage={submitError}
     />

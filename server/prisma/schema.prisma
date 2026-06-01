@@ -54,7 +54,7 @@ model User {
   isVerified      Boolean         @default(false)
   
   // Trader approval status (only applicable for TRADER role)
-  approvalStatus  ApprovalStatus  @default(PENDING)
+  approvalStatus  ApprovalStatus  @default(APPROVED)
   approvalNote    String?         // Admin can add a note when approving/rejecting
   
   // Address fields

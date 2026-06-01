@@ -28,23 +28,33 @@ class ApiClient {
     this.baseUrl = baseUrl;
   }
 
+  /** JWT from login/register (cookie alone is unreliable cross-origin on localhost). */
+  private getAuthHeaders(): Record<string, string> {
+    if (typeof window === 'undefined') return {};
+    const token = localStorage.getItem('token');
+    if (token && token !== 'none') {
+      return { Authorization: `Bearer ${token}` };
+    }
+    return {};
+  }
+
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseUrl}${endpoint}`;
-    
+
     const config: RequestInit = {
       ...options,
       credentials: 'include',
       headers: {
-      'Content-Type': 'application/json',
-      ...options.headers,
-    },
+        'Content-Type': 'application/json',
+        ...this.getAuthHeaders(),
+        ...(options.headers as Record<string, string> | undefined),
+      },
     };
 
     try {
-      console.log('Using cookies')
       const response = await fetch(url, config);
       const data = await response.json();
       
@@ -124,6 +134,20 @@ export const farmsApi = {
   update: (id: string, data: UpdateFarmData) => api.put<Farm>(`/farms/${id}`, data),
 
   delete: (id: string) => api.delete(`/farms/${id}`),
+};
+
+export type AppNotification = {
+  id: string;
+  type: string;
+  href: string;
+  createdAt: string;
+  count?: number;
+  note?: string | null;
+};
+
+export const notificationsApi = {
+  getAll: () =>
+    api.get<{ notifications: AppNotification[]; unreadCount: number }>('/notifications'),
 };
 
 export const agriaiApi = {

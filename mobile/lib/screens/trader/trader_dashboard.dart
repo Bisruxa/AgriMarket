@@ -23,7 +23,7 @@ class _TraderDashboardState extends State<TraderDashboard> {
   List<Product> _previewProducts = [];
   bool _isLoadingPreview = true;
 
-  static const _defaultImage = 'assets/images/welcome.jpg';
+  static const _defaultImage = 'assets/images/welcome.png';
 
   static const _navItems = [
     AppNavItem(

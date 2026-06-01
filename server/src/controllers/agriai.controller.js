@@ -11,7 +11,7 @@ function requireFields(body, fields) {
 
 // @desc    Check AgriAI upstream health
 // @route   GET /api/agriai/health
-// @access  Private
+// @access  Public
 exports.getAgriAIHealth = async (req, res, next) => {
   try {
     const data = await getHealth();

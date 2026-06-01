@@ -1,8 +1,5 @@
 'use client';
 import React, { useState } from 'react';
-import {
-  Card, CardContent, CardHeader, CardTitle,
-} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -12,9 +9,11 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { useFarms, useFarmMutations } from '@/components/hooks/useFarms';
-import { ETHIOPIAN_REGIONS, WOREDAS_BY_REGION } from '@/lib/regon_n_woreda';
+import { useEthiopianGeoOptions } from '@/components/hooks/useEthiopianGeoOptions';
 import { Farm } from '@/types/farm';
-import { Plus, Pencil, Trash2, MapPin, Sprout, Loader2 } from 'lucide-react';
+import { Plus, Loader2 } from 'lucide-react';
+import { useTranslations } from '@/components/hooks/useTranlations';
+import { useLanguage } from '@/app/context/LanguageContext';
 
 const SOIL_TYPES = [
   { value: 'clay', label: 'Clay' },
@@ -48,6 +47,10 @@ const emptyForm: FarmFormData = {
 };
 
 const ManageFarms = () => {
+  const t = useTranslations();
+  const f = t.dashboard.farms;
+  const { language } = useLanguage();
+  const { regions, getWoredasForRegion, labelForRegion, labelForWoreda } = useEthiopianGeoOptions();
   const { data, isLoading } = useFarms();
   const { createMutation, updateMutation, deleteMutation } = useFarmMutations();
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -103,14 +106,37 @@ const ManageFarms = () => {
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   const selectedRegion = form.region;
-  const woredas = selectedRegion ? WOREDAS_BY_REGION[selectedRegion] || [] : [];
+  const woredas = selectedRegion ? getWoredasForRegion(selectedRegion) : [];
+
+  const soilTypeLabel = (value: string) =>
+    f.soilTypes[value as keyof typeof f.soilTypes] || value;
+  const soilColorLabel = (value: string) =>
+    f.soilColors[value as keyof typeof f.soilColors] || value;
+
+  const dash = f.listNotSet;
+  const locale = language === 'am' ? 'am-ET' : 'en-US';
+
+  const formatDate = (iso: string) => {
+    try {
+      return new Date(iso).toLocaleDateString(locale, {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric',
+      });
+    } catch {
+      return iso;
+    }
+  };
+
+  const display = (value: string | null | undefined) =>
+    value && String(value).trim() ? value : dash;
 
   return (
-    <div className="mt-6">
+    <div className={`mt-6 ${language === 'am' ? 'amharic' : ''}`}>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-[#2A5A2A]">Manage Your Farms</h2>
+        <h2 className="text-xl font-bold text-[#2A5A2A]">{f.title}</h2>
         <Button onClick={openAddDialog} className="bg-[#2A5A2A] hover:bg-[#1E431E] text-white">
-          <Plus className="mr-1 h-4 w-4" /> Add Farm
+          <Plus className="mr-1 h-4 w-4" /> {f.addFarm}
         </Button>
       </div>
 
@@ -119,60 +145,177 @@ const ManageFarms = () => {
           <Loader2 className="h-8 w-8 animate-spin text-[#2A5A2A]" />
         </div>
       ) : farms.length === 0 ? (
-        <div className="text-center py-8 text-black/60 border border-dashed rounded-xl">
-          <MapPin className="h-8 w-8 mx-auto mb-2 opacity-40" />
-          <p className="text-sm">No farms yet. Click &quot;Add Farm&quot; to register your land.</p>
+        <div className="rounded-xl border border-dashed border-gray-300 py-10 text-center text-sm text-black/60">
+          <p>{f.empty}</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {farms.map((farm) => (
-            <Card key={farm.id} className="border border-black/10">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <CardTitle className="text-base text-[#2A5A2A]">{farm.name}</CardTitle>
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(farm)}>
-                      <Pencil className="h-4 w-4" />
+        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white divide-y divide-gray-100">
+          {farms.map((farm) => {
+            const hasClimate =
+              farm.ph != null ||
+              farm.nitrogen != null ||
+              farm.temperature != null ||
+              farm.humidity != null ||
+              farm.rainfall != null;
+
+            return (
+              <article
+                key={farm.id}
+                className="p-4 sm:p-5 transition-colors hover:bg-[#F5F9F5]/60"
+              >
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="min-w-0 flex-1 space-y-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-[#2A5A2A]">{farm.name}</h3>
+                      <p className="mt-0.5 text-xs text-black/45">
+                        {f.listRegistered}: {formatDate(farm.createdAt)}
+                      </p>
+                    </div>
+
+                    <dl className="grid grid-cols-1 gap-x-8 gap-y-3 text-sm sm:grid-cols-2 lg:grid-cols-3">
+                      <div>
+                        <dt className="text-xs font-medium uppercase tracking-wide text-black/40">
+                          {f.region}
+                        </dt>
+                        <dd className="mt-0.5 text-black/80">
+                          {farm.region ? labelForRegion(farm.region) : dash}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-xs font-medium uppercase tracking-wide text-black/40">
+                          {f.woreda}
+                        </dt>
+                        <dd className="mt-0.5 text-black/80">
+                          {farm.woreda ? labelForWoreda(farm.woreda) : dash}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-xs font-medium uppercase tracking-wide text-black/40">
+                          {f.listKebele}
+                        </dt>
+                        <dd className="mt-0.5 text-black/80">{display(farm.kebele)}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-xs font-medium uppercase tracking-wide text-black/40">
+                          {f.soilType}
+                        </dt>
+                        <dd className="mt-0.5 text-black/80">
+                          {farm.soilType ? soilTypeLabel(farm.soilType) : dash}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt className="text-xs font-medium uppercase tracking-wide text-black/40">
+                          {f.soilColor}
+                        </dt>
+                        <dd className="mt-0.5 text-black/80">
+                          {farm.soilColor ? soilColorLabel(farm.soilColor) : dash}
+                        </dd>
+                      </div>
+                      {farm.size && (
+                        <div>
+                          <dt className="text-xs font-medium uppercase tracking-wide text-black/40">
+                            {f.listSize}
+                          </dt>
+                          <dd className="mt-0.5 text-black/80">
+                            {farm.size}
+                            {farm.sizeUnit ? ` ${farm.sizeUnit}` : ''}
+                          </dd>
+                        </div>
+                      )}
+                    </dl>
+
+                    {hasClimate && (
+                      <div className="rounded-lg border border-[#5B8C51]/15 bg-[#F5F9F5]/80 px-3 py-2.5">
+                        <p className="mb-2 text-xs font-semibold text-[#2A5A2A]">{f.listClimate}</p>
+                        <dl className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs text-black/70 sm:grid-cols-3 lg:grid-cols-6">
+                          {farm.ph != null && (
+                            <div>
+                              <dt className="text-black/45">{f.listPh}</dt>
+                              <dd className="font-medium text-black/80">{farm.ph}</dd>
+                            </div>
+                          )}
+                          {farm.nitrogen != null && (
+                            <div>
+                              <dt className="text-black/45">N</dt>
+                              <dd className="font-medium text-black/80">{farm.nitrogen}</dd>
+                            </div>
+                          )}
+                          {farm.phosphorus != null && (
+                            <div>
+                              <dt className="text-black/45">P</dt>
+                              <dd className="font-medium text-black/80">{farm.phosphorus}</dd>
+                            </div>
+                          )}
+                          {farm.potassium != null && (
+                            <div>
+                              <dt className="text-black/45">K</dt>
+                              <dd className="font-medium text-black/80">{farm.potassium}</dd>
+                            </div>
+                          )}
+                          {farm.temperature != null && (
+                            <div>
+                              <dt className="text-black/45">{f.listTemp}</dt>
+                              <dd className="font-medium text-black/80">{farm.temperature}°C</dd>
+                            </div>
+                          )}
+                          {farm.humidity != null && (
+                            <div>
+                              <dt className="text-black/45">{f.listHumidity}</dt>
+                              <dd className="font-medium text-black/80">{farm.humidity}%</dd>
+                            </div>
+                          )}
+                          {farm.rainfall != null && (
+                            <div>
+                              <dt className="text-black/45">{f.listRainfall}</dt>
+                              <dd className="font-medium text-black/80">{farm.rainfall} mm</dd>
+                            </div>
+                          )}
+                        </dl>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex shrink-0 flex-row gap-2 lg:flex-col lg:items-stretch">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="border-[#2A5A2A]/40 text-[#2A5A2A] hover:bg-[#2A5A2A]/5"
+                      onClick={() => openEditDialog(farm)}
+                    >
+                      {f.update}
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-700" onClick={() => setDeleteDialog(farm)}>
-                      <Trash2 className="h-4 w-4" />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="border-red-200 text-red-600 hover:bg-red-50"
+                      onClick={() => setDeleteDialog(farm)}
+                    >
+                      {f.delete}
                     </Button>
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent className="space-y-1 text-sm text-black/70">
-                {farm.soilType && (
-                  <div className="flex items-center gap-2">
-                    <Sprout className="h-3.5 w-3.5" />
-                    <span className="capitalize">{farm.soilType}</span>
-                  </div>
-                )}
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-3.5 w-3.5" />
-                  <span>
-                    {[farm.region, farm.woreda, farm.kebele].filter(Boolean).join(', ') || 'Location not set'}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+              </article>
+            );
+          })}
         </div>
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingFarm ? 'Edit Farm' : 'Add Farm'}</DialogTitle>
+            <DialogTitle>{editingFarm ? f.editFarm : f.addFarmDialog}</DialogTitle>
             <DialogDescription>
-              {editingFarm ? 'Update your farm details.' : 'Tell us about your farm land.'}
+              {editingFarm ? f.editDescription : f.addDescription}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-black/70 mb-1 block">Farm Name *</label>
+              <label className="text-sm font-medium text-black/70 mb-1 block">{f.farmName}</label>
               <Input
-                placeholder="e.g. North Field, Riverside Plot"
+                placeholder={f.farmNamePlaceholder}
                 value={form.name}
                 onChange={(e) => setForm({ ...form, name: e.target.value })}
               />
@@ -180,28 +323,28 @@ const ManageFarms = () => {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-sm font-medium text-black/70 mb-1 block">Soil Type</label>
+                <label className="text-sm font-medium text-black/70 mb-1 block">{f.soilType}</label>
                 <Select value={form.soilType} onValueChange={(v) => setForm({ ...form, soilType: v })}>
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select" />
+                    <SelectValue placeholder={f.select} />
                   </SelectTrigger>
                   <SelectContent>
-                    {SOIL_TYPES.map((t) => (
-                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                    {SOIL_TYPES.map((st) => (
+                      <SelectItem key={st.value} value={st.value}>{soilTypeLabel(st.value)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
               <div>
-                <label className="text-sm font-medium text-black/70 mb-1 block">Soil Color</label>
+                <label className="text-sm font-medium text-black/70 mb-1 block">{f.soilColor}</label>
                 <Select value={form.soilColor} onValueChange={(v) => setForm({ ...form, soilColor: v })}>
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select" />
+                    <SelectValue placeholder={f.select} />
                   </SelectTrigger>
                   <SelectContent>
                     {SOIL_COLORS.map((c) => (
-                      <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+                      <SelectItem key={c.value} value={c.value}>{soilColorLabel(c.value)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -210,13 +353,16 @@ const ManageFarms = () => {
 
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-sm font-medium text-black/70 mb-1 block">Region</label>
-                <Select value={form.region} onValueChange={(v) => setForm({ ...form, region: v, woreda: '' })}>
+                <label className="text-sm font-medium text-black/70 mb-1 block">{f.region}</label>
+                <Select
+                  value={form.region || undefined}
+                  onValueChange={(v) => setForm({ ...form, region: v, woreda: '' })}
+                >
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Select region" />
+                    <SelectValue placeholder={f.selectRegion} />
                   </SelectTrigger>
-                  <SelectContent>
-                    {ETHIOPIAN_REGIONS.map((r) => (
+                  <SelectContent position="popper" className="z-[140] max-h-60">
+                    {regions.map((r) => (
                       <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
                     ))}
                   </SelectContent>
@@ -224,18 +370,29 @@ const ManageFarms = () => {
               </div>
 
               <div>
-                <label className="text-sm font-medium text-black/70 mb-1 block">Woreda</label>
+                <label className="text-sm font-medium text-black/70 mb-1 block">{f.woreda}</label>
                 <Select
-                  value={form.woreda}
+                  key={`woreda-select-${selectedRegion}`}
+                  value={form.woreda || undefined}
                   onValueChange={(v) => setForm({ ...form, woreda: v })}
-                  disabled={!selectedRegion}
+                  disabled={!selectedRegion || woredas.length === 0}
                 >
                   <SelectTrigger className="w-full">
-                    <SelectValue placeholder={selectedRegion ? 'Select woreda' : 'Select region first'} />
+                    <SelectValue
+                      placeholder={
+                        !selectedRegion
+                          ? f.selectRegionFirst
+                          : woredas.length === 0
+                            ? f.noWoredasForRegion
+                            : f.selectWoreda
+                      }
+                    />
                   </SelectTrigger>
-                  <SelectContent>
-                    {woredas.map((w) => (
-                      <SelectItem key={w.value} value={w.value}>{w.label}</SelectItem>
+                  <SelectContent position="popper" className="z-[140] max-h-60">
+                    {woredas.map((woreda) => (
+                      <SelectItem key={woreda.value} value={woreda.value}>
+                        {woreda.label}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -243,9 +400,9 @@ const ManageFarms = () => {
             </div>
 
             <div>
-              <label className="text-sm font-medium text-black/70 mb-1 block">Kebele (optional)</label>
+              <label className="text-sm font-medium text-black/70 mb-1 block">{f.kebele}</label>
               <Input
-                placeholder="e.g. Kebele 01"
+                placeholder={f.kebelePlaceholder}
                 value={form.kebele}
                 onChange={(e) => setForm({ ...form, kebele: e.target.value })}
               />
@@ -253,14 +410,14 @@ const ManageFarms = () => {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDialogOpen(false)}>{t.common.cancel}</Button>
             <Button
               onClick={handleSubmit}
               disabled={!form.name.trim() || isPending}
               className="bg-[#2A5A2A] hover:bg-[#1E431E] text-white"
             >
               {isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
-              {editingFarm ? 'Update' : 'Save Farm'}
+              {editingFarm ? f.update : f.saveFarm}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -269,20 +426,20 @@ const ManageFarms = () => {
       <Dialog open={!!deleteDialog} onOpenChange={(o) => !o && setDeleteDialog(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Delete Farm</DialogTitle>
+            <DialogTitle>{f.deleteTitle}</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete &quot;{deleteDialog?.name}&quot;? This action cannot be undone.
+              {f.deleteDescription.replace('{name}', deleteDialog?.name ?? '')}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialog(null)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setDeleteDialog(null)}>{t.common.cancel}</Button>
             <Button
               onClick={handleDelete}
               disabled={deleteMutation.isPending}
               className="bg-red-600 hover:bg-red-700 text-white"
             >
               {deleteMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
-              Delete
+              {f.delete}
             </Button>
           </DialogFooter>
         </DialogContent>

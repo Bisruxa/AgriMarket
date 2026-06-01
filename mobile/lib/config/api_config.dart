@@ -5,11 +5,13 @@ class ApiConfig {
 
   // Auth
   static const login = '/auth/login';
+  static const register = '/auth/register';
+  static const checkEmail = '/auth/check-email';
   static const logout = '/auth/logout';
+  static const me = '/auth/me';
 
   // User
   static const profile = '/user/profile';
-  static const me = '/auth/me';
   static const updatePassword = '/user/password';
 
   // Products
@@ -18,4 +20,9 @@ class ApiConfig {
 
   // Farms
   static const farms = '/farms';
+
+  // AgriAI
+  static const recommendCrop = '/agriai/recommend/crop';
+  static const predictPrice = '/agriai/predict/price';
+  static const priceForecasterMetadata = '/agriai/price-forecaster/metadata';
 }

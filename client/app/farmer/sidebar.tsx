@@ -16,32 +16,32 @@ const FarmerSidebar = () => {
   const farmerLinks = [
     {
       name: t.sidebar.dashboard,
-      icon: <House className="mr-2" size={20} />,
+      icon: <House size={20} />,
       to: "/farmer/dashboard",
     },
     {
       name: t.sidebar.myFarms,
-      icon: <Sprout className="mr-2" size={20} />,
+      icon: <Sprout size={20} />,
       to: "/farmer/farms",
     },
     {
       name: t.sidebar.cropRecommendations,
-      icon: <ReceiptText className="mr-2" size={20} />,
+      icon: <ReceiptText size={20} />,
       to: "/farmer/cropdetail",
     },
     {
       name: t.sidebar.priceForecast,
-      icon: <TrendingUp className="mr-2" size={20} />,
+      icon: <TrendingUp size={20} />,
       to: "/farmer/price-forecast",
     },
     {
       name: t.sidebar.trends,
-      icon: <ChartNoAxesCombined className="mr-2" size={20} />,
+      icon: <ChartNoAxesCombined size={20} />,
       to: "/farmer/trends",
     },
     {
       name: t.sidebar.market,
-      icon: <Store className="mr-2" size={20} />,
+      icon: <Store size={20} />,
       to: "/farmer/market",
     },
   ];

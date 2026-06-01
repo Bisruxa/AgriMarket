@@ -26,13 +26,18 @@ const corsOptions = {
     }
     
     // List of allowed origins for development
+    const envOrigins = (process.env.CLIENT_URL || '')
+      .split(',')
+      .map((o) => o.trim())
+      .filter(Boolean);
+
     const allowedOrigins = [
       'http://localhost:3000',
       'http://localhost:3001',
       'http://localhost:3002',
       'http://localhost:54474',
-      process.env.CLIENT_URL
-    ].filter(Boolean);
+      ...envOrigins,
+    ];
     
     if (allowedOrigins.includes(origin)) {
       callback(null, true);
@@ -59,6 +64,7 @@ app.use('/api/farms', require('./routes/farm.routes'));
 app.use('/api/weather', require('./routes/weather.routes'));
 app.use('/api/market', require('./routes/market.routes'));
 app.use('/api/agriai', require('./routes/agriai.routes'));
+app.use('/api/notifications', require('./routes/notifications.routes'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common/auth_shell.dart';
 import '../widgets/common/section_title.dart';
@@ -14,6 +15,7 @@ class TraderSignupScreen extends StatefulWidget {
 }
 
 class _TraderSignupScreenState extends State<TraderSignupScreen> {
+  final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
@@ -23,6 +25,57 @@ class _TraderSignupScreenState extends State<TraderSignupScreen> {
 
   String? _selectedRegion;
   String? _selectedWoreda;
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  Future<void> _register() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    if (_passwordController.text != _confirmPasswordController.text) {
+      setState(() => _errorMessage = 'Passwords do not match');
+      return;
+    }
+
+    if (_selectedRegion == null || _selectedRegion!.isEmpty) {
+      setState(() => _errorMessage = 'Please select your region');
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    final result = await ApiService().register({
+      'name': _nameController.text.trim(),
+      'email': _emailController.text.trim(),
+      'password': _passwordController.text,
+      'role': 'TRADER',
+      'phone': _phoneController.text.trim(),
+      'region': _selectedRegion,
+      'woreda': _selectedWoreda,
+    });
+
+    if (!mounted) return;
+
+    if (result.success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Registration submitted! Your account is pending admin approval.',
+          ),
+          backgroundColor: AppColors.traderAccent,
+        ),
+      );
+      Navigator.pushReplacementNamed(context, '/login');
+      return;
+    }
+
+    setState(() {
+      _isLoading = false;
+      _errorMessage = result.message ?? 'Registration failed';
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,9 +87,25 @@ class _TraderSignupScreenState extends State<TraderSignupScreen> {
       child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
         child: Form(
+          key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              if (_errorMessage != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.error.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+                  ),
+                  child: Text(
+                    _errorMessage!,
+                    style: const TextStyle(color: AppColors.error, fontSize: 13),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
               const SectionTitle(
                 title: 'Business Information',
                 subtitle: 'Your company or trading details',
@@ -135,7 +204,7 @@ class _TraderSignupScreenState extends State<TraderSignupScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Your TIN will be verified by admin. You will be notified once approved.',
+                            'Your account will be verified by admin before you can log in.',
                             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                   fontSize: 12,
                                 ),
@@ -149,16 +218,8 @@ class _TraderSignupScreenState extends State<TraderSignupScreen> {
               CustomButton(
                 text: 'Register as Trader',
                 backgroundColor: AppColors.traderAccent,
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Registration submitted! Awaiting admin approval.',
-                      ),
-                    ),
-                  );
-                  Navigator.pushReplacementNamed(context, '/login');
-                },
+                isLoading: _isLoading,
+                onPressed: _register,
               ),
               const SizedBox(height: 16),
               Row(
