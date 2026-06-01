@@ -17,7 +17,10 @@ from .schemas import (
     PriceForecasterMetadataResponse,
 )
 from .services.service_factory import service_factory
-from .services.gemini_service import send_message as gemini_send_message
+from .services.gemini_service import (
+    send_message as gemini_send_message,
+    get_model_config,
+)
 
 load_dotenv()
 
@@ -154,3 +157,17 @@ def chat(request: ChatRequest) -> Dict[str, Any]:
         raise HTTPException(
             status_code=500, detail=f"Chat error: {exc}"
         ) from exc
+
+
+@app.get("/chat/models")
+def chat_models() -> Dict[str, Any]:
+    models = get_model_config()
+    return {
+        "text_model": models["text_model"],
+        "live_model": models["live_model"],
+        "live_model_candidates": models.get("live_model_candidates", []),
+        "notes": {
+            "text_model_usage": "Use for /chat generateContent function-calling flow",
+            "live_model_usage": "Use with Gemini Live API WebSocket for real-time audio/voice",
+        },
+    }

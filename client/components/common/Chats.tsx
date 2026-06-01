@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { Leaf, Search, User, Send, MoreVertical, Sparkles } from "lucide-react";
+import { Leaf, Search, User, Send, MoreVertical, Sparkles, Mic, MicOff, Radio } from "lucide-react";
 
 interface Message {
   id: string;
@@ -14,6 +14,9 @@ interface ChatsProps {
   messages: Message[];
   isAiTyping?: boolean;
   onSendMessage?: (message: string) => void;
+  isLive?: boolean;
+  liveStatus?: 'idle' | 'connecting' | 'connected' | 'disconnected' | 'error';
+  onToggleLive?: () => void;
   className?: string;
 }
 
@@ -22,17 +25,72 @@ export function Chats({
   messages,
   isAiTyping = false,
   onSendMessage,
+  isLive = false,
+  liveStatus = 'idle',
+  onToggleLive,
   className,
 }: ChatsProps) {
   const [inputValue, setInputValue] = React.useState("");
+  const [isListening, setIsListening] = React.useState(false);
+  const [isSpeechSupported, setIsSpeechSupported] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
   const scrollRef = React.useRef<HTMLDivElement>(null);
+  const recognitionRef = React.useRef<any>(null);
+
+  React.useEffect(() => {
+    setIsSpeechSupported(
+      "SpeechRecognition" in window || "webkitSpeechRecognition" in window
+    );
+  }, []);
+
+  const stopListening = React.useCallback(() => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      recognitionRef.current = null;
+    }
+    setIsListening(false);
+  }, []);
+
+  const startListening = React.useCallback(() => {
+    if (!isSpeechSupported || isListening) return;
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.lang = "en-US";
+
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      setIsListening(false);
+      if (onSendMessage && transcript.trim()) {
+        onSendMessage(transcript);
+      }
+    };
+
+    recognition.onerror = () => {
+      setIsListening(false);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+    setIsListening(true);
+  }, [isSpeechSupported, isListening, onSendMessage]);
 
   React.useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages, isAiTyping]);
+
+  React.useEffect(() => {
+    return () => stopListening();
+  }, [stopListening]);
 
   const handleSend = () => {
     if (inputValue.trim() && onSendMessage) {
@@ -48,12 +106,20 @@ export function Chats({
     }
   };
 
+  const hasText = inputValue.trim().length > 0;
+
   return (
     <div className={`flex-1 flex flex-col bg-white ${className || ""}`}>
       <div className="px-8 py-5 border-b border-[#e2f0e8] flex items-center justify-between">
         <div className="flex items-center gap-2 text-[#1d4a2e] font-medium">
           <Leaf className="h-4 w-4 text-[#388e5c]" />
           <span>{currentChatTitle}</span>
+          {isLive && (
+            <span className="flex items-center gap-1 text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-normal animate-pulse">
+              <span className="w-1.5 h-1.5 bg-red-500 rounded-full" />
+              LIVE
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-3 text-[#5e9c78]">
           <Search className="h-4 w-4 cursor-default hover:text-[#1d5e36] transition-colors" />
@@ -135,27 +201,73 @@ export function Chats({
       </div>
 
       <div className="px-8 pt-5 bg-white border-t border-[#e2f3e9]">
-        <div className="flex items-center gap-2 rounded-full border border-[#cde5d8] bg-[#f3fbf7] pl-5 pr-3 focus-within:border-[#8cc2a6] transition-colors">
-          <input
-            ref={inputRef}
-            type="text"
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="Ask about crops, prices, weather..."
-            className="flex-1 bg-transparent border-none py-4 text-sm outline-none text-[#1b4027] placeholder-[#8cb99e]"
-          />
-          <button
-            onClick={handleSend}
-            disabled={!inputValue.trim()}
-            className={`w-9 h-9 rounded-full flex items-center justify-center transition-all ${
-              inputValue.trim()
-                ? "bg-[#1b5933] text-white hover:bg-[#247a44] cursor-pointer"
-                : "bg-[#e2f3e9] text-[#7fb197] cursor-default"
-            }`}
-          >
-            <Send className="h-4 w-4" />
-          </button>
+        <div className={`flex items-center gap-2 rounded-full border bg-[#f3fbf7] pl-5 pr-3 transition-colors ${
+          isListening
+            ? "border-red-300 ring-1 ring-red-200"
+            : "border-[#cde5d8] focus-within:border-[#8cc2a6]"
+        }`}>
+          {isListening ? (
+            <div className="flex-1 flex items-center gap-2 py-4 text-sm text-[#1b4027]">
+              <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+              <span className="text-red-500 font-medium">Listening...</span>
+            </div>
+          ) : (
+            <input
+              ref={inputRef}
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Ask about crops, prices, weather..."
+              className="flex-1 bg-transparent border-none py-4 text-sm outline-none text-[#1b4027] placeholder-[#8cb99e]"
+            />
+          )}
+          {isLive ? (
+            <button
+              onClick={onToggleLive}
+              className="w-9 h-9 rounded-full flex items-center justify-center bg-red-500 text-white hover:bg-red-600 cursor-pointer transition-all animate-pulse"
+              title="Stop live session"
+            >
+              <Radio className="h-4 w-4" />
+            </button>
+          ) : hasText ? (
+            <button
+              onClick={handleSend}
+              className="w-9 h-9 rounded-full flex items-center justify-center bg-[#1b5933] text-white hover:bg-[#247a44] cursor-pointer transition-all"
+            >
+              <Send className="h-4 w-4" />
+            </button>
+          ) : (
+            <div className="flex items-center gap-1">
+              {onToggleLive && (
+                <button
+                  onClick={onToggleLive}
+                  disabled={liveStatus === 'connecting'}
+                  className={`w-9 h-9 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+                    liveStatus === 'connecting'
+                      ? 'bg-yellow-100 text-yellow-600 cursor-wait'
+                      : 'bg-[#e8f4ef] text-[#5e9c78] hover:bg-[#d4efde]'
+                  }`}
+                  title="Live voice conversation"
+                >
+                  <Radio className="h-4 w-4" />
+                </button>
+              )}
+              {isSpeechSupported && (
+                <button
+                  onClick={isListening ? stopListening : startListening}
+                  className={`w-9 h-9 rounded-full flex items-center justify-center transition-all cursor-pointer ${
+                    isListening
+                      ? "bg-red-500 text-white animate-pulse"
+                      : "bg-[#e2f3e9] text-[#5e9c78] hover:bg-[#d4efde]"
+                  }`}
+                  title={isListening ? "Stop listening" : "Voice input"}
+                >
+                  {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

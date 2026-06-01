@@ -5,6 +5,8 @@ import { ChatHistory } from "./ChatHistory";
 import { Chats } from "./Chats";
 import { initSocket, joinChat, leaveChat, sendMessage, disconnectSocket, getSocket } from "@/lib/chat";
 import { API_URL } from "@/lib/api";
+import { chatApi } from "@/lib/api";
+import { createLiveChat } from "@/lib/live-chat";
 
 interface Message {
   id: string;
@@ -18,6 +20,7 @@ interface ChatItem {
   id: string;
   title: string;
   createdAt: string;
+  timestamp: string;
   isActive: boolean;
   messages?: { content: string; role: string }[];
 }
@@ -39,6 +42,76 @@ export default function ChatPage() {
   const [currentChatId, setCurrentChatId] = React.useState<string | null>(null);
   const [isLoading, setIsLoading] = React.useState(false);
   const [isAiTyping, setIsAiTyping] = React.useState(false);
+  const [isLive, setIsLive] = React.useState(false);
+  const [liveStatus, setLiveStatus] = React.useState<'idle' | 'connecting' | 'connected' | 'disconnected' | 'error'>('idle');
+  const liveChatRef = React.useRef<ReturnType<typeof createLiveChat> | null>(null);
+
+  function getAuthToken(): string | null {
+    const cookies = document.cookie.split('; ');
+    for (const c of cookies) {
+      if (c.startsWith('token=')) return c.split('=')[1];
+    }
+    return null;
+  }
+
+  const handleToggleLive = React.useCallback(() => {
+    if (isLive) {
+      liveChatRef.current?.disconnect();
+      liveChatRef.current = null;
+      setIsLive(false);
+      setLiveStatus('idle');
+      return;
+    }
+
+    const token = getAuthToken();
+    if (!token) {
+      setLiveStatus('error');
+      return;
+    }
+
+    const live = createLiveChat(token, {
+      onMessage: (text, audioChunk) => {
+        const msg: Message = {
+          id: `live-${Date.now()}`,
+          role: 'assistant',
+          content: text || (audioChunk ? '[Audio response received]' : ''),
+          timestamp: 'now',
+        };
+        setMessages((prev) => [...prev, msg]);
+      },
+      onStatus: (status, msg) => {
+        setLiveStatus(status);
+        if (status === 'error') {
+          const errMsg: Message = {
+            id: `live-err-${Date.now()}`,
+            role: 'assistant',
+            content: `Live error: ${msg || 'Connection failed'}`,
+            timestamp: 'now',
+          };
+          setMessages((prev) => [...prev, errMsg]);
+        }
+        if (status === 'disconnected') {
+          setIsLive(false);
+        }
+      },
+    });
+
+    live.connect();
+    liveChatRef.current = live;
+    setIsLive(true);
+  }, [isLive]);
+
+  React.useEffect(() => {
+    if (liveStatus === 'connected') {
+      liveChatRef.current?.startCapture();
+    }
+  }, [liveStatus]);
+
+  React.useEffect(() => {
+    return () => {
+      liveChatRef.current?.disconnect();
+    };
+  }, []);
 
   React.useEffect(() => {
     const token = document.cookie
@@ -98,6 +171,7 @@ export default function ChatPage() {
             id: c.id,
             title: c.title || "New Chat",
             createdAt: c.createdAt,
+            timestamp: c.createdAt,
             isActive: c.id === currentChatId,
             messages: c.messages,
           }))
@@ -127,7 +201,7 @@ export default function ChatPage() {
     }
   }
 
-  async function handleNewChat() {
+  async function handleNewChat(): Promise<string | null> {
     try {
       const res = await fetch(`${API_URL}/chat`, {
         method: "POST",
@@ -139,18 +213,24 @@ export default function ChatPage() {
       if (json.success) {
         const chat = json.data;
         setCurrentChatId(chat.id);
+        joinChat(chat.id);
         setMessages([]);
         setChatItems((prev) => [
-          { id: chat.id, title: chat.title, createdAt: chat.createdAt, isActive: true },
+          { id: chat.id, title: chat.title, createdAt: chat.createdAt, timestamp: chat.createdAt, isActive: true },
           ...prev.map((c) => ({ ...c, isActive: false })),
         ]);
+        return chat.id;
       }
     } catch (e) {
       console.error("Failed to create chat", e);
     }
+    return null;
   }
 
   async function handleSelectChat(id: string) {
+    if (currentChatId && currentChatId !== id) {
+      leaveChat(currentChatId);
+    }
     setCurrentChatId(id);
     joinChat(id);
     setChatItems((prev) =>
@@ -160,10 +240,17 @@ export default function ChatPage() {
   }
 
   async function handleSendMessage(content: string) {
-    if (!currentChatId) {
-      await handleNewChat();
+    const chatId = currentChatId || (await handleNewChat());
+    if (!chatId) {
+      const errMsg: Message = {
+        id: Date.now().toString(),
+        role: "assistant",
+        content: "Error: Unable to create a chat session.",
+        timestamp: "now",
+      };
+      setMessages((prev) => [...prev, errMsg]);
+      return;
     }
-    const chatId = currentChatId;
 
     const userMsg: Message = {
       id: `temp-${Date.now()}`,
@@ -174,7 +261,36 @@ export default function ChatPage() {
     setMessages((prev) => [...prev, userMsg]);
     setIsAiTyping(true);
 
-    sendMessage(chatId!, content);
+    const socket = getSocket();
+    if (socket?.connected) {
+      sendMessage(chatId, content);
+      return;
+    }
+
+    // Fallback path for environments where JWT cookie is httpOnly and socket auth token is unavailable in JS.
+    const result = await chatApi.sendMessage(chatId, content);
+    setIsAiTyping(false);
+
+    if (!result.success || !result.data) {
+      const errMsg: Message = {
+        id: Date.now().toString(),
+        role: "assistant",
+        content: `Error: ${result.message || "Failed to process message"}`,
+        timestamp: "now",
+      };
+      setMessages((prev) => [...prev, errMsg]);
+      return;
+    }
+
+    const assistant = (result.data as any).assistantMessage;
+    const assistantMsg: Message = {
+      id: assistant?.id || `${Date.now()}-assistant`,
+      role: "assistant",
+      content: assistant?.content || "No response received.",
+      timestamp: assistant?.createdAt ? formatTime(assistant.createdAt) : "now",
+    };
+    setMessages((prev) => [...prev, assistantMsg]);
+    loadChats();
   }
 
   const currentChatTitle =
@@ -192,6 +308,9 @@ export default function ChatPage() {
         messages={messages}
         isAiTyping={isAiTyping}
         onSendMessage={handleSendMessage}
+        isLive={isLive}
+        liveStatus={liveStatus}
+        onToggleLive={handleToggleLive}
       />
     </div>
   );
