@@ -8,7 +8,7 @@ function WatchList() {
     { name: 'Teff', price: '85', demand: 'Medium', yield: '40', icon: '🌾' },
     { name: 'Cabbage', price: '12',  demand: 'Low', yield: '10', icon: '🥬' },
     { name: 'Potato', price: '25',  demand: 'High', yield: '45', icon: '🥔' },
-    { name: 'Tomato', price: '18', demand: 'Low', yield: '5', icon: '🍅' },
+    { name: 'Tomto', price: '18', demand: 'Low', yield: '5', icon: '🍅' },
     { name: 'Onion', price: '22', demand: 'Medium', yield: '15', icon: '🧅' },
     { name: 'Carrot', price: '28',  demand: 'High', yield: '20', icon: '🥕' },
     { name: 'Lentil', price: '45',  demand: 'Medium', yield: '12', icon: '🫘' },
