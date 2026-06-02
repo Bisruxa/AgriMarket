@@ -340,7 +340,7 @@ export default function FarmsteadDashboard() {
         </span>
         <span className="flex items-center gap-1">
           <Info className="h-3 w-3" />
-          sources: local mandi, Ethiopian Commodity Exchange, CSA
+          Sources: Ethiopian Agricultural Research Institute, Ethiopian Commodity Exchange, CSA
         </span>
       </div>
     </div>
