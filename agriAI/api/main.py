@@ -6,6 +6,7 @@ from typing import Any, Dict
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 
 from .schemas import (
     ChatRequest,
@@ -15,21 +16,15 @@ from .schemas import (
     PriceForecastRequest,
     PriceForecastResponse,
     PriceForecasterMetadataResponse,
-    ToolDefinitionsResponse,
-    ToolExecutionRequest,
-    ToolExecutionResponse,
 )
 from .services.service_factory import service_factory
-from .services.gemini_service import (
-    send_message as gemini_send_message,
-    send_message_stream,
-    
-)
+from .services.gemini_service import send_message as gemini_send_message
+from .services.gemini_service import send_message_stream
 from .services.function_executor import get_tool_definitions, execute_function
 
 load_dotenv()
 
-app = FastAPI(title="AgriAI Service", version="0.3.0")
+app = FastAPI(title="AgriAI Service", version="0.4.0")
 
 allowed_origins = os.getenv("AGRIAI_ALLOWED_ORIGINS", "http://localhost:3000").split(",")
 app.add_middleware(
@@ -54,10 +49,10 @@ def load_all_services() -> None:
             ),
             data_path=os.getenv("PRICE_DATA_PATH", "data/processed/crop_price_history_v2.csv"),
         )
-        print("✅  PriceForecasterService loaded.")
+        print("PriceForecasterService loaded.")
     except Exception as exc:
         app.state.price_service = None
-        print(f"⚠️  PriceForecasterService failed to load: {exc}")
+        print(f"PriceForecasterService failed to load: {exc}")
 
     try:
         app.state.recommender_service = service_factory.get_service(
@@ -70,10 +65,10 @@ def load_all_services() -> None:
                 "RECOMMENDER_ENCODER_PATH", "models/crop_recommender/label_encoder.joblib"
             ),
         )
-        print("✅  CropRecommenderService loaded.")
+        print("CropRecommenderService loaded.")
     except Exception as exc:
         app.state.recommender_service = None
-        print(f"⚠️  CropRecommenderService failed to load: {exc}")
+        print(f"CropRecommenderService failed to load: {exc}")
 
 
 @app.get("/health")
@@ -81,13 +76,9 @@ def health_check() -> Dict[str, str]:
     return {"status": "ok", "service": "AgriAI"}
 
 
-# ── Price Forecaster ────────────────────────────────────────────────────
+# ── Price Forecaster (ML model) ──
 
-
-@app.get(
-    "/price-forecaster/metadata",
-    response_model=PriceForecasterMetadataResponse,
-)
+@app.get("/price-forecaster/metadata", response_model=PriceForecasterMetadataResponse)
 def get_price_forecaster_metadata() -> Dict[str, Any]:
     if app.state.price_service is None:
         raise HTTPException(status_code=503, detail="Price forecaster service is not available.")
@@ -102,10 +93,7 @@ def get_price_forecaster_metadata() -> Dict[str, Any]:
     }
 
 
-@app.post(
-    "/predict/price",
-    response_model=PriceForecastResponse,
-)
+@app.post("/predict/price", response_model=PriceForecastResponse)
 def predict_price(request: PriceForecastRequest) -> Dict[str, Any]:
     if app.state.price_service is None:
         raise HTTPException(status_code=503, detail="Price forecaster service is not available.")
@@ -126,25 +114,20 @@ def predict_price(request: PriceForecastRequest) -> Dict[str, Any]:
     except FileNotFoundError as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
     except Exception as exc:
-        raise HTTPException(
-            status_code=500, detail=f"An unexpected error occurred: {exc}"
-        ) from exc
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {exc}") from exc
 
 
-# ── Crop Recommender ────────────────────────────────────────────────────
-
+# ── Crop Recommender (ML model) ──
 
 @app.post("/recommend/crop", response_model=CropRecommendationResponse)
 def recommend_crop(request: CropRecommendationRequest) -> Dict[str, Any]:
     try:
         return app.state.recommender_service.predict(request.model_dump())
     except Exception as exc:
-        raise HTTPException(
-            status_code=500, detail=f"An unexpected error occurred: {exc}"
-        ) from exc
+        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {exc}") from exc
 
 
-# ── Gemini AI Chat ────────────────────────────────────────────────────
+# ── Gemini AI Chat (with language + user_context support) ──
 
 @app.post("/chat", response_model=ChatResponse)
 def chat(request: ChatRequest) -> Dict[str, Any]:
@@ -153,15 +136,15 @@ def chat(request: ChatRequest) -> Dict[str, Any]:
             message=request.message,
             conversation_history=request.conversation_history,
             user_id=request.user_id,
+            language=request.language,
+            user_context=request.user_context,
         )
         return {
             "text": result.get("text", ""),
             "functionCalls": result.get("functionCalls", []),
         }
     except Exception as exc:
-        raise HTTPException(
-            status_code=500, detail=f"Chat error: {exc}"
-        ) from exc
+        raise HTTPException(status_code=500, detail=f"Chat error: {exc}") from exc
 
 
 @app.post("/chat/stream")
@@ -170,6 +153,8 @@ def chat_stream(request: ChatRequest):
         for event in send_message_stream(
             message=request.message,
             conversation_history=request.conversation_history,
+            language=request.language,
+            user_context=request.user_context,
         ):
             yield event
         yield "event: close\ndata: \n\n"
@@ -186,11 +171,9 @@ def chat_stream(request: ChatRequest):
 
 @app.get("/chat/models")
 def chat_models() -> Dict[str, Any]:
-    models = get_model_config()
     return {
-        "text_model": models["text_model"],
-        "live_model": models["live_model"],
-        "live_model_candidates": models.get("live_model_candidates", []),
+        "text_model": os.getenv("GEMINI_MODEL_NAME", "gemini-2.0-flash"),
+        "live_model": os.getenv("GEMINI_LIVE_MODEL", "gemini-2.0-flash-live-001"),
         "notes": {
             "text_model_usage": "Use for /chat generateContent function-calling flow",
             "live_model_usage": "Use with Gemini Live API WebSocket for real-time audio/voice",
@@ -198,19 +181,20 @@ def chat_models() -> Dict[str, Any]:
     }
 
 
-# ── Tool Definitions & Execution ─────────────────────────────────────────
+# ── Tool Definitions & Execution (for Gemini function calling) ──
 
-
-@app.get("/tools/definitions", response_model=ToolDefinitionsResponse)
+@app.get("/tools/definitions")
 def get_tool_definitions_endpoint() -> Dict[str, Any]:
     tools = get_tool_definitions()
     return {"tools": tools}
 
 
-@app.post("/tools/execute", response_model=ToolExecutionResponse)
-def execute_tool_endpoint(request: ToolExecutionRequest) -> Dict[str, Any]:
+@app.post("/tools/execute")
+def execute_tool_endpoint(request: dict) -> Dict[str, Any]:
     try:
-        result = execute_function(request.name, request.args)
+        name = request.get("name")
+        args = request.get("args", {})
+        result = execute_function(name, args)
         return {"result": result}
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc

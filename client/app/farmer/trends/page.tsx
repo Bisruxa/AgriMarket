@@ -84,31 +84,25 @@ export default function FarmsteadDashboard() {
     setError(null)
     try {
       const cropNames = CROP_KEYWORDS[cropKey] || [cropKey]
-      const results = await Promise.all(
-        cropNames.map(cn =>
-          pricesApi.getTrends({ cropName: cn, region, limit: 60 })
-        )
-      )
-
       const all: PriceRecord[] = []
-      for (const res of results) {
-        if (res.success && res.data) {
-          all.push(...res.data)
-        }
+
+      const res = await pricesApi.getTrends({ cropName: cropNames[0], region, limit: 200 })
+      if (res.success && res.data && res.data.length > 0) {
+        all.push(...res.data)
       }
 
       if (all.length === 0) {
         for (const cn of cropNames) {
-          const fallback = await pricesApi.getTrends({ cropName: cn, limit: 60 })
-          if (fallback.success && fallback.data) {
-            all.push(...fallback.data)
+          const r = await pricesApi.getTrends({ cropName: cn, limit: 200 })
+          if (r.success && r.data) {
+            all.push(...r.data)
           }
         }
       }
 
       const seen = new Set<string>()
       const deduped = all.filter(r => {
-        const k = `${r.year}-${r.month}`
+        const k = `${r.year}-${r.month}-${r.region}`
         if (seen.has(k)) return false
         seen.add(k)
         return true
@@ -152,9 +146,13 @@ export default function FarmsteadDashboard() {
 
   const chartData = React.useMemo(() => {
     if (priceRecords.length === 0) return []
-    const recent = priceRecords.slice(-12)
-    return recent.map(r => ({
-      label: MONTH_NAMES[r.month - 1],
+    const sorted = [...priceRecords].sort((a, b) => {
+      if (a.year !== b.year) return a.year - b.year
+      return a.month - b.month
+    })
+    const last24 = sorted.slice(-24)
+    return last24.map(r => ({
+      label: `${MONTH_NAMES[r.month - 1]} ${r.year}`,
       value: Math.round(r.avgPrice),
     }))
   }, [priceRecords])
@@ -198,26 +196,26 @@ export default function FarmsteadDashboard() {
   ]
 
   const marketData = priceRecords.length > 0
-    ? (() => {
-        const latest = priceRecords[priceRecords.length - 1]
-        const prev = priceRecords.length > 12 ? priceRecords[priceRecords.length - 13] : null
-        const trend = prev && latest
-          ? (((latest.avgPrice - prev.avgPrice) / prev.avgPrice) * 100).toFixed(1)
+    ? priceRecords.slice(-12).map(r => {
+        const idx = priceRecords.indexOf(r)
+        const prev = idx > 0 ? priceRecords[idx - 1] : null
+        const trend = prev && prev.year !== r.year || (prev && prev.month !== r.month)
+          ? (() => {
+              const samePeriod = priceRecords.filter(p => p.month === r.month && p.year === r.year - 1)[0]
+              if (samePeriod) {
+                const pct = ((r.avgPrice - samePeriod.avgPrice) / samePeriod.avgPrice * 100).toFixed(1)
+                return { label: `${parseFloat(pct) >= 0 ? "+" : ""}${pct}%`, up: parseFloat(pct) >= 0, value: pct }
+              }
+              return null
+            })()
           : null
-        const up = trend ? parseFloat(trend) >= 0 : false
-        return [
-          {
-            market: `${selectedRegion} (${MONTH_NAMES[latest.month - 1]} ${latest.year})`,
-            demand: "—",
-            trend: {
-              label: trend ? `${up ? "+" : ""}${trend}%` : "steady",
-              up,
-              value: trend ? `${up ? "+" : ""}${trend}%` : "steady",
-            },
-            price: `ETB ${Math.round(latest.avgPrice).toLocaleString()}/kg`,
-          },
-        ]
-      })()
+        return {
+          market: `${MONTH_NAMES[r.month - 1]} ${r.year}`,
+          demand: "—",
+          trend: trend || { label: "—", up: false, value: "0" },
+          price: `ETB ${Math.round(r.avgPrice).toLocaleString()}/kg`,
+        }
+      })
     : []
 
   return (

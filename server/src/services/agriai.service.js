@@ -1,5 +1,4 @@
 const DEFAULT_BASE_URL = 'http://localhost:8000';
-// const DEFAULT_BASE_URL = 'https://apache-resolutions-spreading-asn.trycloudflare.com/api'; // fallback tunnel
 const REQUEST_TIMEOUT_MS = Number(process.env.AGRIAI_TIMEOUT_MS || 12000);
 const CHAT_TIMEOUT_MS = Number(process.env.AGRIAI_CHAT_TIMEOUT_MS || 60000);
 

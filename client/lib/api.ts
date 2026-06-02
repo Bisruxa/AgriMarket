@@ -149,7 +149,7 @@ export interface PriceRecord {
   avgPrice: number;
   minPrice: number | null;
   maxPrice: number | null;
-  recordCount: number;
+  source: string | null;
 }
 
 export const pricesApi = {
