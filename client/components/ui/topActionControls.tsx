@@ -9,27 +9,10 @@ import { LanguageButton } from "@/components/ui/languageButton";
 import { useTranslations } from "@/components/hooks/useTranlations";
 import { useLanguage } from "@/app/context/LanguageContext";
 import { useNotifications } from "@/components/hooks/useNotifications";
-import type { AppNotification } from "@/lib/api";
-
-const DISMISSED_KEY = "agrimarket-dismissed-notifications";
-
-function loadDismissed(): Set<string> {
-  if (typeof window === "undefined") return new Set();
-  try {
-    const raw = localStorage.getItem(DISMISSED_KEY);
-    return raw ? new Set(JSON.parse(raw) as string[]) : new Set();
-  } catch {
-    return new Set();
-  }
-}
-
-function saveDismissed(ids: Set<string>) {
-  localStorage.setItem(DISMISSED_KEY, JSON.stringify([...ids]));
-}
+import { notificationsApi, type AppNotification } from "@/lib/api";
 
 const TopActionControls = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [dismissed, setDismissed] = useState<Set<string>>(() => new Set());
   const [panelStyle, setPanelStyle] = useState<React.CSSProperties>({});
   const containerRef = useRef<HTMLDivElement>(null);
   const bellRef = useRef<HTMLSpanElement>(null);
@@ -38,10 +21,6 @@ const TopActionControls = () => {
   const { language } = useLanguage();
   const n = t.dashboard.notifications;
   const { data, isLoading, isError, refetch, isReady } = useNotifications();
-
-  useEffect(() => {
-    setDismissed(loadDismissed());
-  }, []);
 
   const resolveText = useCallback(
     (item: AppNotification) => {
@@ -59,8 +38,8 @@ const TopActionControls = () => {
   );
 
   const visible =
-    data?.notifications.filter((item) => !dismissed.has(item.id)) ?? [];
-  const unreadCount = visible.length;
+    data?.notifications.filter((item) => !item.isRead) ?? [];
+  const unreadCount = data?.unreadCount ?? visible.length;
 
   const updatePanelPosition = useCallback(() => {
     const el = bellRef.current;
@@ -116,19 +95,11 @@ const TopActionControls = () => {
   };
 
   const dismissOne = (id: string) => {
-    setDismissed((prev) => {
-      const next = new Set(prev);
-      next.add(id);
-      saveDismissed(next);
-      return next;
-    });
+    void notificationsApi.dismiss(id).then(() => refetch());
   };
 
   const dismissAll = () => {
-    const next = new Set(dismissed);
-    visible.forEach((item) => next.add(item.id));
-    setDismissed(next);
-    saveDismissed(next);
+    void notificationsApi.markAllRead().then(() => refetch());
   };
 
   const typeStyles: Record<string, string> = {
@@ -173,16 +144,18 @@ const TopActionControls = () => {
           {isError && !isLoading && (
             <p className="py-6 text-center text-sm text-red-600">{n.loadError}</p>
           )}
-          {!isLoading && !isError && visible.length === 0 && (
+          {!isLoading &&
+            !isError &&
+            (data?.notifications ?? []).length === 0 && (
             <p className="py-6 text-center text-sm text-black/50">{n.empty}</p>
           )}
           {!isLoading &&
-            visible.map((item) => {
+            (data?.notifications ?? []).map((item) => {
               const { title, message } = resolveText(item);
               return (
                 <div
                   key={item.id}
-                  className={`mb-2 rounded-lg border p-3 last:mb-0 ${typeStyles[item.type] ?? typeStyles.info}`}
+                  className={`mb-2 rounded-lg border p-3 last:mb-0 ${typeStyles[item.type] ?? typeStyles.info} ${item.isRead ? "opacity-60" : ""}`}
                 >
                   <p className="text-sm font-semibold text-black/85">{title}</p>
                   <p className="mt-1 text-xs leading-relaxed text-black/65">{message}</p>

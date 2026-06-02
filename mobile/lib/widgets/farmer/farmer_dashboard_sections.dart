@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../constants/app_assets.dart';
 import '../../theme/app_theme.dart';
 
 class FarmerVerificationBanner extends StatelessWidget {
@@ -61,6 +63,7 @@ class MarketplaceAnalyticsCard extends StatelessWidget {
     return _DashboardCard(
       title: 'Marketplace Analytics',
       subtitle: 'My listings',
+      headerImage: AppAssets.connect,
       child: Column(
         children: [
           Row(
@@ -110,12 +113,14 @@ class CommodityTickerItem {
   final String price;
   final String change;
   final bool up;
+  final String? imageAsset;
 
   const CommodityTickerItem({
     required this.name,
     required this.price,
     required this.change,
     required this.up,
+    this.imageAsset,
   });
 }
 
@@ -137,6 +142,7 @@ class CommodityTickerCard extends StatelessWidget {
             price: e.price,
             change: e.change,
             up: e.up,
+            imageAsset: e.imageAsset,
           ),
         )
         .toList();
@@ -195,6 +201,7 @@ class AiCropRecommendationsCard extends StatelessWidget {
     return _DashboardCard(
       title: 'AI Crop Recommendations',
       subtitle: 'Top for $region',
+      headerImage: AppAssets.insights,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -312,12 +319,14 @@ class _DashboardCard extends StatelessWidget {
   final String? subtitle;
   final Widget child;
   final Widget? trailing;
+  final String? headerImage;
 
   const _DashboardCard({
     required this.title,
     this.subtitle,
     required this.child,
     this.trailing,
+    this.headerImage,
   });
 
   @override
@@ -369,6 +378,21 @@ class _DashboardCard extends StatelessWidget {
               if (trailing != null) trailing!,
             ],
           ),
+          if (headerImage != null) ...[
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: AspectRatio(
+                aspectRatio: 16 / 7,
+                child: Image.asset(
+                  headerImage!,
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                ),
+              ),
+            ),
+          ],
           const SizedBox(height: 14),
           child,
         ],
@@ -422,12 +446,14 @@ class _Commodity {
   final String price;
   final String change;
   final bool up;
+  final String? imageAsset;
 
   const _Commodity({
     required this.name,
     required this.price,
     required this.change,
     required this.up,
+    this.imageAsset,
   });
 }
 
@@ -445,15 +471,34 @@ class _CommodityTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.border),
       ),
+      clipBehavior: Clip.antiAlias,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.grain_rounded,
-            color: AppColors.primary.withValues(alpha: 0.8),
-            size: 20,
-          ),
-          const SizedBox(height: 2),
+          if (item.imageAsset != null)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: SizedBox(
+                height: 46,
+                width: double.infinity,
+                child: Image.asset(
+                  item.imageAsset!,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Icon(
+                    Icons.grain_rounded,
+                    color: AppColors.primary.withValues(alpha: 0.8),
+                    size: 20,
+                  ),
+                ),
+              ),
+            )
+          else
+            Icon(
+              Icons.grain_rounded,
+              color: AppColors.primary.withValues(alpha: 0.8),
+              size: 20,
+            ),
+          const SizedBox(height: 4),
           FittedBox(
             fit: BoxFit.scaleDown,
             child: Text(
@@ -524,11 +569,11 @@ class _ActiveListingCard extends StatelessWidget {
         children: [
           AspectRatio(
             aspectRatio: 1.05,
-            child: Image.asset(
-              item.imageAsset,
+            child: _DashboardImage(
+              path: item.imageAsset,
               fit: BoxFit.cover,
               width: double.infinity,
-              errorBuilder: (_, __, ___) => ColoredBox(
+              fallback: ColoredBox(
                 color: AppColors.primary.withValues(alpha: 0.08),
                 child: Icon(
                   Icons.eco_rounded,
@@ -583,6 +628,42 @@ class _ActiveListingCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _DashboardImage extends StatelessWidget {
+  final String path;
+  final BoxFit fit;
+  final double? width;
+  final double? height;
+  final Widget fallback;
+
+  const _DashboardImage({
+    required this.path,
+    this.fit = BoxFit.cover,
+    this.width,
+    this.height,
+    required this.fallback,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (path.startsWith('http')) {
+      return Image.network(
+        path,
+        fit: fit,
+        width: width,
+        height: height,
+        errorBuilder: (_, __, ___) => fallback,
+      );
+    }
+    return Image.asset(
+      path,
+      fit: fit,
+      width: width,
+      height: height,
+      errorBuilder: (_, __, ___) => fallback,
     );
   }
 }

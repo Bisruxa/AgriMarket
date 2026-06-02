@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../../constants/app_assets.dart';
 import '../../theme/app_theme.dart';
 
 class FarmerInboxMessage {
@@ -205,15 +207,7 @@ class FarmerDashboardHeader extends StatelessWidget {
                     border: Border.all(color: AppColors.primary, width: 2),
                   ),
                   child: ClipOval(
-                    child: Image.asset(
-                      profileImageUrl,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => const Icon(
-                        Icons.person_rounded,
-                        color: AppColors.primary,
-                        size: 40,
-                      ),
-                    ),
+                    child: _ProfileAvatar(imageUrl: profileImageUrl, size: 40),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -372,14 +366,10 @@ class FarmerDashboardHeader extends StatelessWidget {
                             color: Colors.white.withValues(alpha: 0.15),
                           ),
                           child: ClipOval(
-                            child: Image.asset(
-                              profileImageUrl,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => const Icon(
-                                Icons.person_rounded,
-                                color: Colors.white,
-                                size: 30,
-                              ),
+                            child: _ProfileAvatar(
+                              imageUrl: profileImageUrl,
+                              size: 30,
+                              iconColor: Colors.white,
                             ),
                           ),
                         ),
@@ -411,6 +401,50 @@ class FarmerDashboardHeader extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ProfileAvatar extends StatelessWidget {
+  final String imageUrl;
+  final double size;
+  final Color iconColor;
+
+  const _ProfileAvatar({
+    required this.imageUrl,
+    required this.size,
+    this.iconColor = AppColors.primary,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final fallback = Icon(Icons.person_rounded, color: iconColor, size: size);
+    final path = imageUrl.trim().isEmpty ? AppAssets.welcome : imageUrl;
+
+    if (path.startsWith('http')) {
+      return Image.network(
+        path,
+        fit: BoxFit.cover,
+        width: double.infinity,
+        height: double.infinity,
+        errorBuilder: (_, __, ___) => Image.asset(
+          AppAssets.welcome,
+          fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => fallback,
+        ),
+      );
+    }
+
+    return Image.asset(
+      path,
+      fit: BoxFit.cover,
+      width: double.infinity,
+      height: double.infinity,
+      errorBuilder: (_, __, ___) => Image.asset(
+        AppAssets.welcome,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => fallback,
       ),
     );
   }

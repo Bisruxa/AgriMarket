@@ -5,6 +5,7 @@ import 'package:agrimatketapp/models/notification_model.dart';
 import 'package:agrimatketapp/models/price_model.dart';
 import 'package:agrimatketapp/models/profile_model.dart';
 import 'package:agrimatketapp/models/weather_model.dart';
+import 'package:agrimatketapp/utils/crop_price_utils.dart';
 import 'package:agrimatketapp/services/token_storage.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
@@ -85,6 +86,11 @@ class ApiService {
   Future<Response> put(String endpoint, dynamic data) async {
     final client = await _getDio();
     return client.put(endpoint, data: data);
+  }
+
+  Future<Response> patch(String endpoint, [dynamic data]) async {
+    final client = await _getDio();
+    return client.patch(endpoint, data: data);
   }
 
   Future<Response> delete(String endpoint) async {
@@ -698,6 +704,66 @@ class ApiService {
     }
   }
 
+  Future<NotificationsResult> markNotificationRead(String key) async {
+    try {
+      final response = await patch('${ApiConfig.notifications}/$key/read');
+      return _notificationsFromResponse(response);
+    } catch (_) {
+      return const NotificationsResult(success: false, message: 'Network error');
+    }
+  }
+
+  Future<NotificationsResult> markAllNotificationsRead() async {
+    try {
+      final response = await patch('${ApiConfig.notifications}/read-all');
+      return _notificationsFromResponse(response);
+    } catch (_) {
+      return const NotificationsResult(success: false, message: 'Network error');
+    }
+  }
+
+  Future<NotificationsResult> dismissNotification(String key) async {
+    try {
+      final response = await delete('${ApiConfig.notifications}/$key');
+      return _notificationsFromResponse(response);
+    } catch (_) {
+      return const NotificationsResult(success: false, message: 'Network error');
+    }
+  }
+
+  NotificationsResult _notificationsFromResponse(Response response) {
+    final data = response.data;
+    if (response.statusCode == 200 &&
+        data is Map<String, dynamic> &&
+        data['success'] == true) {
+      final payload = data['data'];
+      final list = <AppNotification>[];
+      var unread = 0;
+      if (payload is Map<String, dynamic>) {
+        unread = payload['unreadCount'] is num
+            ? (payload['unreadCount'] as num).toInt()
+            : 0;
+        final raw = payload['notifications'];
+        if (raw is List) {
+          for (final item in raw) {
+            if (item is Map<String, dynamic>) {
+              list.add(AppNotification.fromJson(item));
+            }
+          }
+        }
+      }
+      return NotificationsResult(
+        success: true,
+        notifications: list,
+        unreadCount: unread,
+      );
+    }
+    return NotificationsResult(
+      success: false,
+      message: _messageFromBody(data) ?? 'Failed to update notifications',
+    );
+  }
+
   // ── Weather ─────────────────────────────────────────────────────────────
 
   Future<WeatherForecast?> getWeatherForecast({
@@ -738,6 +804,58 @@ class ApiService {
   }
 
   // ── Prices ──────────────────────────────────────────────────────────────
+
+  /// Tries multiple DB crop names (e.g. Teff → "Teff (white)") like the web app.
+  Future<List<PriceRecord>> getPriceTrendsForCropKey({
+    required String cropKey,
+    String? region,
+    int limit = 200,
+  }) async {
+    final names = CropPriceUtils.dbNamesForKey(cropKey);
+    final seen = <String>{};
+    final all = <PriceRecord>[];
+
+    for (final name in names) {
+      final batch = await getPriceTrends(
+        cropName: name,
+        region: region,
+        limit: limit,
+      );
+      for (final r in batch) {
+        final k = '${r.year}-${r.month}-${r.region}-${r.cropName}';
+        if (seen.add(k)) all.add(r);
+      }
+      if (all.isNotEmpty) break;
+    }
+
+    if (all.isEmpty) {
+      for (final name in names) {
+        final batch = await getPriceTrends(cropName: name, limit: limit);
+        for (final r in batch) {
+          final k = '${r.year}-${r.month}-${r.region}-${r.cropName}';
+          if (seen.add(k)) all.add(r);
+        }
+        if (all.isNotEmpty) break;
+      }
+    }
+
+    all.sort((a, b) {
+      if (a.year != b.year) return a.year.compareTo(b.year);
+      return a.month.compareTo(b.month);
+    });
+    return all;
+  }
+
+  Future<SalesTimingResult?> getSalesTimingForCropKey({
+    required String cropKey,
+    String? region,
+  }) async {
+    for (final name in CropPriceUtils.dbNamesForKey(cropKey)) {
+      final result = await getSalesTiming(cropName: name, region: region);
+      if (result != null && result.hasData) return result;
+    }
+    return getSalesTiming(cropName: CropPriceUtils.dbNamesForKey(cropKey).first, region: region);
+  }
 
   Future<List<PriceRecord>> getPriceTrends({
     String? cropName,
