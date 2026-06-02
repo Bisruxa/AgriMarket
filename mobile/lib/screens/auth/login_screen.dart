@@ -225,7 +225,12 @@ class _LoginScreenState extends State<LoginScreen> {
         });
       }
     } on DioException catch (e) {
-      String message = 'Connection error. Please check your internet connection.';
+      String message = 'Cannot reach the API server. Start it with: cd server && npm run dev';
+      if (e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.unknown) {
+        message =
+            'Cannot connect to ${ApiConfig.baseUrl}. Start the server: cd server && npm run dev';
+      }
       final data = e.response?.data;
       if (data is Map<String, dynamic> && data['message'] is String) {
         message = data['message'];
