@@ -5,6 +5,7 @@ import { User } from '@/types/auth-page';
 import { AuthContextType } from '@/types/auth-page';
 import { useRouter } from 'next/navigation';
 import { authApi } from '@/lib/api';
+import { setAuthCookies, clearAuthCookies } from '@/lib/auth-session';
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
@@ -29,11 +30,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (token) {
       localStorage.setItem('token', token);
     }
+    setAuthCookies(userData, token);
   }, []);
 
   const logout = useCallback(() => {
     setUser(null);
     clearStoredSession();
+    clearAuthCookies();
     authApi.logout().catch(() => {});
     router.push('/signin');
   }, [router]);
@@ -46,8 +49,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const storedUser = localStorage.getItem('user');
 
       try {
+        if (storedUser && tokenAtStart && tokenAtStart !== 'none') {
+          try {
+            setAuthCookies(JSON.parse(storedUser) as User, tokenAtStart);
+          } catch {
+            /* ignore malformed stored user */
+          }
+        }
+
         if (!tokenAtStart || tokenAtStart === 'none') {
           if (storedUser) clearStoredSession();
+          clearAuthCookies();
           if (!cancelled) setUser(null);
           return;
         }
@@ -59,15 +71,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const userData = response.data as User;
           setUser(userData);
           localStorage.setItem('user', JSON.stringify(userData));
+          const token = response.token ?? tokenAtStart ?? undefined;
           if (response.token) {
             localStorage.setItem('token', response.token);
           }
+          setAuthCookies(userData, token ?? undefined);
           return;
         }
 
-        // Only clear if login did not replace the token while getMe was in flight
         if (localStorage.getItem('token') === tokenAtStart) {
           clearStoredSession();
+          clearAuthCookies();
           setUser(null);
         }
       } catch (error) {
@@ -75,6 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.error('Failed to restore session:', error);
         if (localStorage.getItem('token') === tokenAtStart) {
           clearStoredSession();
+          clearAuthCookies();
           setUser(null);
         }
       } finally {

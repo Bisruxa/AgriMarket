@@ -8,7 +8,7 @@ function FarmsContent() {
   return (
     <>
       <Header />
-      <div className="px-1 pb-8">
+      <div className="px-1 -pt-12">
         <ManageFarms />
       </div>
     </>

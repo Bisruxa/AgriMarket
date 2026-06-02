@@ -104,10 +104,10 @@ export default function DashboardPage() {
       <div className="space-y-5 py-4">
         <div>
           <h1 className="text-2xl font-bold text-[#1A2E1A]">
-            {t.admin?.dashboard?.title || 'Farmers & Traders'}
+            Farmers & Traders
           </h1>
           <p className="text-[#6B7B6B] mt-1 text-sm">
-            {t.admin?.dashboard?.subtitle || 'Manage platform users and roles'}
+            Manage platform users and roles
           </p>
         </div>
 

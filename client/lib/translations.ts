@@ -255,6 +255,12 @@ stats:{
     save: string;
 
   };
+  notFound: {
+    title: string;
+    subtitle: string;
+    goHome: string;
+    goDashboard: string;
+  };
   filters?: {
     status?: {
       all: string;
@@ -630,6 +636,12 @@ const en: Translations = {
   cancel: "Cancel",
   save: "Save",
 },
+notFound: {
+  title: "Page not found",
+  subtitle: "This field hasn't been planted yet — the page you're looking for doesn't exist or was moved.",
+  goHome: "Back to home",
+  goDashboard: "Go to dashboard",
+},
 filters: {
   status: {
     all: "All Status",
@@ -1001,6 +1013,12 @@ common: {
   noResults:"ምንም ውጤት አልተገኘም",
   cancel: "ሰርዝ",
   save: "አስቀምጥ",
+},
+notFound: {
+  title: "ገጽ አልተገኘም",
+  subtitle: "የሚፈልጉት ገጽ የለም ወይም ተዛውሯል — እንደገና ይሞክሩ ወይም ወደ መነሻ ገጽ ይመለሱ።",
+  goHome: "ወደ መነሻ ገጽ",
+  goDashboard: "ወደ ዳሽቦርድ",
 },
 filters: {
   status: {
