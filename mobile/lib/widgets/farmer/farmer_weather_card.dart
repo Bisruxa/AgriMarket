@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../constants/app_assets.dart';
 import '../../models/weather_model.dart';
 
 String _formatCurrentDate(DateTime date) {
@@ -103,13 +104,8 @@ class FarmerWeatherCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(18),
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF1E88E5), Color(0xFF43A047)],
-        ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -119,7 +115,36 @@ class FarmerWeatherCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
+      child: Stack(
+        children: [
+          Positioned(
+            right: -8,
+            bottom: -4,
+            child: Opacity(
+              opacity: 0.35,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(16),
+                child: Image.asset(
+                  AppAssets.crop6,
+                  width: 120,
+                  height: 100,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                ),
+              ),
+            ),
+          ),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(18),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF1E88E5), Color(0xFF43A047)],
+              ),
+            ),
+            child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
@@ -188,6 +213,9 @@ class FarmerWeatherCard extends StatelessWidget {
                 fontSize: 12,
                 height: 1.35,
               ),
+            ),
+          ),
+        ],
             ),
           ),
         ],
