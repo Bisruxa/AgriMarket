@@ -1,9 +1,10 @@
 "use client";
 import * as React from "react";
-import { Leaf, Search, User, Send, MoreVertical, Sparkles, Mic, MicOff, Radio } from "lucide-react";
+import { User, Send, Sparkles, Mic, MicOff, Radio } from "lucide-react";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { VoiceSettings } from "./VoiceSettings";
 import { Language, Voice } from "@/types/real-time";
+import { useLanguage } from "@/app/context/LanguageContext";
 
 interface Message {
   id: string;
@@ -30,7 +31,7 @@ interface ChatsProps {
 }
 
 export function Chats({
-  currentChatTitle = "AgriAI Assistant",
+  currentChatTitle = "Agri Chat",
   messages,
   isAiTyping = false,
   onSendMessage,
@@ -45,6 +46,8 @@ export function Chats({
   onToggleMute,
   className,
 }: ChatsProps) {
+  const { language } = useLanguage();
+  const isAm = language === "am";
   const [inputValue, setInputValue] = React.useState("");
   const [isListening, setIsListening] = React.useState(false);
   const [isSpeechSupported, setIsSpeechSupported] = React.useState(false);
@@ -131,22 +134,16 @@ export function Chats({
 
   return (
     <div className={`flex-1 flex flex-col bg-white ${className || ""}`}>
-      <div className="px-8 py-5 border-b border-[#e2f0e8] flex items-center justify-between">
-        <div className="flex items-center gap-2 text-[#1d4a2e] font-medium">
-          <Leaf className="h-4 w-4 text-[#388e5c]" />
-          <span>{currentChatTitle}</span>
+      <div className="px-8 py-5 border-b border-[#e2f0e8]">
+        <h1 className="text-[#1d4a2e] font-medium truncate">
+          {currentChatTitle}
           {isLive && (
-            <span className="flex items-center gap-1 text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-normal animate-pulse">
+            <span className="ml-2 inline-flex items-center gap-1 text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded-full font-normal align-middle animate-pulse">
               <span className="w-1.5 h-1.5 bg-red-500 rounded-full" />
               LIVE
             </span>
           )}
-        </div>
-        <div className="flex items-center gap-3 text-[#5e9c78]">
-          <Search className="h-4 w-4 cursor-default hover:text-[#1d5e36] transition-colors" />
-          <User className="h-4 w-4 cursor-default hover:text-[#1d5e36] transition-colors" />
-          <MoreVertical className="h-4 w-4 cursor-default hover:text-[#1d5e36] transition-colors" />
-        </div>
+        </h1>
       </div>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-8 py-6">
@@ -154,12 +151,9 @@ export function Chats({
           {messages.length === 0 && !isAiTyping && (
             <div className="flex flex-col items-center justify-center h-full text-center text-[#6ea584] mt-16">
               <Sparkles className="h-12 w-12 mb-4 opacity-50" />
-              <h3 className="text-lg font-medium text-[#1d4a2e] mb-2">
-                AgriAI Assistant
+              <h3 className="text-lg font-medium text-[#1d4a2e]">
+                {isAm ? "ዛሬ እንዴት ልረዳዎ?" : "How Can I Help You Today"}
               </h3>
-              <p className="text-sm max-w-md">
-                Ask me about crop recommendations, price forecasts, weather, or market trends.
-              </p>
             </div>
           )}
 
@@ -282,7 +276,7 @@ export function Chats({
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask about crops, prices, weather..."
+              placeholder={isAm ? "ስለ ሰብል፣ ዋጋ ወይም አየር ሁኔታ ይጠይቁ..." : "Ask about crops, prices, weather..."}
               className="flex-1 bg-transparent border-none py-4 text-sm outline-none text-[#1b4027] placeholder-[#8cb99e]"
             />
           )}

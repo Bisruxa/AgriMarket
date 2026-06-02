@@ -3,7 +3,9 @@
 import React, { useState, useEffect } from "react";
 import { ReactNode } from "react";
 import TraderSidebar from "./sidebar";
-import TopActionControls from "@/components/ui/topActionControls";
+import FixedTopBar from "@/components/ui/FixedTopBar";
+import { useLanguage } from "../context/LanguageContext";
+import { useTranslations } from "@/components/hooks/useTranlations";
 
 interface NodeProp {
   children: ReactNode;
@@ -11,6 +13,10 @@ interface NodeProp {
 
 const Framerlayout = ({ children }: NodeProp) => {
   const [isMobile, setIsMobile] = useState<boolean>(false);
+  const { language } = useLanguage();
+  const t = useTranslations();
+  const layoutT = t.dashboard.layout;
+  const amharicClass = language === "am" ? "amharic" : "";
 
   // Check if screen is mobile
   useEffect(() => {
@@ -36,17 +42,16 @@ const Framerlayout = ({ children }: NodeProp) => {
       {/* Main Content */}
       <div className={`
         flex-1 min-h-screen px-3 py-2  flex flex-col
-        ${isMobile ? 'w-full' : ' md:ml-64  lg:ml-85'}
+        ${isMobile ? 'w-full' : 'md:ml-60'}
         transition-all duration-300 ease-in-out
+        ${amharicClass}
       `}>
         {/* Add padding-top for mobile header */}
         {isMobile && <div className="h-16" />}
-        
-        <div className="mb-3 flex justify-end">
-          <TopActionControls />
-        </div>
 
-        <div className="flex-1 ">
+        <FixedTopBar isMobile={isMobile} />
+
+        <div className="flex-1 -mt-1">
           {children}
         </div>
 
@@ -54,9 +59,9 @@ const Framerlayout = ({ children }: NodeProp) => {
         <div className="flex items-center mt-4 space-x-1">
           <img className="w-5 h-5" src="/corn.avif" alt="cornImage" />
           <p className="text-black/70 text-xs">
-            Ready to farm smarter? Grow with AgriMarket.
+            {layoutT.footerTagline}
             <br />
-            &copy;2026 AgriMarket
+            {layoutT.copyright}
           </p>
         </div>
       </div>

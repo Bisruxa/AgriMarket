@@ -79,7 +79,7 @@
   --sidebar-ring: oklch(0.708 0 0);
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
-  --font-ethiopic: 'Noto Sans Ethiopic', system-ui;
+  --font-ethiopic-fallback: 'Noto Sans Ethiopic', system-ui;
   --font-inter: "Inter", sans-serif; /* Added Inter font variable */
   --font-poppins: "Poppins", sans-serif; /* Added Poppins font variable */
 }
@@ -137,7 +137,7 @@
   
   /* Amharic-specific styling */
   .amharic {
-    font-family: var(--font-ethiopic), var(--font-inter), system-ui;
+    font-family: var(--font-ethiopic, var(--font-ethiopic-fallback)), var(--font-geist-sans), system-ui;
   }
 }
 /* Ensure popup appears above everything */

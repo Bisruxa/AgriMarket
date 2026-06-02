@@ -1,10 +1,8 @@
 const express = require('express');
-const http = require('http');
 const cors = require('cors');
 const morgan = require('morgan');
 const dotenv = require('dotenv');
 const cookieParser = require('cookie-parser');
-const { Server } = require('socket.io');
 const { connectDB } = require('./config/db');
 // Load environment variables
 dotenv.config();
@@ -13,16 +11,6 @@ dotenv.config();
 connectDB();
 
 const app = express();
-const httpServer = http.createServer(app);
-const io = new Server(httpServer, {
-  cors: {
-    origin: function (origin, callback) {
-      if (!origin || process.env.NODE_ENV !== 'production') return callback(null, true);
-      return callback(null, true);
-    },
-    credentials: true,
-  },
-});
 
 // CORS configuration
 const corsOptions = {
@@ -52,6 +40,7 @@ app.use('/api/farms', require('./routes/farm.routes'));
 app.use('/api/weather', require('./routes/weather.routes'));
 app.use('/api/market', require('./routes/market.routes'));
 app.use('/api/agriai', require('./routes/agriai.routes'));
+app.use('/api/notifications', require('./routes/notifications.routes'));
 app.use('/api/chat', require('./routes/chat.routes'));
 app.use('/api/prices', require('./routes/price.routes'));
 
@@ -85,6 +74,6 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 5000;
 
-httpServer.listen(PORT, () => {
+app.listen(PORT, () => {
   console.log(`🚀 Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
 });

@@ -3,9 +3,11 @@
 import * as React from "react";
 import { ChatHistory } from "./ChatHistory";
 import { Chats } from "./Chats";
-import { API_URL } from "@/lib/api";
+import { chatApi } from "@/lib/api";
 import { useGeminiLive } from "@/lib/useGeminiLive";
 import { Language, Voice } from "@/types/real-time";
+import { useLanguage } from "@/app/context/LanguageContext";
+import { type AppLanguage, formatAppDate } from "@/lib/formatDate";
 
 interface Message {
   id: string;
@@ -23,7 +25,7 @@ interface ChatItem {
   messages?: { content: string; role: string }[];
 }
 
-function formatTime(dateStr: string): string {
+function formatTime(dateStr: string, language: AppLanguage): string {
   const d = new Date(dateStr);
   const now = new Date();
   const diff = now.getTime() - d.getTime();
@@ -31,12 +33,30 @@ function formatTime(dateStr: string): string {
   if (diff < 3600000) return `${Math.floor(diff / 60000)}m`;
   if (diff < 86400000) return `${Math.floor(diff / 3600000)}h`;
   if (diff < 604800000) return `${Math.floor(diff / 86400000)}d`;
-  return d.toLocaleDateString();
+  return formatAppDate(d, language, "short");
 }
 
 const CURRENT_CHAT_ID_KEY = "agri_chat_current_id";
 
+function chatDisplayTitle(chat: {
+  title?: string;
+  messages?: { role: string; content: string }[];
+}): string {
+  const title = (chat.title || "").trim();
+  if (title && title !== "New Chat" && title !== "Voice Chat") return title;
+  const firstUser = chat.messages?.find((m) => m.role === "user");
+  if (firstUser?.content) {
+    const cleaned = firstUser.content.replace(/\s+/g, " ").trim();
+    if (!cleaned) return title || "New Chat";
+    const max = 50;
+    return cleaned.length <= max ? cleaned : `${cleaned.slice(0, max).trim()}…`;
+  }
+  return title || "New Chat";
+}
+
 export default function ChatPage() {
+  const { language } = useLanguage();
+  const lang = (language === "am" ? "am" : "en") as AppLanguage;
   const [chatItems, setChatItems] = React.useState<ChatItem[]>([]);
   const [messages, setMessages] = React.useState<Message[]>([]);
   const [currentChatId, setCurrentChatIdState] = React.useState<string | null>(null);
@@ -143,22 +163,41 @@ export default function ChatPage() {
     }
   }, []);
 
+  function mapChatToItem(c: {
+    id: string;
+    title?: string;
+    createdAt: string;
+    messages?: { role: string; content: string }[];
+  }): ChatItem {
+    return {
+      id: c.id,
+      title: chatDisplayTitle(c),
+      createdAt: c.createdAt,
+      timestamp: formatTime(c.createdAt, lang),
+      isActive: c.id === currentChatId,
+      messages: c.messages,
+    };
+  }
+
+  async function saveMessage(chatId: string, role: string, content: string) {
+    try {
+      return await chatApi.appendMessage(chatId, role, content);
+    } catch (e) {
+      console.error("Failed to save message", e);
+      return null;
+    }
+  }
+
   async function ensureChatId(): Promise<string | null> {
     try {
-      const res = await fetch(`${API_URL}/chat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ title: "Voice Chat" }),
-      });
-      const json = await res.json();
-      if (json.success) {
-        const chat = json.data;
+      const json = await chatApi.createChat("New Chat");
+      if (json.success && json.data) {
+        const chat = json.data as { id: string; title?: string; createdAt: string; messages?: [] };
         setCurrentChatId(chat.id);
         setMessages([]);
-        setChatItems(prev => [
-          { id: chat.id, title: chat.title, createdAt: chat.createdAt, timestamp: chat.createdAt, isActive: true },
-          ...prev.map(c => ({ ...c, isActive: false })),
+        setChatItems((prev) => [
+          mapChatToItem({ ...chat, messages: [] }),
+          ...prev.map((c) => ({ ...c, isActive: false })),
         ]);
         return chat.id;
       }
@@ -168,35 +207,14 @@ export default function ChatPage() {
     return null;
   }
 
-  async function saveMessage(chatId: string, role: string, content: string) {
-    try {
-      const res = await fetch(`${API_URL}/chat/${chatId}/messages`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ role, content }),
-      });
-      return await res.json();
-    } catch (e) {
-      console.error("Failed to save message", e);
-      return null;
-    }
-  }
-
   async function loadChats() {
     try {
-      const res = await fetch(`${API_URL}/chat`, { credentials: "include" });
-      const json = await res.json();
-      if (json.success) {
+      const json = await chatApi.getChats();
+      if (json.success && Array.isArray(json.data)) {
         setChatItems(
-          json.data.map((c: any) => ({
-            id: c.id,
-            title: c.title || "New Chat",
-            createdAt: c.createdAt,
-            timestamp: c.createdAt,
-            isActive: c.id === currentChatId,
-            messages: c.messages,
-          }))
+          json.data.map((c: ChatItem & { createdAt: string; messages?: { role: string; content: string }[] }) =>
+            mapChatToItem(c)
+          )
         );
       }
     } catch (e) {
@@ -206,15 +224,15 @@ export default function ChatPage() {
 
   async function loadMessages(chatId: string) {
     try {
-      const res = await fetch(`${API_URL}/chat/${chatId}`, { credentials: "include" });
-      const json = await res.json();
-      if (json.success) {
+      const json = await chatApi.getChat(chatId);
+      if (json.success && json.data) {
+        const data = json.data as { messages: { id: string; role: string; content: string; createdAt: string }[] };
         setMessages(
-          json.data.messages.map((m: any) => ({
+          data.messages.map((m) => ({
             id: m.id,
-            role: m.role,
+            role: m.role as "user" | "assistant",
             content: m.content,
-            timestamp: formatTime(m.createdAt),
+            timestamp: formatTime(m.createdAt, lang),
           }))
         );
       }
@@ -225,20 +243,14 @@ export default function ChatPage() {
 
   async function handleNewChat(): Promise<string | null> {
     try {
-      const res = await fetch(`${API_URL}/chat`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ title: "New Chat" }),
-      });
-      const json = await res.json();
-      if (json.success) {
-        const chat = json.data;
+      const json = await chatApi.createChat("New Chat");
+      if (json.success && json.data) {
+        const chat = json.data as { id: string; title?: string; createdAt: string };
         setCurrentChatId(chat.id);
         setMessages([]);
-        setChatItems(prev => [
-          { id: chat.id, title: chat.title, createdAt: chat.createdAt, timestamp: chat.createdAt, isActive: true },
-          ...prev.map(c => ({ ...c, isActive: false })),
+        setChatItems((prev) => [
+          mapChatToItem({ ...chat, messages: [] }),
+          ...prev.map((c) => ({ ...c, isActive: false })),
         ]);
         return chat.id;
       }
@@ -246,6 +258,22 @@ export default function ChatPage() {
       console.error("Failed to create chat", e);
     }
     return null;
+  }
+
+  async function handleDeleteChat(id: string) {
+    try {
+      const json = await chatApi.deleteChat(id);
+      if (json.success) {
+        if (currentChatId === id) {
+          setCurrentChatId(null);
+          setMessages([]);
+        }
+        setChatItems((prev) => prev.filter((c) => c.id !== id));
+        await loadChats();
+      }
+    } catch (e) {
+      console.error("Failed to delete chat", e);
+    }
   }
 
   async function handleSelectChat(id: string) {
@@ -263,19 +291,23 @@ export default function ChatPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/chat/${chatId}/messages`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ content }),
-      });
-      const json = await response.json();
+      const json = await chatApi.sendMessage(chatId, content);
 
       setIsLoading(false);
 
-      if (json.success && json.data?.assistantMessage) {
+      if (json.success && json.data) {
+        const data = json.data as { assistantMessage?: { content: string } };
+        if (data.assistantMessage) {
+          setChatItems((prev) =>
+            prev.map((c) =>
+              c.id === chatId && (c.title === "New Chat" || c.title === "Voice Chat")
+                ? { ...c, title: chatDisplayTitle({ title: c.title, messages: [{ role: "user", content }] }) }
+                : c
+            )
+          );
+        }
         await loadMessages(chatId);
-        loadChats();
+        await loadChats();
       } else {
         setMessages(prev =>
           prev.map(m =>
@@ -300,18 +332,16 @@ export default function ChatPage() {
     }
   }
 
-  const currentChatTitle =
-    chatItems.find(c => c.isActive)?.title || "AgriAI Assistant";
-
   return (
     <div className="max-w-325 w-full h-[90vh] max-h-200 bg-white flex overflow-hidden">
       <ChatHistory
         items={chatItems}
         onNewChat={handleNewChat}
         onSelectChat={handleSelectChat}
+        onDeleteChat={handleDeleteChat}
       />
       <Chats
-        currentChatTitle={currentChatTitle}
+        currentChatTitle="Agri Chat"
         messages={messages}
         isAiTyping={isLoading}
         onSendMessage={handleSendMessage}

@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
-import '../../models/crop_model.dart';
+
 import '../../models/product_model.dart';
 import '../../models/profile_model.dart';
+import '../../models/weather_model.dart';
 import '../../services/api_service.dart';
+import '../../services/token_storage.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/logout_helper.dart';
+import '../../utils/notification_labels.dart';
 import '../../widgets/common/app_bottom_nav.dart';
-import '../../widgets/welcome_card.dart';
-import '../../widgets/profitable_crops_card.dart';
-import 'crop_recommendation.dart';
-import 'farms_screen.dart';
+import '../../widgets/farmer/farmer_dashboard_header.dart';
+import '../../widgets/farmer/farmer_dashboard_sections.dart';
+import '../../widgets/farmer/farmer_weather_card.dart';
+import 'agri_chat_screen.dart';
 import 'farmer_profile.dart';
+import 'farmer_trends_screen.dart';
+import 'farms_screen.dart';
 import 'marketplace.dart';
-import 'farmer.chat.dart';
 
 class FarmerDashboard extends StatefulWidget {
   const FarmerDashboard({super.key});
@@ -27,7 +31,15 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
   UserProfile? _profile;
   bool _isLoadingProfile = true;
 
-  static const _defaultImage = 'assets/images/welcome.jpg';
+  List<FarmerInboxMessage> _inboxMessages = [];
+  WeatherForecast? _weather;
+  bool _weatherLoading = true;
+  List<Product> _myProducts = [];
+  List<CommodityTickerItem> _commodities = [];
+  String? _featuredCropName;
+  double? _featuredCropScore;
+
+  static const _defaultImage = 'assets/images/welcome.png';
 
   static const _navItems = [
     AppNavItem(
@@ -36,54 +48,221 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
       label: 'Home',
     ),
     AppNavItem(
-      icon: Icons.agriculture_outlined,
-      activeIcon: Icons.agriculture_rounded,
-      label: 'Farms',
-    ),
-    AppNavItem(
-      icon: Icons.auto_awesome_outlined,
-      activeIcon: Icons.auto_awesome_rounded,
-      label: 'Crops',
+      icon: Icons.chat_bubble_outline_rounded,
+      activeIcon: Icons.chat_bubble_rounded,
+      label: 'Chat',
     ),
     AppNavItem(
       icon: Icons.store_outlined,
       activeIcon: Icons.store_rounded,
       label: 'Market',
     ),
+    AppNavItem(
+      icon: Icons.insights_outlined,
+      activeIcon: Icons.insights_rounded,
+      label: 'Insights',
+    ),
+    AppNavItem(
+      icon: Icons.person_outline_rounded,
+      activeIcon: Icons.person_rounded,
+      label: 'Profile',
+    ),
   ];
 
   @override
   void initState() {
     super.initState();
-    _loadProfile();
+    _loadAll();
+  }
+
+  Future<void> _loadAll() async {
+    await _loadProfile();
+    await Future.wait([
+      _loadNotifications(),
+      _loadWeatherAndFarms(),
+      _loadProducts(),
+      _loadCommodities(),
+      _loadMultiCrop(),
+    ]);
   }
 
   Future<void> _loadProfile() async {
     final profile = await _apiService.getProfile();
+    final storedName = await TokenStorage.getUserName();
+    final storedFarm = await TokenStorage.getFarmSubtitle();
+
     if (mounted) {
       setState(() {
-        _profile = profile;
+        final resolvedName = (profile?.name.isNotEmpty == true)
+            ? profile!.name
+            : (storedName?.isNotEmpty == true ? storedName! : 'Farmer');
+
+        if (profile != null) {
+          _profile = UserProfile(
+            id: profile.id,
+            name: resolvedName,
+            email: profile.email,
+            role: profile.role,
+            phone: profile.phone,
+            region: profile.region,
+            woreda: profile.woreda,
+            farmLocation: profile.farmLocation ?? storedFarm,
+            farmSize: profile.farmSize,
+            tinNumber: profile.tinNumber,
+            avatarUrl: profile.avatarUrl,
+          );
+        } else if (storedName != null && storedName.isNotEmpty) {
+          _profile = UserProfile(
+            name: storedName,
+            email: '',
+            role: 'farmer',
+            farmLocation: storedFarm,
+          );
+        }
         _isLoadingProfile = false;
       });
     }
   }
 
-  Future<void> _openProfile() async {
-    final updated = await Navigator.push<bool>(
-      context,
-      MaterialPageRoute(builder: (_) => const FarmerProfileScreen()),
-    );
-    if (updated == true && mounted) {
-      _loadProfile();
-    }
+  Future<void> _loadNotifications() async {
+    final result = await _apiService.getNotifications();
+    if (!mounted || !result.success) return;
+    setState(() {
+      _inboxMessages = result.notifications.map((n) {
+        final labels = NotificationLabels.label(n);
+        return FarmerInboxMessage(
+          id: n.id,
+          title: labels.title,
+          body: labels.body,
+          timeAgo: NotificationLabels.timeAgo(n.createdAt),
+        );
+      }).toList();
+    });
   }
 
+  Future<void> _loadWeatherAndFarms() async {
+    setState(() => _weatherLoading = true);
+    final farmsResult = await _apiService.getFarms();
+    WeatherForecast? forecast;
+
+    if (farmsResult.success && farmsResult.farms.isNotEmpty) {
+      final withCoords = farmsResult.farms.where(
+        (f) => f.latitude != null && f.longitude != null,
+      );
+      if (withCoords.isNotEmpty) {
+        forecast = await _apiService.getWeatherForFarm(withCoords.first.id);
+      }
+    }
+
+    forecast ??= await _apiService.getWeatherForecast(
+      latitude: 9.03,
+      longitude: 38.74,
+    );
+
+    if (!mounted) return;
+    setState(() {
+      _weather = forecast;
+      _weatherLoading = false;
+    });
+  }
+
+  Future<void> _loadProducts() async {
+    try {
+      final response = await _apiService.getMyProducts(page: 1, limit: 20);
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        final list = response.data['data'] as List? ?? [];
+        if (!mounted) return;
+        setState(() {
+          _myProducts = list.map((j) => Product.fromJson(j)).toList();
+        });
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _loadCommodities() async {
+    const cropNames = ['Teff', 'Wheat', 'Maize', 'Barley'];
+    final items = <CommodityTickerItem>[];
+
+    for (final crop in cropNames) {
+      final records = await _apiService.getPriceTrends(
+        cropName: crop,
+        limit: 2,
+      );
+      if (records.length >= 2) {
+        final latest = records.first.avgPrice;
+        final prev = records[1].avgPrice;
+        final pct = prev > 0 ? ((latest - prev) / prev) * 100 : 0.0;
+        items.add(CommodityTickerItem(
+          name: crop,
+          price: 'ETB ${latest.toStringAsFixed(0)}',
+          change: '${pct >= 0 ? '+' : ''}${pct.toStringAsFixed(0)}%',
+          up: pct >= 0,
+        ));
+      } else if (records.length == 1) {
+        items.add(CommodityTickerItem(
+          name: crop,
+          price: 'ETB ${records.first.avgPrice.toStringAsFixed(0)}',
+          change: '—',
+          up: true,
+        ));
+      }
+    }
+
+    if (!mounted) return;
+    setState(() => _commodities = items);
+  }
+
+  Future<void> _loadMultiCrop() async {
+    final multi = await _apiService.getMultiCropProfitability();
+    if (!mounted || multi == null || !multi.hasData || multi.items.isEmpty) {
+      return;
+    }
+    final top = multi.items.first;
+    setState(() {
+      _featuredCropName = top['cropName']?.toString();
+      final score = top['score'];
+      _featuredCropScore = score is num ? score.toDouble() : null;
+    });
+  }
+
+  String get _farmerName => _profile?.name ?? 'Farmer';
+
+  String get _firstName {
+    final parts = _farmerName.trim().split(RegExp(r'\s+'));
+    return parts.isNotEmpty ? parts.first : 'Farmer';
+  }
+
+  String get _cropRegion => _profile?.region?.trim() ?? 'Oromia';
+
+  int get _activeListingsCount =>
+      _myProducts.where((p) => p.isAvailable && p.stock > 0).length;
+
+  int get _soldOutCount =>
+      _myProducts.where((p) => !p.isAvailable || p.stock == 0).length;
+
+  List<ActiveListingItem> get _activeListings => _myProducts
+      .where((p) => p.isAvailable && p.stock > 0)
+      .take(4)
+      .map(
+        (p) => ActiveListingItem(
+          name: p.name,
+          priceLine: 'ETB ${p.price.toStringAsFixed(0)}/${p.unit}',
+          statusLine: '${p.stock} in stock',
+          imageAsset: p.images.isNotEmpty
+              ? p.images.first
+              : 'assets/images/Crop1.jpg',
+          statusHighlight: p.stock <= 5,
+        ),
+      )
+      .toList();
+
   List<Widget> get _screens => [
-    _buildHomeScreen(),
-    const FarmsScreen(),
-    const CropRecommendation(),
-    const MarketplaceScreen(),
-  ];
+        _buildHomeScreen(),
+        AgriChatScreen(defaultRegion: _cropRegion, showAppBar: false),
+        const MarketplaceScreen(),
+        const FarmerTrendsScreen(),
+        const FarmerProfileScreen(),
+      ];
 
   @override
   Widget build(BuildContext context) {
@@ -98,322 +277,83 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
         onTap: (index) => setState(() => _selectedIndex = index),
         items: _navItems,
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const FarmerChatScreen()),
-          );
-        },
-        backgroundColor: AppColors.primary,
-        elevation: 4,
-        child: const Icon(Icons.auto_awesome_rounded, color: Colors.white),
-      ),
+      floatingActionButton: _selectedIndex == 1
+          ? null
+          : FloatingActionButton(
+              onPressed: () => setState(() => _selectedIndex = 1),
+              backgroundColor: AppColors.primary,
+              child: const Icon(Icons.auto_awesome_rounded, color: Colors.white),
+            ),
     );
   }
 
   Widget _buildHomeScreen() {
-    return SafeArea(
-      child: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Dashboard',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontSize: 26,
-                        ),
-                  ),
-                  PopupMenuButton<String>(
-                    onSelected: (value) {
-                      if (value == 'profile') {
-                        _openProfile();
-                      } else if (value == 'logout') {
-                        logoutAndRedirect(context);
-                      }
-                    },
-                    itemBuilder: (context) => [
-                      const PopupMenuItem(
-                        value: 'profile',
-                        child: Row(
-                          children: [
-                            Icon(Icons.person_outline_rounded, size: 20),
-                            SizedBox(width: 10),
-                            Text('Profile'),
-                          ],
-                        ),
-                      ),
-                      const PopupMenuItem(
-                        value: 'logout',
-                        child: Row(
-                          children: [
-                            Icon(Icons.logout_rounded, size: 20),
-                            SizedBox(width: 10),
-                            Text('Logout'),
-                          ],
-                        ),
-                      ),
-                    ],
-                    child: Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.border),
-                      ),
-                      child: const Icon(Icons.more_vert_rounded),
-                    ),
-                  ),
-                ],
+    if (_isLoadingProfile) {
+      return const ColoredBox(
+        color: AppColors.surface,
+        child: Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+      );
+    }
+
+    return ColoredBox(
+      color: AppColors.surface,
+      child: RefreshIndicator(
+        color: AppColors.primary,
+        onRefresh: _loadAll,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(
+              child: FarmerDashboardHeader(
+                farmerName: _farmerName,
+                profileImageUrl: _profile?.avatarUrl ?? _defaultImage,
+                messages: _inboxMessages,
+                onLogout: () => logoutAndRedirect(context),
+                onOpenFarms: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const FarmsScreen()),
+                  );
+                },
               ),
             ),
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (_isLoadingProfile)
-                    const Center(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 24),
-                        child: CircularProgressIndicator(color: AppColors.primary),
-                      ),
-                    )
-                  else
-                    WelcomeCard(
-                      farmerName: _profile?.name ?? 'Farmer',
-                      farmName: _profile?.displaySubtitle.isNotEmpty == true
-                          ? _profile!.displaySubtitle
-                          : 'Your farm',
-                      profileImageUrl: _profile?.avatarUrl ?? _defaultImage,
-                      onViewProfile: _openProfile,
-                    ),
-                  const SizedBox(height: 20),
-                  _QuickActions(
-                    onFarms: () => setState(() => _selectedIndex = 1),
-                    onCrops: () => setState(() => _selectedIndex = 2),
-                    onMarket: () => setState(() => _selectedIndex = 3),
-                  ),
-                  const SizedBox(height: 20),
-                  ProfitableCropsCard(
-                    crops: topProfitableCrops,
-                    onViewAll: () => setState(() => _selectedIndex = 2),
-                  ),
-                  const SizedBox(height: 24),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'Recent Listings',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      TextButton(
-                        onPressed: () => setState(() => _selectedIndex = 3),
-                        child: const Text('View All'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 0.72,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                    ),
-                    itemCount: mockProducts.length > 4 ? 4 : mockProducts.length,
-                    itemBuilder: (context, index) {
-                      return _CompactProductTile(
-                        product: mockProducts[index],
-                        onTap: () => setState(() => _selectedIndex = 3),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 24),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _QuickActions extends StatelessWidget {
-  final VoidCallback onFarms;
-  final VoidCallback onCrops;
-  final VoidCallback onMarket;
-
-  const _QuickActions({
-    required this.onFarms,
-    required this.onCrops,
-    required this.onMarket,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: _ActionChip(
-            icon: Icons.agriculture_rounded,
-            label: 'My Farms',
-            color: AppColors.primary,
-            onTap: onFarms,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _ActionChip(
-            icon: Icons.auto_awesome_rounded,
-            label: 'Crop Tips',
-            color: AppColors.primaryLight,
-            onTap: onCrops,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: _ActionChip(
-            icon: Icons.add_shopping_cart_rounded,
-            label: 'Sell',
-            color: AppColors.accent,
-            onTap: onMarket,
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ActionChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _ActionChip({
-    required this.icon,
-    required this.label,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(icon, color: color, size: 24),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _CompactProductTile extends StatelessWidget {
-  final Product product;
-  final VoidCallback onTap;
-
-  const _CompactProductTile({required this.product, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.08),
-                    borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(15),
-                    ),
-                  ),
-                  child: const Icon(
-                    Icons.eco_rounded,
-                    color: AppColors.primary,
-                    size: 40,
-                  ),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(10),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(
-                      product.name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
-                      ),
+                    FarmerWeatherCard(
+                      greetingName: _firstName,
+                      forecast: _weather,
+                      isLoading: _weatherLoading,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'ETB ${product.price.toStringAsFixed(0)}/${product.unit}',
-                      style: const TextStyle(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 12,
+                    const SizedBox(height: 16),
+                    const FarmerVerificationBanner(),
+                    const SizedBox(height: 16),
+                    MarketplaceAnalyticsCard(
+                      activeListings: _activeListingsCount,
+                      soldOut: _soldOutCount,
+                      totalProducts: _myProducts.length,
+                    ),
+                    CommodityTickerCard(items: _commodities),
+                    if (_featuredCropName != null)
+                      AiCropRecommendationsCard(
+                        region: _cropRegion,
+                        cropName: _featuredCropName!,
+                        score: _featuredCropScore,
                       ),
+                    ActiveListingsSection(
+                      listings: _activeListings,
+                      onViewAll: () => setState(() => _selectedIndex = 2),
                     ),
                   ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

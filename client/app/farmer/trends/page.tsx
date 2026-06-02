@@ -21,7 +21,12 @@ import { DataTable } from "@/components/common/Table"
 import { InfoCards } from "@/components/common/Info"
 import type { ChartConfig } from "@/components/ui/chart"
 import { useLanguage } from "@/app/context/LanguageContext"
-import { pricesApi, PriceRecord } from "@/lib/api"
+import {
+  pricesApi,
+  PriceRecord,
+  SalesTimingResult,
+  MultiCropProfitabilityResult,
+} from "@/lib/api"
 
 const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
 
@@ -73,6 +78,10 @@ export default function FarmsteadDashboard() {
   const [loading, setLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = React.useState<string>("")
+  const [salesTiming, setSalesTiming] = React.useState<SalesTimingResult | null>(null)
+  const [timingLoading, setTimingLoading] = React.useState(false)
+  const [multiCrop, setMultiCrop] = React.useState<MultiCropProfitabilityResult | null>(null)
+  const [planLoading, setPlanLoading] = React.useState(false)
 
   const availableRegions = [
     "Addis Ababa","Oromia","Amhara","Tigray","SNNP","Somali",
@@ -130,6 +139,41 @@ export default function FarmsteadDashboard() {
     fetchPrices(selectedCrop, selectedRegion)
   }, [selectedCrop, selectedRegion, fetchPrices])
 
+  React.useEffect(() => {
+    const loadSalesTiming = async () => {
+      setTimingLoading(true)
+      try {
+        const cropName = (CROP_KEYWORDS[selectedCrop] || [selectedCrop])[0]
+        const res = await pricesApi.getSalesTiming({ cropName, region: selectedRegion })
+        if (res.success && res.data) {
+          setSalesTiming(res.data)
+        } else {
+          setSalesTiming(null)
+        }
+      } finally {
+        setTimingLoading(false)
+      }
+    }
+    loadSalesTiming()
+  }, [selectedCrop, selectedRegion])
+
+  React.useEffect(() => {
+    const loadMultiCrop = async () => {
+      setPlanLoading(true)
+      try {
+        const res = await pricesApi.getMultiCropProfitability()
+        if (res.success && res.data) {
+          setMultiCrop(res.data)
+        } else {
+          setMultiCrop(null)
+        }
+      } finally {
+        setPlanLoading(false)
+      }
+    }
+    loadMultiCrop()
+  }, [])
+
   const handleCropSelect = (crop: string) => {
     setSelectedCrop(crop)
     setSearchCrop("")
@@ -143,6 +187,19 @@ export default function FarmsteadDashboard() {
   }
 
   const activeCropLabel = CROP_LABELS[selectedCrop]?.[language] ?? selectedCrop
+  const t = {
+    sellTimingTitle: language === "am" ? "ለመሸጥ ተመራጭ ጊዜ" : "Best sell window",
+    bestMonth: language === "am" ? "ተመራጭ ወር" : "Best month",
+    expectedGain: language === "am" ? "የተጠቃሚ ጥቅም" : "Expected gain",
+    latestPrice: language === "am" ? "የአሁኑ ዋጋ" : "Latest price",
+    noTiming: language === "am" ? "የመሸጫ ምክር መረጃ አልተገኘም።" : "No timing guidance available yet.",
+    multiCropTitle: language === "am" ? "የብዙ ሰብል ትርፍ እቅድ" : "Multi-crop profitability plan",
+    topCrop: language === "am" ? "ዋና ምክር" : "Top recommendation",
+    diversified: language === "am" ? "የልዩነት መጠን" : "Diversification index",
+    profitableNow: language === "am" ? "አሁን ትርፋማ" : "Profitable now",
+    loadingPlan: language === "am" ? "እቅድ እየተጫነ ነው..." : "Loading planning insights...",
+    gainVsRecent: language === "am" ? "ከቅርብ አማካይ ጋር ሲነጻጸር" : "vs recent average",
+  }
 
   const chartData = React.useMemo(() => {
     if (priceRecords.length === 0) return []
@@ -290,6 +347,59 @@ export default function FarmsteadDashboard() {
 
       {!loading && !error && chartData.length > 0 && (
         <>
+          <div className="mb-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <div className="rounded-xl border border-[#bfdfce] bg-white p-4">
+              <div className="mb-2 flex items-center gap-2 text-[#1f543c]">
+                <Clock className="h-4 w-4" />
+                <h3 className="text-sm font-semibold">{t.sellTimingTitle}</h3>
+              </div>
+              {timingLoading ? (
+                <p className="text-sm text-[#57886c]">{language === "am" ? "በመተንተን ላይ..." : "Analyzing..."}</p>
+              ) : salesTiming?.hasData && salesTiming.recommendation ? (
+                <div className="space-y-2 text-sm text-[#2a553d]">
+                  <p><span className="font-semibold">{t.bestMonth}:</span> {salesTiming.recommendation.bestSellMonthName}</p>
+                  <p><span className="font-semibold">{t.latestPrice}:</span> ETB {Math.round(salesTiming.recommendation.latestKnownPrice).toLocaleString()}/kg</p>
+                  <p>
+                    <span className="font-semibold">{t.expectedGain}:</span>{" "}
+                    <span className={salesTiming.recommendation.expectedGainPercent >= 0 ? "text-green-700" : "text-red-700"}>
+                      {salesTiming.recommendation.expectedGainPercent >= 0 ? "+" : ""}
+                      {salesTiming.recommendation.expectedGainPercent.toFixed(1)}%
+                    </span>
+                  </p>
+                </div>
+              ) : (
+                <p className="text-sm text-[#57886c]">{t.noTiming}</p>
+              )}
+            </div>
+
+            <div className="rounded-xl border border-[#bfdfce] bg-white p-4">
+              <div className="mb-2 flex items-center gap-2 text-[#1f543c]">
+                <PieChart className="h-4 w-4" />
+                <h3 className="text-sm font-semibold">{t.multiCropTitle}</h3>
+              </div>
+              {planLoading ? (
+                <p className="text-sm text-[#57886c]">{t.loadingPlan}</p>
+              ) : multiCrop?.summary ? (
+                <div className="space-y-2 text-sm text-[#2a553d]">
+                  <p><span className="font-semibold">{t.topCrop}:</span> {multiCrop.summary.topRecommendation || "—"}</p>
+                  <p><span className="font-semibold">{t.profitableNow}:</span> {multiCrop.summary.profitableNow}/{multiCrop.summary.cropsAnalyzed}</p>
+                  <p><span className="font-semibold">{t.diversified}:</span> {multiCrop.summary.diversificationIndex}%</p>
+                  {multiCrop.topRecommendations?.[0]?.trendPercent != null && (
+                    <p>
+                      <span className="font-semibold">{t.gainVsRecent}:</span>{" "}
+                      <span className={multiCrop.topRecommendations[0].trendPercent >= 0 ? "text-green-700" : "text-red-700"}>
+                        {multiCrop.topRecommendations[0].trendPercent >= 0 ? "+" : ""}
+                        {multiCrop.topRecommendations[0].trendPercent.toFixed(1)}%
+                      </span>
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-[#57886c]">{language === "am" ? "እቅድ መረጃ አልተገኘም።" : "No multi-crop planning data yet."}</p>
+              )}
+            </div>
+          </div>
+
           <div className="mb-8 grid grid-cols-1 gap-5 lg:grid-cols-2">
             <LineGraph
               data={chartData}

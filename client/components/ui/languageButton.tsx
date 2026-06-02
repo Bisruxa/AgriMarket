@@ -1,39 +1,25 @@
-'use client'
-import React, { useState } from 'react'
-import { Globe } from 'lucide-react'
-import { useLanguage } from '@/app/context/LanguageContext'
+'use client';
 
+import { Globe } from 'lucide-react';
+import { useLanguage } from '@/app/context/LanguageContext';
+import { useTranslations } from '@/components/hooks/useTranlations';
 
 export function LanguageButton() {
-  // const [currentLang, setCurrentLang] = useState(language || 'en')
-   const { language, toggleLanguage } = useLanguage()
-  // const toggleLanguage = () => {
-  //   const newLang = currentLang === 'en' ? 'am' : 'en'
-  //   setCurrentLang(newLang)
-    
-    // Call the callback if provided
-    // if (onLanguageChange) {
-    //   onLanguageChange(newLang)
-    // }
-    
-    // console.log('Language changed to:', newLang)
-  
-
-  const getButtonStyles = () => {
-    const baseStyles = "flex items-center gap-2 px-3 py-2 rounded-full transition-colors duration-300"
-    return `${baseStyles} bg-white/10 hover:bg-white/20 text-black`
-  }
+  const { language, toggleLanguage } = useLanguage();
+  const t = useTranslations();
+  const d = t.dashboard.language;
 
   return (
     <button
+      type="button"
       onClick={toggleLanguage}
-      className={getButtonStyles()}
-      aria-label={language === 'en' ? 'Switch to Amharic' : 'Switch to English'}
+      className="flex items-center gap-2 rounded-full bg-white/10 px-3 py-2 text-black transition-colors duration-300 hover:bg-white/20"
+      aria-label={language === 'en' ? d.switchToAmharic : d.switchToEnglish}
     >
-      <Globe size={18} />
+      <Globe size={18} aria-hidden />
       <span className="text-sm font-medium">
-        {language === 'en' ? 'አማ' : 'ENG'}
+        {language === 'en' ? d.labelWhenEn : d.labelWhenAm}
       </span>
     </button>
-  )
+  );
 }

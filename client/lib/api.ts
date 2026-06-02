@@ -28,32 +28,44 @@ class ApiClient {
     this.baseUrl = baseUrl;
   }
 
+  /** JWT from login/register (cookie alone is unreliable cross-origin on localhost). */
+  private getAuthHeaders(): Record<string, string> {
+    if (typeof window === 'undefined') return {};
+    const token = localStorage.getItem('token');
+    if (token && token !== 'none') {
+      return { Authorization: `Bearer ${token}` };
+    }
+    return {};
+  }
+
   private async request<T>(
     endpoint: string,
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseUrl}${endpoint}`;
     
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('token');
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-    }
-    
     const config: RequestInit = {
       ...options,
       credentials: 'include',
-      headers: { ...headers, ...options.headers },
+      headers: {
+        'Content-Type': 'application/json',
+        ...this.getAuthHeaders(),
+        ...(options.headers as Record<string, string> | undefined),
+      },
     };
 
     try {
       const response = await fetch(url, config);
       const data = await response.json();
-      
+
+      if (
+        response.ok &&
+        typeof window !== 'undefined' &&
+        data?.token &&
+        data.token !== 'none'
+      ) {
+        localStorage.setItem('token', data.token);
+      }
 
       if (!response.ok) {
         return {
@@ -132,6 +144,20 @@ export const farmsApi = {
   delete: (id: string) => api.delete(`/farms/${id}`),
 };
 
+export type AppNotification = {
+  id: string;
+  type: string;
+  href: string;
+  createdAt: string;
+  count?: number;
+  note?: string | null;
+};
+
+export const notificationsApi = {
+  getAll: () =>
+    api.get<{ notifications: AppNotification[]; unreadCount: number }>('/notifications'),
+};
+
 export const agriaiApi = {
   predictPrice: (data: { crop_name: string; region: string; year: number; month: number }) =>
     api.post('/agriai/predict/price', data),
@@ -152,6 +178,57 @@ export interface PriceRecord {
   source: string | null;
 }
 
+export interface SalesTimingResult {
+  cropName: string;
+  region: string | null;
+  hasData: boolean;
+  recommendation: {
+    bestSellMonth: number;
+    bestSellMonthName: string;
+    averageBestPrice: number;
+    lowestMonth: number;
+    lowestMonthName: string;
+    averageLowestPrice: number;
+    latestKnownPrice: number;
+    latestKnownPeriod: string;
+    expectedGainPercent: number;
+  } | null;
+  topMonths?: Array<{ month: number; monthName: string; avgPrice: number; samples: number }>;
+  dataPoints?: number;
+}
+
+export interface MultiCropProfitabilityResult {
+  hasData: boolean;
+  summary: {
+    farmsAnalyzed: number;
+    cropsAnalyzed: number;
+    profitableNow: number;
+    diversificationIndex: number;
+    topRecommendation: string | null;
+  } | null;
+  topRecommendations?: Array<{
+    cropName: string;
+    hasPriceData: boolean;
+    region?: string;
+    latestPrice?: number;
+    recentAverage?: number;
+    annualAverage?: number;
+    trendPercent?: number;
+    score?: number;
+  }>;
+  items?: Array<{
+    cropName: string;
+    hasPriceData: boolean;
+    region?: string;
+    latestPrice?: number;
+    recentAverage?: number;
+    annualAverage?: number;
+    trendPercent?: number;
+    score?: number;
+  }>;
+  message?: string;
+}
+
 export const pricesApi = {
   getTrends: (params?: { cropName?: string; region?: string; limit?: number }) => {
     const query = new URLSearchParams();
@@ -163,6 +240,16 @@ export const pricesApi = {
   getCrops: () => api.get<string[]>('/prices/crops'),
   getRegions: () => api.get<string[]>('/prices/regions'),
   getYearRange: () => api.get<{ minYear: number; maxYear: number }>('/prices/year-range'),
+  getSalesTiming: (params: { cropName: string; region?: string }) => {
+    const query = new URLSearchParams();
+    query.set('cropName', params.cropName);
+    if (params.region) query.set('region', params.region);
+    return api.get<SalesTimingResult>(`/prices/sales-timing?${query.toString()}`);
+  },
+  getMultiCropProfitability: (farmId?: string) =>
+    api.get<MultiCropProfitabilityResult>(
+      farmId ? `/prices/multi-crop-profitability?farmId=${farmId}` : '/prices/multi-crop-profitability'
+    ),
 };
 
 export const chatApi = {
@@ -172,6 +259,8 @@ export const chatApi = {
   deleteChat: (id: string) => api.delete(`/chat/${id}`),
   sendMessage: (chatId: string, content: string) =>
     api.post(`/chat/${chatId}/messages`, { content }),
+  appendMessage: (chatId: string, role: string, content: string) =>
+    api.post(`/chat/${chatId}/messages/append`, { role, content }),
 };
 
 export const productsApi = {

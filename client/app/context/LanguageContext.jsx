@@ -1,27 +1,63 @@
-'use client'
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
+'use client';
 
-const LanguageContext = createContext();
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useMemo,
+  useCallback,
+} from 'react';
+
+const STORAGE_KEY = 'agrimarket-language';
+
+const LanguageContext = createContext(null);
+
+function applyLanguageToDocument(lang) {
+  if (typeof document === 'undefined') return;
+  const root = document.documentElement;
+  root.lang = lang === 'am' ? 'am' : 'en';
+  root.classList.toggle('amharic', lang === 'am');
+  document.body.classList.toggle('amharic', lang === 'am');
+}
 
 export const LanguageProvider = ({ children }) => {
-  const [language, setLanguage] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const savedLang = localStorage.getItem('agrimarket-language');
-      return savedLang === 'en' || savedLang === 'am' ? savedLang : 'en';
-    }
-    return 'en'; 
-  });
-  useEffect(() => {
-    localStorage.setItem('agrimarket-language', language);
-  }, [language]);
+  const [language, setLanguageState] = useState('en');
+  const [ready, setReady] = useState(false);
 
-  const toggleLanguage = () => {
-    setLanguage(prev => prev === 'en' ? 'am' : 'en');
-  };
-  const contextValue = useMemo(() => ({
-    language,
-    toggleLanguage
-  }), [language]);
+  useEffect(() => {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    const initial = saved === 'am' || saved === 'en' ? saved : 'en';
+    setLanguageState(initial);
+    applyLanguageToDocument(initial);
+    setReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!ready) return;
+    localStorage.setItem(STORAGE_KEY, language);
+    applyLanguageToDocument(language);
+  }, [language, ready]);
+
+  const setLanguage = useCallback((lang) => {
+    if (lang === 'en' || lang === 'am') {
+      setLanguageState(lang);
+    }
+  }, []);
+
+  const toggleLanguage = useCallback(() => {
+    setLanguageState((prev) => (prev === 'en' ? 'am' : 'en'));
+  }, []);
+
+  const contextValue = useMemo(
+    () => ({
+      language,
+      toggleLanguage,
+      setLanguage,
+      ready,
+    }),
+    [language, toggleLanguage, setLanguage, ready]
+  );
 
   return (
     <LanguageContext.Provider value={contextValue}>

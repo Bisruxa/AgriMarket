@@ -5,6 +5,8 @@ class TokenStorage {
 
   static const _tokenKey = 'auth_token';
   static const _roleKey = 'user_role';
+  static const _userNameKey = 'user_name';
+  static const _farmSubtitleKey = 'farm_subtitle';
 
   static Future<void> saveToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
@@ -26,6 +28,26 @@ class TokenStorage {
     return prefs.getString(_roleKey);
   }
 
+  static Future<void> saveUserName(String name) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_userNameKey, name);
+  }
+
+  static Future<String?> getUserName() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_userNameKey);
+  }
+
+  static Future<void> saveFarmSubtitle(String subtitle) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_farmSubtitleKey, subtitle);
+  }
+
+  static Future<String?> getFarmSubtitle() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_farmSubtitleKey);
+  }
+
   static Future<bool> isFarmer() async {
     final role = await getRole();
     return role?.toLowerCase() == 'farmer';
@@ -35,5 +57,7 @@ class TokenStorage {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);
     await prefs.remove(_roleKey);
+    await prefs.remove(_userNameKey);
+    await prefs.remove(_farmSubtitleKey);
   }
 }

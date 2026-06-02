@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useCallback } from "react"
+import { type AppLanguage, formatAppMonthDay } from "@/lib/formatDate"
 
 interface PriceDataPoint {
   date: string
@@ -7,6 +8,7 @@ interface PriceDataPoint {
 }
 
 export const usePriceData = (language: string) => {
+  const lang = (language === "am" ? "am" : "en") as AppLanguage
   const [priceData, setPriceData] = useState<{ label: string; value: number; fullDate: string }[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -61,10 +63,7 @@ export const usePriceData = (language: string) => {
       
       // Transform API data to match component format
       const transformedData = data.map(point => ({
-        label: new Date(point.date).toLocaleDateString(language === "am" ? "am-ET" : "en-US", {
-          month: "short",
-          day: "numeric"
-        }),
+        label: formatAppMonthDay(point.date, lang),
         value: point.price,
         fullDate: point.date
       }))
@@ -79,7 +78,7 @@ export const usePriceData = (language: string) => {
     } finally {
       setIsLoading(false)
     }
-  }, [language])
+  }, [lang])
 
   return { priceData, isLoading, error, fetchPriceData }
 }
