@@ -130,6 +130,27 @@ model Product {
   @@map("products")
 }
 
+model Price {
+  id          String   @id @default(cuid())
+  cropName    String
+  region      String
+  year        Int
+  month       Int
+  avgPrice    Float
+  minPrice    Float?
+  maxPrice    Float?
+  source      String
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([cropName, region, year, month])
+  @@index([cropName])
+  @@index([region])
+  @@index([year])
+  @@map("prices")
+}
+
 model Farm {
   id            String    @id @default(cuid())
   name          String    // Custom name for the farm land (e.g., "North Field", "Riverside Plot")

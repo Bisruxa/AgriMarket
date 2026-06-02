@@ -53,6 +53,7 @@ app.use('/api/weather', require('./routes/weather.routes'));
 app.use('/api/market', require('./routes/market.routes'));
 app.use('/api/agriai', require('./routes/agriai.routes'));
 app.use('/api/chat', require('./routes/chat.routes'));
+app.use('/api/prices', require('./routes/price.routes'));
 
 // Chat routes (CRUD only, AI via client-side live voice)
 // Health check endpoint

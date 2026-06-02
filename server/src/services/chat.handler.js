@@ -1,7 +1,8 @@
+const { prisma } = require('../config/db');
 const chatService = require('../services/chat.service');
 const { sendChatMessage } = require('../services/agriai.service');
 
-async function handleMessage({ chatId, userId, content }) {
+async function handleMessage({ chatId, userId, content, language }) {
   const chat = await chatService.getChat(chatId, userId);
   if (!chat) {
     const err = new Error('Chat not found');
@@ -9,14 +10,47 @@ async function handleMessage({ chatId, userId, content }) {
     throw err;
   }
 
+  const messages = Array.isArray(chat.messages) ? chat.messages : [];
+  const conversationHistory = messages.map(m => ({
+    role: m.role,
+    content: m.content,
+  }));
+
   const userMsg = await chatService.appendMessage(chatId, userId, 'user', content);
 
   let assistantContent = '';
   try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true, name: true, email: true, role: true,
+        region: true, woreda: true, farmSize: true, crops: true,
+      },
+    });
+
+    const farms = await prisma.farm.findMany({
+      where: { farmerId: userId, isActive: true },
+      select: {
+        id: true, name: true, region: true, woreda: true,
+        size: true, soilType: true, soilColor: true,
+        nitrogen: true, phosphorus: true, potassium: true,
+        ph: true, temperature: true, humidity: true, rainfall: true,
+        latitude: true, longitude: true,
+      },
+    });
+
     const result = await sendChatMessage({
       message: content,
-      conversation_history: [],
+      conversation_history: conversationHistory,
       user_id: userId,
+      language: language || 'en',
+      user_context: {
+        role: user?.role || 'FARMER',
+        region: user?.region || null,
+        woreda: user?.woreda || null,
+        name: user?.name || null,
+        farms: farms,
+      },
     });
     assistantContent = result.text || '';
   } catch (aiErr) {
@@ -25,6 +59,11 @@ async function handleMessage({ chatId, userId, content }) {
   }
 
   const assistantMsg = await chatService.appendMessage(chatId, userId, 'assistant', assistantContent);
+
+  if (messages.length === 0 && content.length > 0) {
+    const title = content.length > 50 ? content.slice(0, 50) + '...' : content;
+    await chatService.updateChatTitle(chatId, userId, title).catch(() => {});
+  }
 
   return { userMessage: userMsg, assistantMessage: assistantMsg };
 }

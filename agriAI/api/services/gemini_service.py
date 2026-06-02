@@ -8,36 +8,116 @@ from fastapi.responses import StreamingResponse
 from google import genai
 from google.genai import types
 
-from .function_executor import get_tool_definitions, execute_function
+from .function_executor import get_tool_definitions, execute_function, set_user_context
 
 load_dotenv()
 
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-TEXT_MODEL_NAME = os.getenv("GEMINI_MODEL_NAME", os.getenv("GEMINI_TEXT_MODEL_NAME", "gemini-3.5-flash"))
+TEXT_MODEL_NAME = os.getenv("GEMINI_MODEL_NAME", "gemini-2.0-flash")
 
 client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 if not GEMINI_API_KEY:
     print("WARNING: GEMINI_API_KEY not set. Chat streaming will not work.")
 
+LANGUAGE_MAP = {
+    "en": "English",
+    "am": "Amharic (አማርኛ)",
+    "om": "Oromo (Afaan Oromoo)",
+    "ti": "Tigrinya (ትግርኛ)",
+    "so": "Somali (Af-Soomaali)",
+}
 
-SYSTEM_PROMPT = """You are AgriAI, an expert agricultural assistant for Ethiopian farmers and traders.
-You help with:
-1. Crop recommendations based on soil and climate data
-2. Price forecasting for agricultural products
-3. Weather information and farming advice
-4. Market trends and analysis
-5. Soil analysis and improvement suggestions
+BASE_SYSTEM_PROMPT = """You are AgriAI, an expert agricultural assistant created specifically for Ethiopian farmers, traders, and agribusinesses.
 
-You have access to tools that can provide real data. When a user asks about:
-- What to plant or crop recommendations -> use get_crop_recommendation
-- Price predictions or forecasts -> use get_price_forecast
-- Weather -> use get_weather_forecast
-- Market data or trends -> get_market_trends
-- Soil analysis -> use get_soil_analysis
+## Your Role
+- You provide practical, science-based farming advice tailored to Ethiopian conditions.
+- You explain complex agricultural concepts in simple, easy-to-understand terms.
+- You use local Ethiopian units: ETB (Ethiopian Birr), hectares, kilograms, quintals.
+- You reference Ethiopian seasons (Meher - main rainy season Jun-Sep, Belg - short rains Feb-May), known crops (Teff, Maize, Coffee, Chat, Enset, etc.), and regions.
 
-Always use the appropriate tool when needed. If the user doesn't provide enough parameters,
-ask them for the missing information. Respond in a friendly, conversational manner.
-Format prices in ETB (Ethiopian Birr). Be concise but helpful."""
+## How You Respond
+1. **Greeting**: Acknowledge the user warmly.
+2. **Data**: When you have data from tools (price trends, weather, soil analysis), present it clearly and explain what it means for the user.
+3. **Advice**: Give practical, actionable recommendations the user can follow.
+4. **Follow-up**: End by asking a relevant follow-up question or offering to help further.
+
+## Tool Usage Guidelines
+{farm_context}
+
+You have access to these tools:
+- **get_price_trends**: Get recent price data from the market database for any crop and region. Use this when asked about prices, forecasts, or market value.
+- **get_farm_details**: Look up a specific farm's soil chemistry and climate data by farm ID.
+- **get_user_farms**: List all farms the user has registered.
+- **get_weather_forecast**: Get 7-day weather forecast for any location (requires latitude/longitude).
+- **get_market_trends**: Get current marketplace trends, category performance, and listing activity.
+- **get_soil_analysis**: Analyze soil NPK and pH levels and get improvement recommendations.
+
+Use tools when you need real data. If the user doesn't provide enough parameters (e.g., no farm ID, no crop name), ask them for the missing information politely.
+
+## Language Preference
+{language_instruction}
+
+## Response Style
+- Be conversational, warm, and encouraging.
+- Break down complex topics simply. For example, explain what "pH" means and why it matters for their crops.
+- When giving recommendations, explain the WHY behind them.
+- For prices: always state prices in ETB, mention the trend direction, and give context (e.g., "This is 10% higher than last month").
+- For weather: relate conditions to farming activities (e.g., "Good time to plant because rain is expected").
+- If you don't know something, say so honestly rather than making up information.
+"""
+
+def _build_system_prompt(language: str = "en", user_context: Optional[Dict] = None) -> str:
+    lang_name = LANGUAGE_MAP.get(language, "English")
+    lang_instruction = f"The user prefers to communicate in {lang_name}. You MUST respond in {lang_name}."
+
+    farm_context = ""
+    if user_context:
+        role = user_context.get("role", "FARMER")
+        region = user_context.get("region")
+        woreda = user_context.get("woreda")
+        name = user_context.get("name")
+        farms = user_context.get("farms", [])
+
+        user_info = f"The user's name is {name}. " if name else ""
+        user_info += f"The user is a {role}. "
+        if region:
+            user_info += f"They are from {region}"
+            if woreda:
+                user_info += f", {woreda}"
+            user_info += ". "
+
+        farm_info = ""
+        if farms:
+            farm_details = []
+            for f in farms:
+                parts = [f"Farm '{f.get('name', 'Unnamed')}'"]
+                if f.get("region"):
+                    parts.append(f"in {f['region']}")
+                parts.append(f"(ID: {f.get('id', 'unknown')})")
+                soil = []
+                if f.get("nitrogen") is not None:
+                    soil.append(f"N={f['nitrogen']}")
+                if f.get("phosphorus") is not None:
+                    soil.append(f"P={f['phosphorus']}")
+                if f.get("potassium") is not None:
+                    soil.append(f"K={f['potassium']}")
+                if f.get("ph") is not None:
+                    soil.append(f"pH={f['ph']}")
+                if soil:
+                    parts.append(f"Soil: {', '.join(soil)}")
+                if f.get("size"):
+                    parts.append(f"Size: {f['size']}")
+                farm_details.append(" - " + " | ".join(parts))
+
+            farm_info = f"They have {len(farms)} farm(s):\n" + "\n".join(farm_details)
+
+        if user_info or farm_info:
+            farm_context = f"## User Context\n{user_info}\n{farm_info}".strip()
+
+    return BASE_SYSTEM_PROMPT.format(
+        language_instruction=lang_instruction,
+        farm_context=farm_context if farm_context else "No user context available.",
+    )
 
 
 def _build_tools() -> List[types.Tool]:
@@ -50,14 +130,17 @@ def _build_tools() -> List[types.Tool]:
 def send_message_stream(
     message: str,
     conversation_history: Optional[List[Dict]] = None,
+    language: str = "en",
+    user_context: Optional[Dict] = None,
 ) -> AsyncGenerator[str, None]:
-    """Yields SSE tokens from Gemini, handling function calls inline."""
-
     if not client:
         yield "event: error\ndata: AI service not configured.\n\n"
         return
 
     try:
+        set_user_context(user_context)
+        system_prompt = _build_system_prompt(language, user_context)
+
         history = []
         for msg in conversation_history or []:
             role = msg.get("role", "user")
@@ -80,7 +163,7 @@ def send_message_stream(
                     parts=[types.Part(text=message)],
                 )],
                 config=types.GenerateContentConfig(
-                    system_instruction=SYSTEM_PROMPT,
+                    system_instruction=system_prompt,
                     tools=_build_tools(),
                     history=history if history else None,
                 ),
@@ -88,7 +171,7 @@ def send_message_stream(
         except Exception as model_err:
             err_text = str(model_err).lower()
             if "not found" in err_text or "not supported" in err_text:
-                model_name = "gemini-2.5-flash"
+                model_name = "gemini-2.0-flash"
                 response = client.models.generate_content_stream(
                     model=model_name,
                     contents=[types.Content(
@@ -96,7 +179,7 @@ def send_message_stream(
                         parts=[types.Part(text=message)],
                     )],
                     config=types.GenerateContentConfig(
-                        system_instruction=SYSTEM_PROMPT,
+                        system_instruction=system_prompt,
                         tools=_build_tools(),
                         history=history if history else None,
                     ),
@@ -134,7 +217,7 @@ def send_message_stream(
                             )]
                         )],
                         config=types.GenerateContentConfig(
-                            system_instruction=SYSTEM_PROMPT,
+                            system_instruction=system_prompt,
                             tools=_build_tools(),
                         ),
                     )
@@ -159,6 +242,8 @@ def send_message(
     message: str,
     conversation_history: Optional[List[Dict]] = None,
     user_id: Optional[str] = None,
+    language: str = "en",
+    user_context: Optional[Dict] = None,
 ) -> Dict[str, Any]:
     if not client:
         return {
@@ -167,6 +252,9 @@ def send_message(
         }
 
     try:
+        set_user_context(user_context)
+        system_prompt = _build_system_prompt(language, user_context)
+
         history = []
         for msg in conversation_history or []:
             role = msg.get("role", "user")
@@ -184,7 +272,7 @@ def send_message(
             chat = client.chats.create(
                 model=model_name,
                 config=types.GenerateContentConfig(
-                    system_instruction=SYSTEM_PROMPT,
+                    system_instruction=system_prompt,
                     tools=_build_tools(),
                 ),
                 history=history,
@@ -192,11 +280,11 @@ def send_message(
         except Exception as model_error:
             err_text = str(model_error).lower()
             if "not found" in err_text or "not supported" in err_text:
-                model_name = "gemini-2.5-flash"
+                model_name = "gemini-2.0-flash"
                 chat = client.chats.create(
                     model=model_name,
                     config=types.GenerateContentConfig(
-                        system_instruction=SYSTEM_PROMPT,
+                        system_instruction=system_prompt,
                         tools=_build_tools(),
                     ),
                     history=history,
