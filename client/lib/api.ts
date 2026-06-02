@@ -166,6 +166,31 @@ export const agriaiApi = {
     api.get<{ crops: string[]; regions: string[] }>('/agriai/price-forecaster/metadata'),
 };
 
+export interface PriceRecord {
+  id: string;
+  cropName: string;
+  region: string;
+  year: number;
+  month: number;
+  avgPrice: number;
+  minPrice: number | null;
+  maxPrice: number | null;
+  source: string | null;
+}
+
+export const pricesApi = {
+  getTrends: (params?: { cropName?: string; region?: string; limit?: number }) => {
+    const query = new URLSearchParams();
+    if (params?.cropName) query.set('cropName', params.cropName);
+    if (params?.region) query.set('region', params.region);
+    if (params?.limit) query.set('limit', String(params.limit));
+    return api.get<PriceRecord[]>(`/prices/trends?${query.toString()}`);
+  },
+  getCrops: () => api.get<string[]>('/prices/crops'),
+  getRegions: () => api.get<string[]>('/prices/regions'),
+  getYearRange: () => api.get<{ minYear: number; maxYear: number }>('/prices/year-range'),
+};
+
 export const chatApi = {
   getChats: () => api.get('/chat'),
   getChat: (id: string) => api.get(`/chat/${id}`),

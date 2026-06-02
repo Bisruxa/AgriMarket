@@ -70,6 +70,7 @@ exports.sendMessage = async (req, res, next) => {
       chatId: req.params.id,
       userId: req.user.id,
       content: req.body.content,
+      language: req.body.language || 'en',
     });
     res.status(200).json({ success: true, data: result });
   } catch (error) {

@@ -74,6 +74,8 @@ class ChatRequest(BaseModel):
     message: str = Field(..., description="User's message")
     conversation_history: Optional[List[Dict[str, str]]] = Field(default=[], description="Previous conversation messages")
     user_id: Optional[str] = Field(default=None, description="User identifier for context")
+    language: str = Field(default="en", description="User's preferred language code (en, am, om, ti)")
+    user_context: Optional[Dict[str, Any]] = Field(default=None, description="User profile and farm context")
 
 
 class FunctionCallInfo(BaseModel):
