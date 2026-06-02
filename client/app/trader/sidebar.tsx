@@ -9,17 +9,17 @@ const TraderSidebar = () => {
   const traderLinks = [
     {
       name: t.sidebar.dashboard,
-      icon: <House className="mr-2" size={20} />,
+      icon: <House size={20} />,
       to: "/trader/dashboard",
     },
     {
       name: t.sidebar.purchases,
-      icon: <ShoppingCart className="mr-2" size={20} />,
+      icon: <ShoppingCart size={20} />,
       to: "/trader/purchases",
     },
     {
       name: t.sidebar.trends,
-      icon: <ChartNoAxesCombined className="mr-2" size={20} />,
+      icon: <ChartNoAxesCombined size={20} />,
       to: "/trader/trends",
     },
   ];

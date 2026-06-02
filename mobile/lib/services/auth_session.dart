@@ -42,5 +42,22 @@ class AuthSession {
     if (role != null) {
       await TokenStorage.saveRole(role);
     }
+
+    final user = data['user'];
+    if (user is Map<String, dynamic>) {
+      final name = user['name']?.toString();
+      if (name != null && name.isNotEmpty) {
+        await TokenStorage.saveUserName(name);
+      }
+      final region = user['region']?.toString();
+      final woreda = user['woreda']?.toString();
+      final farmSize = user['farmSize']?.toString();
+      final parts = [woreda, region, farmSize]
+          .where((v) => v != null && v.isNotEmpty)
+          .join(' • ');
+      if (parts.isNotEmpty) {
+        await TokenStorage.saveFarmSubtitle(parts);
+      }
+    }
   }
 }

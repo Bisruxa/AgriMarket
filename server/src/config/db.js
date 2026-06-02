@@ -4,6 +4,23 @@ const prisma = new PrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
 });
 
+/** Reconnect after Neon idle disconnect ("Connection closed"). */
+async function ensureDbConnection() {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+  } catch (error) {
+    const msg = error?.message || '';
+    const closed =
+      msg.includes("Can't reach database") ||
+      msg.includes('Connection closed') ||
+      msg.includes('Connection terminated');
+    if (!closed) throw error;
+    await prisma.$disconnect();
+    await prisma.$connect();
+    await prisma.$queryRaw`SELECT 1`;
+  }
+}
+
 const connectDB = async (retries = 5) => {
   for (let i = 0; i < retries; i++) {
     try {
@@ -31,4 +48,4 @@ process.on('beforeExit', async () => {
   await prisma.$disconnect();
 });
 
-module.exports = { prisma, connectDB };
+module.exports = { prisma, connectDB, ensureDbConnection };

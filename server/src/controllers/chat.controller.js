@@ -43,6 +43,27 @@ exports.deleteChat = async (req, res, next) => {
   }
 };
 
+exports.appendMessage = async (req, res, next) => {
+  try {
+    const { role, content } = req.body;
+    if (!role || !content) {
+      return res.status(400).json({ success: false, message: 'role and content are required' });
+    }
+    const entry = await chatService.appendMessage(
+      req.params.id,
+      req.user.id,
+      role,
+      content
+    );
+    if (!entry) {
+      return res.status(404).json({ success: false, message: 'Chat not found' });
+    }
+    res.status(200).json({ success: true, data: entry });
+  } catch (error) {
+    next(error);
+  }
+};
+
 exports.sendMessage = async (req, res, next) => {
   try {
     const result = await handleMessage({

@@ -8,14 +8,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import AuthPage from '@/components/common/AuthForm/AuthForm';
 import { MapPin, Globe, Info } from 'lucide-react';
 import { useState } from 'react';
-import { ETHIOPIAN_REGIONS } from '@/lib/regon_n_woreda';
-import { WOREDAS_BY_REGION } from '@/lib/regon_n_woreda';
 import { useTranslations } from '@/components/hooks/useTranlations';
+import { useEthiopianGeoOptions } from '@/components/hooks/useEthiopianGeoOptions';
 
 
 export default function SignUpPage() {
-  const t = useTranslations(); 
-  
+  const t = useTranslations();
+  const { regions, getWoredasForRegion } = useEthiopianGeoOptions();
+
   const {
     role,
     setRole,
@@ -31,15 +31,13 @@ export default function SignUpPage() {
   } = useSignupForm();
   
   const [selectedRegion, setSelectedRegion] = useState<string>('');
-  const [availableWoredas, setAvailableWoredas] = useState<{ value: string; label: string }[]>([]);
+  const availableWoredas = selectedRegion ? getWoredasForRegion(selectedRegion) : [];
 
   const createEvent = (name: string, value: string) => 
     ({ target: { name, value } }) as React.ChangeEvent<HTMLInputElement>;
 
   const handleRegionChange = (value: string) => {
     setSelectedRegion(value);
-    setAvailableWoredas(WOREDAS_BY_REGION[value] || []);
-    
     handleInputChange(createEvent('region', value));
     handleInputChange(createEvent('woreda', ''));
   };
@@ -71,7 +69,7 @@ export default function SignUpPage() {
                   <SelectValue placeholder="Select your region" />
                 </SelectTrigger>
                 <SelectContent>
-                  {ETHIOPIAN_REGIONS.map(region => (
+                  {regions.map((region) => (
                     <SelectItem key={region.value} value={region.value}>
                       {region.label}
                     </SelectItem>

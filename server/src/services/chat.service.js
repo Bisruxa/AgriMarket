@@ -18,6 +18,18 @@ function trimHistory(messages, windowSize = WINDOW_SIZE) {
   return messages.slice(-windowSize * 2);
 }
 
+function shouldAutoTitle(title) {
+  const t = (title || '').trim();
+  return !t || t === 'New Chat' || t === 'Voice Chat';
+}
+
+function titleFromFirstMessage(content) {
+  const cleaned = String(content || '').replace(/\s+/g, ' ').trim();
+  if (!cleaned) return 'New Chat';
+  const max = 50;
+  return cleaned.length <= max ? cleaned : `${cleaned.slice(0, max).trim()}…`;
+}
+
 async function getChats(userId) {
   const chats = await prisma.chat.findMany({
     where: { userId },
@@ -54,12 +66,22 @@ async function appendMessage(chatId, userId, role, content, metadata) {
   const messages = Array.isArray(chat.messages) ? chat.messages : [];
   const entry = buildMessage(role, content, metadata);
 
+  const updateData = {
+    messages: [...messages, entry],
+    updatedAt: new Date(),
+  };
+
+  if (
+    role === 'user' &&
+    !messages.some((m) => m.role === 'user') &&
+    shouldAutoTitle(chat.title)
+  ) {
+    updateData.title = titleFromFirstMessage(content);
+  }
+
   await prisma.chat.update({
     where: { id: chatId },
-    data: {
-      messages: [...messages, entry],
-      updatedAt: new Date(),
-    },
+    data: updateData,
   });
 
   return entry;
@@ -77,4 +99,5 @@ async function updateChatTitle(chatId, userId, title) {
 module.exports = {
   getChats, getChat, createChat, deleteChat,
   appendMessage, updateChatTitle, trimHistory, buildMessage,
+  titleFromFirstMessage, shouldAutoTitle,
 };

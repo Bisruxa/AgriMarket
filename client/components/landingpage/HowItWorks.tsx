@@ -51,13 +51,13 @@ const HowItWorks = () => {
       title: t.howItWorks.steps.signup,
       description: t.howItWorks.stepDescriptions.signup,
       link: "/signup",
-      image: "/potato.jpg"
+      image: "/bean.jpg"
     },
     {
       title: t.howItWorks.steps.addFarm,
       description: t.howItWorks.stepDescriptions.addFarm,
       link: "/signup",
-      image: "/corn.jpg"
+      image: "/nuts.jpg"
     },
     {
       title: t.howItWorks.steps.getInsights,

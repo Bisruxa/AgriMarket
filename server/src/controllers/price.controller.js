@@ -40,3 +40,29 @@ exports.getYearRange = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.getSalesTiming = async (req, res, next) => {
+  try {
+    const { cropName, region } = req.query;
+    const result = await priceService.getSalesTiming({
+      cropName: cropName || undefined,
+      region: region || undefined,
+    });
+    res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.getMultiCropProfitability = async (req, res, next) => {
+  try {
+    const farmId = req.query.farmId || undefined;
+    const result = await priceService.getMultiCropProfitability({
+      userId: req.user.id,
+      farmId,
+    });
+    res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+};

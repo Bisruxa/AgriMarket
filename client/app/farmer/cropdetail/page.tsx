@@ -9,6 +9,9 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
+import { useTranslations } from '@/components/hooks/useTranlations';
+import { useLanguage } from '@/app/context/LanguageContext';
+import type { DashboardTranslations } from '@/lib/dashboard.translations';
 
 interface Recommendation {
   crop: string;
@@ -19,14 +22,20 @@ interface CropRecommendationResponse {
   recommendations: Recommendation[];
 }
 
-function getSuitabilityLabel(confidence: number): { label: string; color: string; bar: string } {
-  if (confidence >= 0.7) return { label: 'Highly Suitable', color: 'text-green-700', bar: 'bg-green-500' };
-  if (confidence >= 0.4) return { label: 'Moderately Suitable', color: 'text-amber-700', bar: 'bg-amber-500' };
-  if (confidence >= 0.1) return { label: 'Low Suitability', color: 'text-orange-700', bar: 'bg-orange-500' };
-  return { label: 'Not Recommended', color: 'text-red-700', bar: 'bg-red-500' };
+function getSuitabilityLabel(
+  confidence: number,
+  s: DashboardTranslations['cropDetail']['suitability']
+): { label: string; color: string; bar: string } {
+  if (confidence >= 0.7) return { label: s.highly, color: 'text-green-700', bar: 'bg-green-500' };
+  if (confidence >= 0.4) return { label: s.moderate, color: 'text-amber-700', bar: 'bg-amber-500' };
+  if (confidence >= 0.1) return { label: s.low, color: 'text-orange-700', bar: 'bg-orange-500' };
+  return { label: s.notRecommended, color: 'text-red-700', bar: 'bg-red-500' };
 }
 
 const CropDetail = () => {
+  const t = useTranslations();
+  const c = t.dashboard.cropDetail;
+  const { language } = useLanguage();
   const { data, isLoading: farmsLoading } = useFarms();
   const [selectedFarmId, setSelectedFarmId] = useState('');
   const [loading, setLoading] = useState(false);
@@ -58,46 +67,45 @@ const CropDetail = () => {
         const data = response.data as CropRecommendationResponse;
         setRecommendations(data.recommendations || []);
       } else {
-        setError(response.message || 'Failed to get recommendation');
+        setError(response.message || c.failedRecommendation);
       }
     } catch {
-      setError('Network error. Please try again.');
+      setError(c.networkError);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
+    <div className={`flex flex-col min-h-screen bg-gray-50 ${language === 'am' ? 'amharic' : ''}`}>
       <Header />
 
       <div className="flex justify-center items-start flex-1 p-4">
         <div className="w-full max-w-lg space-y-6">
 
-          {/* Form Card */}
           <div className="bg-white rounded-xl shadow-lg p-6">
             <div className="flex items-center gap-3 mb-6">
               <div className="p-2 bg-[#2A5A2A]/10 rounded-lg">
                 <Sprout className="w-5 h-5 text-[#2A5A2A]" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-[#2A5A2A]">Crop Recommendation</h2>
-                <p className="text-xs text-black/40">AI-powered suggestions for your farm</p>
+                <h2 className="text-xl font-bold text-[#2A5A2A]">{c.title}</h2>
+                <p className="text-xs text-black/40">{c.subtitle}</p>
               </div>
             </div>
 
             <div className="space-y-4">
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-black/70">Select Your Farm</label>
+                <label className="text-sm font-medium text-black/70">{c.selectFarm}</label>
                 {farmsLoading ? (
                   <div className="flex items-center gap-2 text-sm text-black/40 h-9">
                     <Loader2 className="h-4 w-4 animate-spin" />
-                    Loading farms...
+                    {c.loadingFarms}
                   </div>
                 ) : (
                   <Select value={selectedFarmId} onValueChange={setSelectedFarmId}>
                     <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Choose a registered farm" />
+                      <SelectValue placeholder={c.chooseFarmPlaceholder} />
                     </SelectTrigger>
                     <SelectContent>
                       {farms.map((farm) => (
@@ -110,8 +118,8 @@ const CropDetail = () => {
                 )}
                 {farms.length === 0 && !farmsLoading && (
                   <p className="text-xs text-amber-600">
-                    No farms registered. Add one from{" "}
-                    <a href="/farmer/farms" className="underline font-medium">My Farms</a> first.
+                    {c.noFarms}{' '}
+                    <a href="/farmer/farms" className="underline font-medium">{c.myFarmsLink}</a>
                   </p>
                 )}
               </div>
@@ -121,12 +129,12 @@ const CropDetail = () => {
                   <div className="flex items-center gap-1.5 text-xs text-black/60">
                     <FlaskConical className="w-3.5 h-3.5 text-[#2A5A2A]" />
                     {selectedFarm.soilType
-                      ? <span className="capitalize">{selectedFarm.soilType} soil</span>
-                      : 'Soil not set'}
+                      ? <span>{selectedFarm.soilType} {c.soilSuffix}</span>
+                      : c.soilNotSet}
                   </div>
                   <div className="flex items-center gap-1.5 text-xs text-black/60">
                     <MapPin className="w-3.5 h-3.5 text-[#2A5A2A]" />
-                    {[selectedFarm.region, selectedFarm.woreda].filter(Boolean).join(', ') || 'Location not set'}
+                    {[selectedFarm.region, selectedFarm.woreda].filter(Boolean).join(', ') || c.locationNotSet}
                   </div>
                   <div className="flex items-center gap-1.5 text-xs text-black/60">
                     <Thermometer className="w-3.5 h-3.5 text-[#2A5A2A]" />
@@ -145,9 +153,9 @@ const CropDetail = () => {
                 onClick={getRecommendation}
               >
                 {loading ? (
-                  <><Loader2 className="h-5 w-5 animate-spin mr-2" /> Analyzing your farm data...</>
+                  <><Loader2 className="h-5 w-5 animate-spin mr-2" /> {c.analyzing}</>
                 ) : (
-                  'Get Recommendation'
+                  c.getRecommendation
                 )}
               </Button>
 
@@ -157,18 +165,17 @@ const CropDetail = () => {
             </div>
           </div>
 
-          {/* Results */}
           {recommendations && recommendations.length > 0 && (
             <div className="space-y-3">
               <div className="flex items-center gap-2">
                 <Sprout className="w-5 h-5 text-[#2A5A2A]" />
-                <h3 className="text-lg font-bold text-[#2A5A2A]">Top Crops for Your Farm</h3>
+                <h3 className="text-lg font-bold text-[#2A5A2A]">{c.topCrops}</h3>
               </div>
 
               {recommendations.map((rec, i) => {
                 const conf = parseFloat(rec.confidence);
                 const pct = Math.round(conf * 100);
-                const suitability = getSuitabilityLabel(conf);
+                const suitability = getSuitabilityLabel(conf, c.suitability);
                 const rank = i + 1;
 
                 return (
@@ -182,14 +189,13 @@ const CropDetail = () => {
                               <span className="font-bold text-black/80 capitalize text-base">{rec.crop}</span>
                               {rank === 1 && (
                                 <span className="text-[10px] bg-[#2A5A2A]/10 text-[#2A5A2A] font-semibold px-1.5 py-0.5 rounded">
-                                  BEST MATCH
+                                  {c.bestMatch}
                                 </span>
                               )}
                             </div>
                             <span className="text-sm font-semibold text-black/50">{pct}%</span>
                           </div>
 
-                          {/* Confidence bar */}
                           <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden mb-1.5">
                             <div
                               className={`h-full rounded-full transition-all duration-500 ${suitability.bar}`}
@@ -202,7 +208,7 @@ const CropDetail = () => {
                               {suitability.label}
                             </span>
                             <span className="text-xs text-black/30">
-                              Based on your farm&apos;s soil &amp; climate data
+                              {c.basedOnData}
                             </span>
                           </div>
                         </div>
@@ -213,8 +219,7 @@ const CropDetail = () => {
               })}
 
               <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 text-xs text-blue-700 leading-relaxed">
-                These recommendations are based on your farm&apos;s soil nutrients (N, P, K), pH level,
-                temperature, humidity, and rainfall patterns. For best results, keep your farm data updated.
+                {c.disclaimer}
               </div>
             </div>
           )}
@@ -222,7 +227,7 @@ const CropDetail = () => {
           {recommendations && recommendations.length === 0 && !error && (
             <div className="bg-white rounded-xl shadow-lg p-8 text-center">
               <Sprout className="w-10 h-10 mx-auto mb-3 text-black/20" />
-              <p className="text-sm text-black/50">No suitable crops found for this farm profile.</p>
+              <p className="text-sm text-black/50">{c.noCropsFound}</p>
             </div>
           )}
         </div>

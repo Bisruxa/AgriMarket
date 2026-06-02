@@ -1,4 +1,5 @@
-'use client'
+'use client';
+
 import Image from "next/image";
 import Link from "next/link";
 import { ThermometerSun, Calendar, Moon, MapPin, Sun } from 'lucide-react';
@@ -7,42 +8,32 @@ import { useState } from 'react';
 import { useCurrentDateTime } from "../hooks/useCurrentDateTime";
 import { useTranslations } from "../hooks/useTranlations";
 import { useAuth } from "@/app/context/UserContext";
+import { useLanguage } from "@/app/context/LanguageContext";
+import FarmFactsCarousel from "./FarmFactsCarousel";
+
+const CARD_HEIGHT = "h-32 sm:h-36";
+
 function WelcomeCard() {
   const { dayName, formattedDate, currentTime } = useCurrentDateTime();
-  const t = useTranslations()
-  const {user} = useAuth();
-  const [temperatureUnit, setTemperatureUnit] = useState('C');
+  const t = useTranslations();
+  const { language } = useLanguage();
+  const w = t.dashboard.weather;
+  const { user } = useAuth();
+  const [temperatureUnit] = useState('C');
   const [weatherData] = useState({
     temp: 28,
     high: 32,
     low: 18,
   });
 
-  const toggleUnit = () => {
-    setTemperatureUnit(unit => unit === 'C' ? 'F' : 'C');
-  };
-
   const convertTemp = (celsius: number) => {
     return temperatureUnit === 'C' ? celsius : Math.round((celsius * 9/5) + 32);
   };
 
-  const UnitButton = ({ unit }: { unit: string }) => (
-    <button 
-      onClick={toggleUnit}
-      className={`text-xs sm:text-sm font-medium transition-colors ${
-        temperatureUnit === unit 
-          ? 'text-[#5B8C51] border-b-2 border-[#5B8C51]' 
-          : 'text-gray-400 hover:text-gray-600'
-      }`}
-    >
-      °{unit}
-    </button>
-  );
-
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 px-4 sm:px-5 text-black mt-20 sm:mt-0 mb-5 md:-ml-5 ml-0 ">
-      <Link href="/portfolio" className="w-full">
-        <div className="bg-whitek rounded-lg shadow-sm p-4 sm:p-5 h-48 sm:h-56 md:h-60 relative cursor-pointer overflow-hidden group border border-[#5B8C51]/30 hover:shadow-lg transition-all ">
+    <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 px-4 sm:px-5 text-black mt-16 sm:mt-0 mb-3 md:-ml-5 ml-0 ${language === 'am' ? 'amharic' : ''}`}>
+      <Link href="/farmer/portfolio" className="w-full">
+        <div className={`bg-white rounded-lg shadow-sm p-3 sm:p-4 ${CARD_HEIGHT} relative cursor-pointer overflow-hidden group border border-[#5B8C51]/30 hover:shadow-lg transition-all`}>
           <div className="absolute inset-0">
             <Image
               src={image}
@@ -51,66 +42,59 @@ function WelcomeCard() {
               className="object-cover group-hover:scale-105 transition-transform duration-500"
               priority
             />
-           
           </div>
-          <div className="relative z-10 h-full flex flex-col justify-end p-3 sm:p-4 -mt-10">
-            <p className=" text-xs sm:text-sm drop-shadow-lg">{t.welcomeCard.title}</p>
-            <h2 className=" py-1 sm:py-2 text-base sm:text-lg md:text-xl font-bold drop-shadow-lg">
+          <div className="relative z-10 h-full flex flex-col justify-end p-2 sm:p-3">
+            <p className="text-xs drop-shadow-lg">{t.welcomeCard.title}</p>
+            <h2 className="py-0.5 text-sm sm:text-base font-bold drop-shadow-lg">
               {user?.name}
             </h2>
-            <p className=" text-xs sm:text-sm drop-shadow-lg">{t.welcomeCard.message}</p>
-            <p className="mt-2 text-xs ">{currentTime}</p>
+            <p className="text-xs drop-shadow-lg">{t.welcomeCard.message}</p>
+            <p className="mt-1 text-[10px]">{currentTime}</p>
           </div>
         </div>
       </Link>
 
-      <div className="bg-white text-black p-4 sm:p-5 md:p-6 rounded-lg shadow-sm h-48 sm:h-56 md:h-60 border border-[#5B8C51]/30 flex flex-col hover:shadow-lg transition-all">
+      <div className={`bg-white text-black p-3 sm:p-4 rounded-lg shadow-sm ${CARD_HEIGHT} border border-[#5B8C51]/30 flex flex-col hover:shadow-lg transition-all`}>
         <div className="flex justify-between items-start gap-2">
           <div className="flex items-center gap-2 bg-gray-100 p-1 px-2 rounded-lg">
-            <MapPin size={16} className="text-[#5B8C51]" />
-            <span className="font-semibold text-xs sm:text-sm text-[#5B8C51] truncate">
-              Addis Ababa, Ethiopia
+            <MapPin size={14} className="text-[#5B8C51]" />
+            <span className="font-semibold text-xs text-[#5B8C51] truncate">
+              {w.location}
             </span>
-          </div>
-          <div className="flex items-center gap-2">
-            {/* <UnitButton unit="C" />
-            <UnitButton unit="F" /> */}
           </div>
         </div>
 
-        <div className="mt-2 sm:mt-3">
-          <div className="flex items-center gap-1 sm:gap-2 mt-5">
-            <Calendar size={14} className="text-gray-500" />
-            <h3 className="text-base sm:text-sm md:text-lg font-bold ">{dayName},</h3>
+        <div className="mt-1">
+          <div className="flex items-center gap-1 mt-2">
+            <Calendar size={12} className="text-gray-500" />
+            <h3 className="text-sm font-bold">{dayName},</h3>
           </div>
-          <p className="mt-1 ml-5 sm:ml-6 text-xs sm:text-sm text-gray-500">{formattedDate}</p>
+          <p className="mt-0.5 ml-4 text-[10px] sm:text-xs text-gray-500">{formattedDate}</p>
         </div>
 
         <div className="mt-auto flex items-center justify-between">
           <div>
-            <p className="text-lg sm:text-xl md:text-2xl font-bold ">
+            <p className="text-lg sm:text-xl font-bold">
               {convertTemp(weatherData.temp)}°{temperatureUnit}
             </p>
-            <div className="flex gap-3 text-xs sm:text-sm text-gray-600 mt-1">
+            <div className="flex gap-2 text-[10px] sm:text-xs text-gray-600 mt-0.5">
               <span className="flex items-center gap-1">
-                <ThermometerSun size={12} className="text-orange-500" /> 
-                H: {convertTemp(weatherData.high)}°
+                <ThermometerSun size={11} className="text-orange-500" />
+                {w.tempHigh}: {convertTemp(weatherData.high)}°
               </span>
               <span className="flex items-center gap-1">
-                <Moon size={12} className="text-blue-400" /> 
-                L: {convertTemp(weatherData.low)}°
+                <Moon size={11} className="text-blue-400" />
+                {w.tempLow}: {convertTemp(weatherData.low)}°
               </span>
             </div>
           </div>
-          <div className="bg-yellow-100 p-2 sm:p-3 rounded-full">
-            <Sun size={24} className="text-yellow-500" />
+          <div className="bg-yellow-100 p-2 rounded-full">
+            <Sun size={20} className="text-yellow-500" />
           </div>
         </div>
       </div>
 
-      <div className="bg-white p-4 sm:p-5 md:p-6 rounded-lg shadow-sm h-48 sm:h-56 md:h-60 border border-[#5B8C51]/30 flex items-center justify-center text-gray-500 hover:shadow-sm transition-all">
-        <p className="text-xs sm:text-sm text-center">Coming Soon</p>
-      </div>
+      <FarmFactsCarousel />
     </div>
   );
 }
