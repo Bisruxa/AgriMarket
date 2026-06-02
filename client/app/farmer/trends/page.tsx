@@ -4,6 +4,7 @@ import * as React from "react"
 import {
   Wheat,
   TrendingUp,
+  TrendingDown,
   Tractor,
   Clock,
   Warehouse,
@@ -11,6 +12,7 @@ import {
   PieChart,
   Cloud,
   Info,
+  Loader2,
 } from "lucide-react"
 
 import { LineGraph } from "@/components/common/LineGraph"
@@ -19,178 +21,330 @@ import { DataTable } from "@/components/common/Table"
 import { InfoCards } from "@/components/common/Info"
 import type { ChartConfig } from "@/components/ui/chart"
 import { useLanguage } from "@/app/context/LanguageContext"
+import { pricesApi, PriceRecord } from "@/lib/api"
+
+const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+
+const CROP_KEYWORDS: Record<string, string[]> = {
+  teff: ["Teff (white)", "Teff (mixed)", "Teff (black)"],
+  barley: ["Barley (white)", "Barley (mixed)"],
+  wheat: ["Wheat (white)", "Wheat (mixed)"],
+  sorghum: ["Sorghum (white)", "Sorghum (red)", "Sorghum (yellow)"],
+  corn: ["Maize"],
+  potato: ["Potato"],
+  onion: ["Onion"],
+  tomato: ["Tomato"],
+  coffee: ["Coffee (beans)", "Coffee (whole)"],
+}
+
+const CROP_LABELS: Record<string, { en: string; am: string }> = {
+  teff: { en: "Teff", am: "ጤፍ" },
+  barley: { en: "Barley", am: "ገብስ" },
+  wheat: { en: "Wheat", am: "ስንዴ" },
+  sorghum: { en: "Sorghum", am: "ማሽላ" },
+  corn: { en: "Corn/Maize", am: "በቆሎ" },
+  potato: { en: "Potato", am: "ስጋር" },
+  onion: { en: "Onion", am: "ሽንኩርት" },
+  tomato: { en: "Tomato", am: "ቲማቲም" },
+  coffee: { en: "Coffee", am: "ቡና" },
+}
+
+const COMMON_CROPS = Object.keys(CROP_LABELS)
+
+const DEMAND_DATA = [
+  { label: "Jan", value: 95 },
+  { label: "Feb", value: 104 },
+  { label: "Mar", value: 116 },
+  { label: "Apr", value: 126 },
+  { label: "May", value: 139 },
+  { label: "Jun", value: 148 },
+]
+
+const DEMAND_CONFIG = {
+  value: { label: "Demand index", color: "#479e73" },
+} satisfies ChartConfig
+
 export default function FarmsteadDashboard() {
   const { language } = useLanguage()
   const [selectedCrop, setSelectedCrop] = React.useState("teff")
+  const [selectedRegion, setSelectedRegion] = React.useState("Addis Ababa")
   const [searchCrop, setSearchCrop] = React.useState("")
+  const [priceRecords, setPriceRecords] = React.useState<PriceRecord[]>([])
+  const [loading, setLoading] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
+  const [lastUpdated, setLastUpdated] = React.useState<string>("")
 
-  const cropLabels: Record<string, { en: string; am: string }> = {
-    teff: { en: "Teff", am: "ጤፍ" },
-    barley: { en: "Barley", am: "ገብስ" },
-    wheat: { en: "Wheat", am: "ስንዴ" },
-    sorghum: { en: "Sorghum", am: "ማሽላ" },
-    corn: { en: "Corn", am: "በቆሎ" },
-  }
-  const commonCrops = ["teff", "barley", "wheat", "sorghum", "corn"]
-  const activeCropLabel = cropLabels[selectedCrop]?.[language] ?? selectedCrop
+  const availableRegions = [
+    "Addis Ababa","Oromia","Amhara","Tigray","SNNP","Somali",
+    "Afar","Dire Dawa","Harari","Gambella","Benshangul-Gumuz","Sidama",
+  ]
 
-  const baseByCrop: Record<string, number> = {
-    teff: 2100,
-    barley: 1700,
-    wheat: 1900,
-    sorghum: 1600,
-    corn: 1800,
+  const fetchPrices = React.useCallback(async (cropKey: string, region: string) => {
+    setLoading(true)
+    setError(null)
+    try {
+      const cropNames = CROP_KEYWORDS[cropKey] || [cropKey]
+      const results = await Promise.all(
+        cropNames.map(cn =>
+          pricesApi.getTrends({ cropName: cn, region, limit: 60 })
+        )
+      )
+
+      const all: PriceRecord[] = []
+      for (const res of results) {
+        if (res.success && res.data) {
+          all.push(...res.data)
+        }
+      }
+
+      if (all.length === 0) {
+        for (const cn of cropNames) {
+          const fallback = await pricesApi.getTrends({ cropName: cn, limit: 60 })
+          if (fallback.success && fallback.data) {
+            all.push(...fallback.data)
+          }
+        }
+      }
+
+      const seen = new Set<string>()
+      const deduped = all.filter(r => {
+        const k = `${r.year}-${r.month}`
+        if (seen.has(k)) return false
+        seen.add(k)
+        return true
+      })
+
+      deduped.sort((a, b) => {
+        if (a.year !== b.year) return a.year - b.year
+        return a.month - b.month
+      })
+
+      setPriceRecords(deduped)
+      if (deduped.length > 0) {
+        setLastUpdated(
+          new Date().toLocaleDateString("en-US", { day: "2-digit", month: "short", year: "numeric" })
+        )
+      }
+    } catch (e) {
+      setError("Failed to load price data")
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  React.useEffect(() => {
+    fetchPrices(selectedCrop, selectedRegion)
+  }, [selectedCrop, selectedRegion, fetchPrices])
+
+  const handleCropSelect = (crop: string) => {
+    setSelectedCrop(crop)
+    setSearchCrop("")
   }
-  const base = baseByCrop[selectedCrop] ?? 1750
-  const priceData = [
-    { label: "Jan", value: base - 120 },
-    { label: "Feb", value: base - 80 },
-    { label: "Mar", value: base - 30 },
-    { label: "Apr", value: base + 20 },
-    { label: "May", value: base + 90 },
-    { label: "Jun", value: base + 40 },
-  ]
-  const demandData = [
-    { label: "Jan", value: 95 },
-    { label: "Feb", value: 104 },
-    { label: "Mar", value: 116 },
-    { label: "Apr", value: 126 },
-    { label: "May", value: 139 },
-    { label: "Jun", value: 148 },
-  ]
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!searchCrop.trim()) return
+    const normalized = searchCrop.trim().toLowerCase().replace(/\s+/g, "-")
+    setSelectedCrop(normalized)
+  }
+
+  const activeCropLabel = CROP_LABELS[selectedCrop]?.[language] ?? selectedCrop
+
+  const chartData = React.useMemo(() => {
+    if (priceRecords.length === 0) return []
+    const recent = priceRecords.slice(-12)
+    return recent.map(r => ({
+      label: MONTH_NAMES[r.month - 1],
+      value: Math.round(r.avgPrice),
+    }))
+  }, [priceRecords])
+
+  const currentPrice = chartData.length > 0 ? chartData[chartData.length - 1].value : null
+  const prevPrice = chartData.length > 1 ? chartData[chartData.length - 2].value : null
+  const priceChange = currentPrice && prevPrice
+    ? (((currentPrice - prevPrice) / prevPrice) * 100).toFixed(1)
+    : null
+  const priceTrend = priceChange && parseFloat(priceChange) >= 0 ? "up" : "down"
+
+  const avgPrice = chartData.length > 0
+    ? Math.round(chartData.reduce((s, d) => s + d.value, 0) / chartData.length)
+    : 0
 
   const priceConfig = {
     value: { label: "Price", color: "#1f6e4a" },
   } satisfies ChartConfig
 
-  const demandConfig = {
-    value: { label: "Demand index", color: "#479e73" },
-  } satisfies ChartConfig
-
-  const marketData = [
-    { market: "Guntur", demand: "1,280", trend: { label: "+8%", up: true, value: "+8%" }, price: "ETB 2,150" },
-    { market: "Vijayawada", demand: "2,100", trend: { label: "+15%", up: true, value: "+15%" }, price: "ETB 2,230" },
-    { market: "Eluru", demand: "940", trend: { label: "steady", up: false, value: "steady" }, price: "ETB 2,020" },
-    { market: "Kurnool", demand: "1,520", trend: { label: "+5%", up: true, value: "+5%" }, price: "ETB 2,090" },
-    { market: "Nellore", demand: "1,750", trend: { label: "+11%", up: true, value: "+11%" }, price: "ETB 2,180" },
-  ]
-
   const infoItems = [
-    { 
-      icon: <DollarSign className="h-5 w-5" />, 
-      label: "avg. price (paddy)", 
-      value: "2,140 ETB/qtl", 
-      note: "↑ 4% above MSP" 
+    {
+      icon: <DollarSign className="h-5 w-5" />,
+      label: language === "am" ? "አማካይ ዋጋ" : "avg. price",
+      value: currentPrice ? `ETB ${currentPrice.toLocaleString()}/kg` : "—",
+      note: priceChange
+        ? `${priceTrend === "up" ? "↑" : "↓"} ${Math.abs(parseFloat(priceChange))}% vs last month`
+        : "",
     },
-    { 
-      icon: <PieChart className="h-5 w-5" />, 
-      label: "demand index", 
-      value: "142 pts", 
-      note: "+12 vs last fortnight" 
+    {
+      icon: <TrendingUp className="h-5 w-5" />,
+      label: language === "am" ? "የ12 ወር አማካይ" : "12-month avg",
+      value: avgPrice ? `ETB ${avgPrice.toLocaleString()}/kg` : "—",
+      note: `${priceRecords.length} ${language === "am" ? "መዝግብ" : "records"}`,
     },
-    { 
-      icon: <Clock className="h-5 w-5" />, 
-      label: "best selling window", 
-      value: "next 2 weeks", 
-      note: "forecast: price uptick" 
-    },
-    { 
-      icon: <Warehouse className="h-5 w-5" />, 
-      label: "storage advice", 
-      value: "low stock", 
-      note: "sell 40% now, wait for peak" 
+    {
+      icon: <Warehouse className="h-5 w-5" />,
+      label: language === "am" ? "ክልል" : "region",
+      value: selectedRegion,
+      note: selectedCrop,
     },
   ]
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!searchCrop.trim()) return
-    const normalized = searchCrop.trim().toLowerCase()
-    setSelectedCrop(normalized)
-  }
+
+  const marketData = priceRecords.length > 0
+    ? (() => {
+        const latest = priceRecords[priceRecords.length - 1]
+        const prev = priceRecords.length > 12 ? priceRecords[priceRecords.length - 13] : null
+        const trend = prev && latest
+          ? (((latest.avgPrice - prev.avgPrice) / prev.avgPrice) * 100).toFixed(1)
+          : null
+        const up = trend ? parseFloat(trend) >= 0 : false
+        return [
+          {
+            market: `${selectedRegion} (${MONTH_NAMES[latest.month - 1]} ${latest.year})`,
+            demand: "—",
+            trend: {
+              label: trend ? `${up ? "+" : ""}${trend}%` : "steady",
+              up,
+              value: trend ? `${up ? "+" : ""}${trend}%` : "steady",
+            },
+            price: `ETB ${Math.round(latest.avgPrice).toLocaleString()}/kg`,
+          },
+        ]
+      })()
+    : []
 
   return (
     <div className="mx-auto w-full max-w-7xl bg-transparent p-0">
       <div className="mb-5 flex w-full flex-col gap-3 rounded-2xl border border-[#bfdfce] bg-[#f3faf6] p-2">
         <div className="flex w-full flex-wrap gap-2">
-          {commonCrops.map((crop) => {
+          {COMMON_CROPS.map((crop) => {
             const isActive = selectedCrop === crop
             return (
               <button
                 key={crop}
                 type="button"
-                onClick={() => setSelectedCrop(crop)}
+                onClick={() => handleCropSelect(crop)}
                 className={`inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium ${
                   isActive ? "bg-[#1f543c] text-white" : "text-[#2a553d] hover:bg-[#e6f3ec]"
                 }`}
               >
                 <Wheat className="h-4 w-4" />
-                {cropLabels[crop][language]}
+                {CROP_LABELS[crop][language]}
               </button>
             )
           })}
         </div>
-        <form onSubmit={handleSearchSubmit} className="flex w-full gap-2">
-          <input
-            type="text"
-            value={searchCrop}
-            onChange={(e) => setSearchCrop(e.target.value)}
-            placeholder={language === "am" ? "የሰብል ስም ፈልግ" : "Search crop name"}
-            className="w-full rounded-md border border-[#bfdfce] bg-white px-3 py-2 text-sm outline-none"
-          />
-          <button
-            type="submit"
-            className="rounded-md bg-[#1f543c] px-4 py-2 text-sm font-medium text-white"
+        <div className="flex w-full flex-wrap gap-2">
+          <select
+            value={selectedRegion}
+            onChange={e => setSelectedRegion(e.target.value)}
+            className="rounded-md border border-[#bfdfce] bg-white px-3 py-2 text-sm outline-none"
           >
-            {language === "am" ? "አሳይ" : "Show"}
-          </button>
-        </form>
+            {availableRegions.map(r => (
+              <option key={r} value={r}>{r}</option>
+            ))}
+          </select>
+          <form onSubmit={handleSearchSubmit} className="flex flex-1 gap-2">
+            <input
+              type="text"
+              value={searchCrop}
+              onChange={e => setSearchCrop(e.target.value)}
+              placeholder={language === "am" ? "የሰብል ስም ፈልግ" : "Search crop name"}
+              className="w-full rounded-md border border-[#bfdfce] bg-white px-3 py-2 text-sm outline-none"
+            />
+            <button
+              type="submit"
+              className="rounded-md bg-[#1f543c] px-4 py-2 text-sm font-medium text-white"
+            >
+              {language === "am" ? "አሳይ" : "Show"}
+            </button>
+          </form>
+        </div>
       </div>
 
-      <div className="mb-8 grid grid-cols-1 gap-5 lg:grid-cols-2">
-        <LineGraph
-          data={priceData}
-          title={`${activeCropLabel} ${language === "am" ? "የዋጋ ታሪክ" : "Price history (ETB/quintal)"}`}
-          badge="+8% vs last month"
-          badgeIcon={<TrendingUp className="mr-1 h-3 w-3" />}
-          minNotice="minimum 1850"
-          maxNotice="peak 2330 (may)"
-          config={priceConfig}
-        />
-        <BarGraph
-          data={demandData}
-          title="Demand trend (index)"
-          badge="+12% demand"
-          badgeIcon={<TrendingUp className="mr-1 h-3 w-3" />}
-          leftNote="mandi active"
-          rightNote="procurement high"
-          config={demandConfig}
-        />
-      </div>
+      {loading && (
+        <div className="flex items-center justify-center py-8 text-[#2a553d]">
+          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+          {language === "am" ? "የዋጋ መረጃ እየጫነ ነው..." : "Loading price data..."}
+        </div>
+      )}
 
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.8fr_1fr]">
-        <DataTable
-          title="Demand forecast by market"
-          data={marketData}
-          footnotes={
-            <>
-              <span className="flex items-center gap-1">
-                <Tractor className="h-3 w-3" /> next harvest: 18–25 May
-              </span>
-              <span className="flex items-center gap-1">
-                <TrendingUp className="h-3 w-3" /> 3-month high
-              </span>
-            </>
-          }
-        />
-        <InfoCards items={infoItems} />
-      </div>
+      {error && (
+        <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      {!loading && !error && priceRecords.length === 0 && (
+        <div className="rounded-md border border-[#bfdfce] p-6 text-center text-[#57886c]">
+          {language === "am"
+            ? "ለዚህ ሰብል እና ክልል የዋጋ መረጃ አልተገኘም"
+            : "No price data found for this crop and region."}
+        </div>
+      )}
+
+      {!loading && !error && chartData.length > 0 && (
+        <>
+          <div className="mb-8 grid grid-cols-1 gap-5 lg:grid-cols-2">
+            <LineGraph
+              data={chartData}
+              title={`${activeCropLabel} ${language === "am" ? "የዋጋ ታሪክ" : "Price history (ETB/kg)"}`}
+              badge={priceChange ? `${priceTrend === "up" ? "↑" : "↓"} ${Math.abs(parseFloat(priceChange))}%` : ""}
+              badgeIcon={priceTrend === "up"
+                ? <TrendingUp className="mr-1 h-3 w-3" />
+                : <TrendingDown className="mr-1 h-3 w-3" />}
+              minNotice={`${language === "am" ? "አማካይ" : "avg"} ${avgPrice}`}
+              maxNotice={selectedRegion}
+              config={priceConfig}
+            />
+            <BarGraph
+              data={DEMAND_DATA}
+              title={language === "am" ? "ፍላጎት አዝማሚያ" : "Demand trend (index)"}
+              badge="+12%"
+              badgeIcon={<TrendingUp className="mr-1 h-3 w-3" />}
+              leftNote="mandi active"
+              rightNote="procurement high"
+              config={DEMAND_CONFIG}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-[1.8fr_1fr]">
+            <DataTable
+              title={language === "am" ? "የዋጋ መረጃ በክልል" : "Price data by region"}
+              data={marketData}
+              footnotes={
+                <>
+                  <span className="flex items-center gap-1">
+                    <Tractor className="h-3 w-3" />
+                    {language === "am" ? "መዝግብ" : "Historical data"}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <TrendingUp className="h-3 w-3" />
+                    {language === "am" ? "የሰብል ግብይት" : "Crop prices"}
+                  </span>
+                </>
+              }
+            />
+            <InfoCards items={infoItems} />
+          </div>
+        </>
+      )}
 
       <div className="mt-8 flex flex-col gap-2 border-t border-dashed border-[#bcdbcc] pt-4 text-xs text-[#57886c] sm:flex-row sm:justify-between">
         <span className="flex items-center gap-1">
-          <Cloud className="h-3 w-3" /> live data · updated 25 Feb 2026, 10:30 AM
+          <Cloud className="h-3 w-3" />
+          {language === "am" ? "የዋጋ መረጃ" : "price data"} · {lastUpdated || "—"}
         </span>
         <span className="flex items-center gap-1">
-          <Info className="h-3 w-3" /> sources: local mandi, FICCI, AgMarket
+          <Info className="h-3 w-3" />
+          sources: local mandi, Ethiopian Commodity Exchange, CSA
         </span>
       </div>
     </div>

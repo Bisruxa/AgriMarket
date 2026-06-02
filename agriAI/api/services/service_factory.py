@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from typing import Dict
 
 from .base_service import InferenceService
@@ -28,6 +29,26 @@ class ServiceFactory:
         if not service:
             raise ValueError(f"Service '{service_name}' not found.")
         return service(**kwargs)
+
+    def get_price_forecaster(self) -> InferenceService:
+        return self.get_service(
+            "price_forecaster",
+            model_path=os.getenv(
+                "PRICE_MODEL_PATH",
+                "models/price_forecaster/xgboost_price_forecaster.json",
+            ),
+            metadata_path=os.getenv(
+                "PRICE_METADATA_PATH",
+                "models/price_forecaster/training_metadata.json",
+            ),
+            data_path=os.getenv(
+                "PRICE_DATA_PATH",
+                "data/processed/crop_price_history_v2.csv",
+            ),
+        )
+
+    def get_crop_recommender(self) -> InferenceService:
+        return self.get_service("crop_recommender")
 
 
 service_factory = ServiceFactory()
