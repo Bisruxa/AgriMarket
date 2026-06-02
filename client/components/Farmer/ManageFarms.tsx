@@ -15,6 +15,7 @@ import { Farm } from '@/types/farm';
 import { Plus, Loader2 } from 'lucide-react';
 import { useTranslations } from '@/components/hooks/useTranlations';
 import { useFormatDate } from '@/components/hooks/useFormatDate';
+import FarmEmptyState from '@/components/Farmer/FarmEmptyState';
 
 const SOIL_TYPES = [
   'clay',
@@ -130,29 +131,27 @@ const ManageFarms = () => {
     value && String(value).trim() ? value : dash;
 
   return (
-    <div className={`mt-6 ${language === 'am' ? 'amharic' : ''}`}>
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-[#0B3D2E]">{f.title}</h2>
+    <div className={`mt-4 px-4 sm:px-5 ${language === 'am' ? 'amharic' : ''}`}>
+      <div className="mb-5 flex items-center justify-between gap-3">
+        <h1>{f.title}</h1>
         <Button
           type="button"
           onClick={openAddDialog}
-          className="bg-[#0B3D2E] hover:bg-[#082F24] text-white"
+          className="bg-[#2A5A2A] hover:bg-[#1E431E] text-white text-sm"
         >
           <Plus className="mr-1 h-4 w-4" /> {f.addFarm}
         </Button>
       </div>
 
       {isLoading ? (
-        <div className="flex justify-center py-8">
-          <Loader2 className="h-8 w-8 animate-spin text-[#0B3D2E]" />
+        <div className="flex justify-center py-12">
+          <Loader2 className="h-7 w-7 animate-spin text-[#2A5A2A]" />
           <span className="sr-only">{f.loading}</span>
         </div>
       ) : farms.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-gray-300 py-10 text-center text-sm text-black/60">
-          <p>{f.empty}</p>
-        </div>
+        <FarmEmptyState message={f.empty} actionLabel={f.addFarm} onAction={openAddDialog} />
       ) : (
-        <div className="overflow-hidden rounded-xl border border-gray-200 bg-white divide-y divide-gray-100">
+        <ul className="divide-y divide-[#5B8C51]/15 border-t border-b border-[#5B8C51]/15">
           {farms.map((farm) => {
             const hasClimate =
               farm.ph != null ||
@@ -162,7 +161,7 @@ const ManageFarms = () => {
               farm.rainfall != null;
 
             return (
-              <article
+              <li
                 key={farm.id}
                 className="p-4 sm:p-5 transition-colors hover:bg-[#F5F9F5]/60"
               >
@@ -299,10 +298,10 @@ const ManageFarms = () => {
                     </Button>
                   </div>
                 </div>
-              </article>
+              </li>
             );
           })}
-        </div>
+        </ul>
       )}
 
       <Dialog

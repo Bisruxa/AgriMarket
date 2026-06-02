@@ -157,3 +157,40 @@
 #root {
   isolation: isolate;
 }
+
+.farmer-portal {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: rgb(31 41 55);
+}
+
+.farmer-portal h1 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #0b3d2e;
+  line-height: 1.3;
+}
+
+.farmer-portal h2 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #0b3d2e;
+  line-height: 1.35;
+}
+
+.farmer-portal h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #0b3d2e;
+  line-height: 1.4;
+}
+
+.farmer-portal p,
+.farmer-portal dd,
+.farmer-portal li {
+  font-size: 0.875rem;
+}
+
+.farmer-portal .text-muted {
+  color: rgb(107 114 128);
+}
