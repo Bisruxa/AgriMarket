@@ -8,6 +8,22 @@ exports.register = async (req, res, next) => {
   try {
     const user = await authService.registerUser(req.body);
 
+    // Traders must be approved by admin before they can sign in
+    if (user.role === 'TRADER' && user.approvalStatus === 'PENDING') {
+      return res.status(201).json({
+        success: true,
+        message:
+          'Registration submitted. Your account is pending admin approval. You will be able to sign in once approved.',
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          approvalStatus: user.approvalStatus,
+        },
+      });
+    }
+
     sendTokenResponse(user, 201, res);
   } catch (error) {
     next(error);

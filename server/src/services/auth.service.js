@@ -1,5 +1,6 @@
-const { prisma } = require('../config/db');
+const { prisma, ensureDbConnection } = require('../config/db');
 const { hashPassword, comparePassword } = require('../models/User.model');
+const notificationService = require('./notifications.service');
 
 const createError = (message, statusCode) => {
   const error = new Error(message);
@@ -21,6 +22,7 @@ const registerUser = async (payload) => {
     experience
   } = payload;
 
+  await ensureDbConnection();
   const existingUser = await prisma.user.findUnique({
     where: { email }
   });
@@ -30,26 +32,43 @@ const registerUser = async (payload) => {
   }
 
   const hashedPassword = await hashPassword(password);
+  const roleUpper = role ? role.toUpperCase() : 'TRADER';
+  const isTrader = roleUpper === 'TRADER';
 
   const user = await prisma.user.create({
     data: {
       name,
       email,
       password: hashedPassword,
-      role: role ? role.toUpperCase() : 'TRADER',
+      role: roleUpper,
       phone: phone || null,
       region: region || null,
       woreda: woreda || null,
       farmSize: farmSize || null,
       crops: crops || null,
-      experience: experience || null
+      experience: experience || null,
+      approvalStatus: isTrader ? 'PENDING' : 'APPROVED',
+      isVerified: !isTrader,
     },
   });
+
+  if (isTrader) {
+    try {
+      await notificationService.upsertNotification(user.id, {
+        key: 'trader-pending',
+        type: 'info',
+        href: '/trader/dashboard',
+      });
+    } catch (e) {
+      console.warn('registerUser trader notification:', e.message);
+    }
+  }
 
   return user;
 };
 
 const loginUser = async (email, password) => {
+  await ensureDbConnection();
   const user = await prisma.user.findUnique({
     where: { email }
   });
@@ -81,6 +100,7 @@ const loginUser = async (email, password) => {
 };
 
 const getCurrentUser = async (userId) => {
+  await ensureDbConnection();
   return prisma.user.findUnique({
     where: { id: userId },
     select: {
@@ -101,12 +121,15 @@ const getCurrentUser = async (userId) => {
       crops: true,
       experience: true,
       isVerified: true,
+      approvalStatus: true,
+      approvalNote: true,
       createdAt: true
     }
   });
 };
 
 const checkEmailAvailability = async (email) => {
+  await ensureDbConnection();
   const existingUser = await prisma.user.findUnique({
     where: { email }
   });

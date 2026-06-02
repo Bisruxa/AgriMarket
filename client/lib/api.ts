@@ -2,6 +2,7 @@ export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000
 // smtg
 import { Product } from '@/types/product';
 import { Farm, CreateFarmData, UpdateFarmData } from '@/types/farm';
+import { User } from '@/types/auth-page';
 
 export type ApiResponse<T> = {
   success: boolean;
@@ -137,6 +138,21 @@ export const authApi = {
   getMe: () => api.get('/auth/me'),
 
   logout: () => api.post('/auth/logout', {}),
+};
+
+export const userApi = {
+  updateProfile: (data: {
+    name?: string;
+    phone?: string;
+    region?: string;
+    woreda?: string;
+    farmSize?: string | number;
+    crops?: string;
+    experience?: string;
+  }) => api.put<User>('/user/profile', data),
+
+  updatePassword: (data: { currentPassword: string; newPassword: string }) =>
+    api.put('/user/password', data),
 };
 
 export const farmsApi = {

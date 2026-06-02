@@ -4,6 +4,12 @@ class ProductFarmer {
   final String? phone;
   final String? region;
   final String? woreda;
+  final String? farmSize;
+  final String? crops;
+  final String? experience;
+  final bool isVerified;
+  final String? avatar;
+  final int farmCount;
 
   ProductFarmer({
     required this.id,
@@ -11,15 +17,35 @@ class ProductFarmer {
     this.phone,
     this.region,
     this.woreda,
+    this.farmSize,
+    this.crops,
+    this.experience,
+    this.isVerified = false,
+    this.avatar,
+    this.farmCount = 0,
   });
+
+  String get locationLabel {
+    final parts = <String>[
+      if (region?.trim().isNotEmpty == true) region!.trim(),
+      if (woreda?.trim().isNotEmpty == true) woreda!.trim(),
+    ];
+    return parts.isEmpty ? '' : parts.join(', ');
+  }
 
   factory ProductFarmer.fromJson(Map<String, dynamic> json) {
     return ProductFarmer(
-      id: json['id'] ?? '',
-      name: json['name'] ?? 'Unknown farmer',
-      phone: json['phone'],
-      region: json['region'],
-      woreda: json['woreda'],
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? 'Unknown farmer',
+      phone: json['phone']?.toString(),
+      region: json['region']?.toString(),
+      woreda: json['woreda']?.toString(),
+      farmSize: json['farmSize']?.toString(),
+      crops: json['crops']?.toString(),
+      experience: json['experience']?.toString(),
+      isVerified: json['isVerified'] == true,
+      avatar: json['avatar']?.toString(),
+      farmCount: json['farmCount'] is num ? (json['farmCount'] as num).toInt() : 0,
     );
   }
 }

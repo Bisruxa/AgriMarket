@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,18 +9,29 @@ import AuthPage from '@/components/common/AuthForm/AuthForm';
 import { useTranslations } from '../../../components/hooks/useTranlations';
 import { Translations } from '@/lib/translations';
 import { authApi } from '@/lib/api';
-import {useRouter} from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/app/context/UserContext';
-export default function SignInPage() {
 
+export default function SignInPage() {
   const t = useTranslations() as Translations;
   const { login } = useAuth();
+  const searchParams = useSearchParams();
   const [role, setRole] = useState<'FARMER' | 'TRADER'>('FARMER');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [infoMessage, setInfoMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
- const router = useRouter();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (searchParams.get('pending') === 'trader') {
+      setRole('TRADER');
+      setInfoMessage(
+        'Registration received. An admin must approve your trader account before you can sign in.',
+      );
+    }
+  }, [searchParams]);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -76,7 +87,13 @@ export default function SignInPage() {
     <AuthPage
       title={t.signin.title}
       subtitle={t.signin.subtitle}
-      errors={error ? [error] : []}
+      errors={
+        error
+          ? [error]
+          : infoMessage
+            ? [infoMessage]
+            : []
+      }
       step={1}
       totalSteps={1}
       isSignUp={false}

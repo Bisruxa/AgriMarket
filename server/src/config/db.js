@@ -12,8 +12,11 @@ async function ensureDbConnection() {
     const msg = error?.message || '';
     const closed =
       msg.includes("Can't reach database") ||
+      msg.includes('Can\'t reach database server') ||
       msg.includes('Connection closed') ||
-      msg.includes('Connection terminated');
+      msg.includes('Connection terminated') ||
+      msg.includes('ECONNREFUSED') ||
+      msg.includes('ETIMEDOUT');
     if (!closed) throw error;
     await prisma.$disconnect();
     await prisma.$connect();

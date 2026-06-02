@@ -24,7 +24,7 @@ interface EditFormProps {
   onSuccess?: (data: any) => void;
 }
 
-const EditForm = ({ Fields, endpoint = "/profile/update", onSuccess }: EditFormProps) => {
+const EditForm = ({ Fields, endpoint = "/user/profile", onSuccess }: EditFormProps) => {
   const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<MessageType | null>(null);
@@ -57,7 +57,7 @@ const EditForm = ({ Fields, endpoint = "/profile/update", onSuccess }: EditFormP
     });
 
     try {
-      const response = await api.post(endpoint, body);
+      const response = await api.put(endpoint, body);
       
       if (response.success) {
         setMessage({

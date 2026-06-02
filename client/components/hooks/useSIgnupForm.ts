@@ -166,6 +166,15 @@ export const useSignupForm = () => {
         return;
       }
 
+      const isPendingTrader =
+        role === 'TRADER' &&
+        (response.user?.approvalStatus === 'PENDING' || !response.token);
+
+      if (isPendingTrader) {
+        router.push('/signin?pending=trader');
+        return;
+      }
+
       if (response.user && response.token) {
         login(response.user, response.token);
       } else if (response.user) {

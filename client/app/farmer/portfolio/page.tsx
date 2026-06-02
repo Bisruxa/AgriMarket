@@ -1,58 +1,12 @@
 import React from "react";
-import Profile from "@/components/common/Profile";
-import EditForm from "@/components/common/EditForm";
 import Header from "@/components/common/Header";
-const farmerField = [
-  {
-    id: "firstname",
-    name: "firstname",
-    label: "First Name",
-    type: "text",
-  },
-  {
-    id: "lastname",
-    name: "lastname",
-    label: "Last Name",
-    type: "text",
-  },
-  {
-    id: "phonenumber",
-    name: "phonenumber",
-    label: "Phone Number",
-    type: "tel",
-  },
-  {
-    id: "location",
-    name: "location",
-    label: "Location ",
-    type: "text",
-  },
-  {
-    id: "farmsize",
-    name: "farmsize",
-    label: "Farm Size",
-    type: "number",
-  },
-  {
-    id: "farmtype",
-    name: "farmtype",
-    label: "Farming Type",
-    type: "text",
-  },
-  {
-    id: "experiance",
-    name: "experiance",
-    label: "Experinace in Farming ",
-    type: "text",
-  },
-];
+import ProfileSettings from "@/components/common/ProfileSettings";
+
 const Farmer_Portfolio = () => {
   return (
     <>
-    <Header></Header>
-      <Profile/>
-      <EditForm Fields={farmerField}/>
-
+      <Header />
+      <ProfileSettings role="FARMER" />
     </>
   );
 };
