@@ -1,7 +1,7 @@
 class ApiConfig {
   ApiConfig._();
 
-  static const baseUrl = 'https://agrimarket-gc00.onrender.com/api';
+  static const baseUrl = 'http://localhost:5000/api';
 
   // Auth
   static const login = '/auth/login';
@@ -25,4 +25,8 @@ class ApiConfig {
   static const recommendCrop = '/agriai/recommend/crop';
   static const predictPrice = '/agriai/predict/price';
   static const priceForecasterMetadata = '/agriai/price-forecaster/metadata';
+
+  // Chat
+  static const chat = '/chat';
+  static String chatMessages(String chatId) => '/chat/$chatId/messages';
 }

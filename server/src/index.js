@@ -4,7 +4,6 @@ const morgan = require('morgan');
 const dotenv = require('dotenv');
 const cookieParser = require('cookie-parser');
 const { connectDB } = require('./config/db');
-
 // Load environment variables
 dotenv.config();
 
@@ -17,33 +16,10 @@ const app = express();
 const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (mobile apps, curl, Postman)
-    if (!origin) return callback(null, true);
-    
-    // In production, allow all origins or specify your frontend URLs
-    if (process.env.NODE_ENV === 'production') {
-      // Allow any origin in production (you can restrict this later)
-      return callback(null, true);
-    }
-    
-    // List of allowed origins for development
-    const envOrigins = (process.env.CLIENT_URL || '')
-      .split(',')
-      .map((o) => o.trim())
-      .filter(Boolean);
-
-    const allowedOrigins = [
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'http://localhost:3002',
-      'http://localhost:54474',
-      ...envOrigins,
-    ];
-    
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
+    // and all origins in development for convenience
+    if (!origin || process.env.NODE_ENV !== 'production') return callback(null, true);
+    // In production, allow any origin (restrict later if needed)
+    return callback(null, true);
   },
   credentials: true
 };
@@ -65,7 +41,9 @@ app.use('/api/weather', require('./routes/weather.routes'));
 app.use('/api/market', require('./routes/market.routes'));
 app.use('/api/agriai', require('./routes/agriai.routes'));
 app.use('/api/notifications', require('./routes/notifications.routes'));
+app.use('/api/chat', require('./routes/chat.routes'));
 
+// Chat routes (CRUD only, AI via client-side live voice)
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.status(200).json({ 

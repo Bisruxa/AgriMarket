@@ -289,36 +289,95 @@ class ApiService {
     return delete('${ApiConfig.products}/$id');
   }
 
-  // ── Farms ───────────────────────────────────────────────────────────────
+  List<Farm> _extractFarmsFromResponse(dynamic data) {
+    final farms = <Farm>[];
+    dynamic raw = data;
+    if (data is Map<String, dynamic>) {
+      raw = data['data'] ?? data['farms'];
+    }
+    if (raw is List) {
+      for (final item in raw) {
+        if (item is Map<String, dynamic>) {
+          farms.add(Farm.fromJson(item));
+        }
+      }
+    }
+    return farms;
+  }
 
   Future<FarmsListResult> getFarms() async {
     try {
       final response = await get(ApiConfig.farms);
-      if (response.statusCode == 200) {
-        final data = response.data;
-        if (data is Map<String, dynamic> && data['success'] == true) {
-          final raw = data['data'];
-          final farms = <Farm>[];
-          if (raw is List) {
-            for (final item in raw) {
-              if (item is Map<String, dynamic>) {
-                farms.add(Farm.fromJson(item));
-              }
-            }
-          }
-          return FarmsListResult(success: true, farms: farms);
-        }
+      final status = response.statusCode ?? 0;
+
+      if (status == 200) {
         return FarmsListResult(
-          success: false,
-          message: _messageFromBody(data),
+          success: true,
+          farms: _extractFarmsFromResponse(response.data),
         );
       }
+
+      if (status == 404) {
+        return FarmsListResult(success: true, farms: []);
+      }
+
       return FarmsListResult(
         success: false,
-        message: _messageFromBody(response.data),
+        message: _messageFromBody(response.data) ?? 'Failed to load farms',
       );
     } catch (_) {
       return FarmsListResult(
+        success: false,
+        message: 'Could not connect. Pull to refresh.',
+      );
+    }
+  }
+
+  Future<CropRecommendResult> getCropRecommendations({
+    required double nitrogen,
+    required double phosphorus,
+    required double potassium,
+    required double temperature,
+    required double humidity,
+    required double ph,
+    required double rainfall,
+    String? soilColor,
+  }) async {
+    try {
+      final response = await post(ApiConfig.recommendCrop, {
+        'nitrogen': nitrogen,
+        'phosphorus': phosphorus,
+        'potassium': potassium,
+        'temperature': temperature,
+        'humidity': humidity,
+        'ph': ph,
+        'rainfall': rainfall,
+        if (soilColor != null && soilColor.isNotEmpty) 'soil_color': soilColor,
+      });
+      final data = response.data;
+      if (response.statusCode == 200 &&
+          data is Map<String, dynamic> &&
+          data['success'] == true) {
+        final payload = data['data'];
+        final recommendations = <CropRecommendationItem>[];
+        if (payload is Map<String, dynamic>) {
+          final raw = payload['recommendations'];
+          if (raw is List) {
+            for (final item in raw) {
+              if (item is Map<String, dynamic>) {
+                recommendations.add(CropRecommendationItem.fromJson(item));
+              }
+            }
+          }
+        }
+        return CropRecommendResult(success: true, recommendations: recommendations);
+      }
+      return CropRecommendResult(
+        success: false,
+        message: _messageFromBody(data) ?? 'Failed to get recommendations',
+      );
+    } catch (_) {
+      return const CropRecommendResult(
         success: false,
         message: 'Network error. Please try again.',
       );
@@ -439,6 +498,50 @@ class ApiService {
     throw Exception(_errorMessage(response, 'Failed to load forecast options'));
   }
 
+  // ── Chat ──────────────────────────────────────────────────────────────
+
+  Future<Map<String, dynamic>> getChats() async {
+    final response = await get(ApiConfig.chat);
+    return response.data is Map<String, dynamic>
+        ? response.data as Map<String, dynamic>
+        : {};
+  }
+
+  Future<Map<String, dynamic>> getChat(String chatId) async {
+    final response = await get('${ApiConfig.chat}/$chatId');
+    return response.data is Map<String, dynamic>
+        ? response.data as Map<String, dynamic>
+        : {};
+  }
+
+  Future<Map<String, dynamic>> createChat({String? title}) async {
+    final response = await post(ApiConfig.chat, {
+      'title': title ?? 'New Chat',
+    });
+    return response.data is Map<String, dynamic>
+        ? response.data as Map<String, dynamic>
+        : {};
+  }
+
+  Future<Map<String, dynamic>> sendMessage(String chatId, String content) async {
+    final response = await post(
+      '${ApiConfig.chat}/$chatId/messages',
+      {'content': content},
+    );
+    return response.data is Map<String, dynamic>
+        ? response.data as Map<String, dynamic>
+        : {};
+  }
+
+  Future<bool> deleteChat(String chatId) async {
+    try {
+      final response = await delete('${ApiConfig.chat}/$chatId');
+      return response.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
   // ── Helpers ─────────────────────────────────────────────────────────────
 
   Map<String, dynamic>? _unwrapData(Response response) {
@@ -497,6 +600,36 @@ class FarmMutationResult {
   final String? message;
 
   FarmMutationResult({required this.success, this.message});
+}
+
+class CropRecommendationItem {
+  final String crop;
+  final double confidence;
+
+  const CropRecommendationItem({required this.crop, required this.confidence});
+
+  factory CropRecommendationItem.fromJson(Map<String, dynamic> json) {
+    final confRaw = json['confidence'];
+    final confidence = confRaw is num
+        ? confRaw.toDouble()
+        : double.tryParse(confRaw?.toString() ?? '') ?? 0;
+    return CropRecommendationItem(
+      crop: json['crop']?.toString() ?? '',
+      confidence: confidence,
+    );
+  }
+}
+
+class CropRecommendResult {
+  final bool success;
+  final List<CropRecommendationItem> recommendations;
+  final String? message;
+
+  const CropRecommendResult({
+    required this.success,
+    this.recommendations = const [],
+    this.message,
+  });
 }
 
 class ProfileMutationResult {

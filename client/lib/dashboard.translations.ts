@@ -153,6 +153,9 @@ export type DashboardTranslations = {
   };
   farms: {
     title: string;
+    dashboardCardTitle: string;
+    dashboardCardSubtitle: string;
+    viewFarms: string;
     addFarm: string;
     empty: string;
     locationNotSet: string;
@@ -189,6 +192,13 @@ export type DashboardTranslations = {
     listTemp: string;
     listHumidity: string;
     listRainfall: string;
+    loading: string;
+    saving: string;
+    toastCreated: string;
+    toastUpdated: string;
+    toastDeleted: string;
+    toastNetworkError: string;
+    toastFailed: string;
   };
 };
 
@@ -420,6 +430,9 @@ export const dashboardEn: DashboardTranslations = {
   },
   farms: {
     title: "Manage Your Farms",
+    dashboardCardTitle: "My Farms",
+    dashboardCardSubtitle: "Register your farm land and manage locations.",
+    viewFarms: "View Farms",
     addFarm: "Add Farm",
     empty: 'No farms yet. Click "Add Farm" to register your land.',
     locationNotSet: "Location not set",
@@ -471,6 +484,13 @@ export const dashboardEn: DashboardTranslations = {
     listTemp: "Temperature",
     listHumidity: "Humidity",
     listRainfall: "Rainfall",
+    loading: "Loading farms...",
+    saving: "Saving...",
+    toastCreated: "Farm registered successfully",
+    toastUpdated: "Farm updated successfully",
+    toastDeleted: "Farm deleted successfully",
+    toastNetworkError: "Network error. Please try again.",
+    toastFailed: "Could not save farm. Please try again.",
   },
 };
 
@@ -701,6 +721,9 @@ export const dashboardAm: DashboardTranslations = {
   },
   farms: {
     title: "እርሻዎችዎን ያስተዳድሩ",
+    dashboardCardTitle: "የእኔ እርሻዎች",
+    dashboardCardSubtitle: "የእርሻ መሬትዎን ይመዝግቡ እና ቦታዎችን ያስተዳድሩ።",
+    viewFarms: "እርሻዎችን ይመልከቱ",
     addFarm: "እርሻ ጨምር",
     empty: 'እስካሁን እርሻ የለም። መሬትዎን ለመመዝገብ «እርሻ ጨምር» ይጫኑ።',
     locationNotSet: "ቦታ አልተመዘገበም",
@@ -751,5 +774,12 @@ export const dashboardAm: DashboardTranslations = {
     listTemp: "ሙቀት",
     listHumidity: "እርጥበት",
     listRainfall: "ዝናብ",
+    loading: "እርሻዎች በመጫን ላይ...",
+    saving: "በመቀመጥ ላይ...",
+    toastCreated: "እርሻ በተሳካ ሁኔታ ተመዘገበ",
+    toastUpdated: "እርሻ በተሳካ ሁኔታ ተዘምኗል",
+    toastDeleted: "እርሻ ተሰርዟል",
+    toastNetworkError: "የአውታረ መረብ ስህተት። እንደገና ይሞክሩ።",
+    toastFailed: "እርሻ ማስቀመጥ አልተሳካም። እንደገና ይሞክሩ።",
   },
 };

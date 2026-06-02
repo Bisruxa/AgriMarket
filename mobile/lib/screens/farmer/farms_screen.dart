@@ -130,7 +130,7 @@ class _FarmsScreenState extends State<FarmsScreen> {
                 hasScrollBody: false,
                 child: _EmptyState(
                   icon: Icons.agriculture_outlined,
-                  message: 'No farms yet. Tap Add Farm to register your land.',
+                  message: 'No farms have been registered.',
                   actionLabel: 'Add Farm',
                   onAction: _openAddFarm,
                 ),

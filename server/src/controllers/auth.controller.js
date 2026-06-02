@@ -37,7 +37,8 @@ exports.getMe = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      data: user
+      data: user,
+      token: generateToken(user)
     });
   } catch (error) {
     next(error);

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../models/agriai_model.dart';
+
+import '../../models/farm_model.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/custom_button.dart';
+import '../../widgets/custom_dropdown.dart';
 
 class CropRecommendation extends StatefulWidget {
   const CropRecommendation({super.key});
@@ -11,58 +14,82 @@ class CropRecommendation extends StatefulWidget {
 }
 
 class _CropRecommendationState extends State<CropRecommendation> {
-  final ApiService _api = ApiService();
+  final _api = ApiService();
 
-  bool _loading = true;
-  String? _error;
+  List<Farm> _farms = [];
+  bool _loadingFarms = true;
+  bool _showInputs = false;
+  bool _isLoading = false;
+  Farm? _selectedFarm;
   List<CropRecommendationItem> _recommendations = [];
-  CropPriceForecast? _topForecast;
-  String? _region;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
-    _loadRecommendations();
+    _loadFarms();
   }
 
-  Future<void> _loadRecommendations() async {
+  Future<void> _loadFarms() async {
     setState(() {
-      _loading = true;
+      _loadingFarms = true;
       _error = null;
     });
-
-    final profile = await _api.getProfile();
-    final region = profile?.region?.trim();
-    _region = (region != null && region.isNotEmpty) ? region : 'Oromia';
-
-    final result = await _api.recommendCropWithDefaults();
+    final result = await _api.getFarms();
     if (!mounted) return;
+    setState(() {
+      _loadingFarms = false;
+      _farms = result.success ? result.farms : [];
+    });
+  }
 
-    if (!result.success) {
-      setState(() {
-        _loading = false;
-        _error = result.message ?? 'Could not load AI recommendations';
-      });
+  bool get _hasValidInput => _selectedFarm != null;
+
+  bool get _canPressButton {
+    if (_isLoading || _loadingFarms) return false;
+    if (!_showInputs) return true;
+    return _hasValidInput;
+  }
+
+  void _onGetRecommendation() {
+    if (!_showInputs) {
+      setState(() => _showInputs = true);
       return;
     }
+    if (!_hasValidInput) return;
+    _fetchRecommendations();
+  }
 
-    CropPriceForecast? forecast;
-    if (result.recommendations.isNotEmpty) {
-      final topCrop = result.recommendations.first.crop;
-      final priceResult = await _api.predictCropPrice(
-        cropName: topCrop,
-        region: _region!,
-      );
-      if (priceResult.success) {
-        forecast = priceResult.forecast;
-      }
-    }
+  Future<void> _fetchRecommendations() async {
+    final farm = _selectedFarm!;
+    setState(() {
+      _isLoading = true;
+      _error = null;
+      _recommendations = [];
+    });
+
+    final result = await _api.getCropRecommendations(
+      nitrogen: farm.nitrogen ?? 60,
+      phosphorus: farm.phosphorus ?? 20,
+      potassium: farm.potassium ?? 30,
+      temperature: farm.temperature ?? 25,
+      humidity: farm.humidity ?? 60,
+      ph: farm.ph ?? 6.5,
+      rainfall: farm.rainfall ?? 100,
+      soilColor: farm.soilColor ?? 'brown',
+    );
 
     if (!mounted) return;
     setState(() {
-      _recommendations = result.recommendations;
-      _topForecast = forecast;
-      _loading = false;
+      _isLoading = false;
+      if (result.success) {
+        _recommendations = result.recommendations;
+        if (result.recommendations.isEmpty) {
+          _error = 'No suitable crops found for this farm profile.';
+        }
+      } else {
+        _error = result.message ?? 'Failed to get recommendations';
+      }
     });
   }
 
@@ -71,273 +98,238 @@ class _CropRecommendationState extends State<CropRecommendation> {
     return Scaffold(
       backgroundColor: AppColors.surface,
       body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _loadRecommendations,
-          color: AppColors.primary,
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          'Crop Insights',
-                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                fontSize: 26,
-                              ),
-                        ),
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
+                child: Text(
+                  'Crop Insights',
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        fontSize: 26,
                       ),
-                      IconButton(
-                        onPressed: _loading ? null : _loadRecommendations,
-                        icon: const Icon(Icons.refresh_rounded),
-                        color: AppColors.primary,
-                      ),
-                    ],
-                  ),
                 ),
               ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _HeroBanner(region: _region),
-                      if (_topForecast != null) ...[
-                        const SizedBox(height: 16),
-                        _PriceForecastCard(forecast: _topForecast!),
-                      ],
-                      const SizedBox(height: 24),
-                      Text(
-                        'Top Recommendations',
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                      const SizedBox(height: 12),
-                      if (_loading)
-                        const Center(
-                          child: Padding(
-                            padding: EdgeInsets.all(32),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    if (_showInputs) ...[
+                      if (_loadingFarms)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          child: Center(
                             child: CircularProgressIndicator(color: AppColors.primary),
                           ),
                         )
-                      else if (_error != null)
-                        _ErrorState(message: _error!, onRetry: _loadRecommendations)
-                      else if (_recommendations.isEmpty)
-                        const _EmptyState()
-                      else
-                        ..._recommendations.asMap().entries.map(
-                              (entry) => _RecommendationCard(
-                                item: entry.value,
-                                featured: entry.key == 0,
-                              ),
+                      else if (_farms.isEmpty)
+                        Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.shade50,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: Colors.amber.shade200),
+                          ),
+                          child: const Text(
+                            'No farms have been registered. Add a farm under My Farms first.',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: AppColors.textPrimary,
                             ),
+                          ),
+                        )
+                      else
+                        CustomDropdown<Farm>(
+                          label: 'Select your farm',
+                          hint: 'Choose a registered farm',
+                          value: _selectedFarm,
+                          items: _farms,
+                          itemLabel: (f) => f.name,
+                          onChanged: (farm) {
+                            setState(() {
+                              _selectedFarm = farm;
+                              _recommendations = [];
+                              _error = null;
+                            });
+                          },
+                        ),
+                      if (_selectedFarm != null) ...[
+                        const SizedBox(height: 12),
+                        _FarmSummaryCard(farm: _selectedFarm!),
+                      ],
+                      const SizedBox(height: 20),
                     ],
-                  ),
+                    CustomButton(
+                      text: _isLoading ? 'Analyzing...' : 'Get Recommendation',
+                      isLoading: _isLoading,
+                      onPressed: _canPressButton ? _onGetRecommendation : null,
+                    ),
+                    if (_error != null) ...[
+                      const SizedBox(height: 16),
+                      Text(
+                        _error!,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: AppColors.error, fontSize: 13),
+                      ),
+                    ],
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+            if (_recommendations.isNotEmpty)
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+                sliver: SliverList.separated(
+                  itemCount: _recommendations.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  itemBuilder: (context, index) {
+                    return _RecommendationResultCard(
+                      recommendation: _recommendations[index],
+                      rank: index + 1,
+                    );
+                  },
+                ),
+              ),
+          ],
         ),
       ),
     );
   }
 }
 
-class _HeroBanner extends StatelessWidget {
-  final String? region;
+class _FarmSummaryCard extends StatelessWidget {
+  final Farm farm;
 
-  const _HeroBanner({this.region});
+  const _FarmSummaryCard({required this.farm});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: AppColors.primaryGradient,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.2),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'AI-Powered Recommendations',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  region != null
-                      ? 'Based on soil data and $region market trends'
-                      : 'Based on soil and regional market trends',
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    fontSize: 13,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(
-              Icons.auto_awesome_rounded,
-              color: Colors.white,
-              size: 28,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PriceForecastCard extends StatelessWidget {
-  final CropPriceForecast forecast;
-
-  const _PriceForecastCard({required this.forecast});
-
-  @override
-  Widget build(BuildContext context) {
-    final trendIcon = forecast.trend == 'increasing'
-        ? Icons.trending_up_rounded
-        : forecast.trend == 'decreasing'
-            ? Icons.trending_down_rounded
-            : Icons.trending_flat_rounded;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.border),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Price outlook: ${forecast.cropName}',
-            style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
+          _SummaryRow(
+            icon: Icons.eco_outlined,
+            label: farm.soilType != null ? '${farm.soilType} soil' : 'Soil type not set',
           ),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              Icon(trendIcon, color: AppColors.primary, size: 20),
-              const SizedBox(width: 8),
-              Text(
-                '${forecast.predictedPrice.toStringAsFixed(0)} ETB • ${forecast.trend} (${forecast.trendPercentage.toStringAsFixed(1)}%)',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            ],
-          ),
-          Text(
-            '${forecast.region} • ${forecast.month}/${forecast.year}',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
+          _SummaryRow(icon: Icons.location_on_outlined, label: farm.locationLabel),
         ],
       ),
     );
   }
 }
 
-class _RecommendationCard extends StatelessWidget {
-  final CropRecommendationItem item;
-  final bool featured;
+class _SummaryRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
 
-  const _RecommendationCard({
-    required this.item,
-    required this.featured,
+  const _SummaryRow({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: AppColors.primary),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _RecommendationResultCard extends StatelessWidget {
+  final CropRecommendationItem recommendation;
+  final int rank;
+
+  const _RecommendationResultCard({
+    required this.recommendation,
+    required this.rank,
   });
 
   @override
   Widget build(BuildContext context) {
-    final confidence = item.confidencePercent;
-    final confidenceLabel =
-        confidence != null ? '${confidence.toStringAsFixed(0)}% match' : item.confidence;
-
-    if (!featured) {
-      return Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: ListTile(
-          leading: CircleAvatar(
-            backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-            child: const Icon(Icons.grass_rounded, color: AppColors.primary, size: 20),
-          ),
-          title: Text(
-            _formatCropName(item.crop),
-            style: const TextStyle(fontWeight: FontWeight.w600),
-          ),
-          subtitle: Text(confidenceLabel),
-        ),
-      );
-    }
+    final pct = (recommendation.confidence <= 1
+            ? recommendation.confidence * 100
+            : recommendation.confidence)
+        .round()
+        .clamp(0, 100);
+    final suitability = _suitabilityLabel(recommendation.confidence);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.primary.withValues(alpha: 0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: rank == 1
+              ? AppColors.primary.withValues(alpha: 0.3)
+              : AppColors.border,
+        ),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(14),
+          CircleAvatar(
+            radius: 18,
+            backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+            child: Text(
+              '$rank',
+              style: const TextStyle(
+                color: AppColors.primary,
+                fontWeight: FontWeight.w700,
+              ),
             ),
-            child: const Icon(Icons.eco_rounded, color: AppColors.primary, size: 32),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _formatCropName(item.crop),
-                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700),
+                  recommendation.crop,
+                  style: const TextStyle(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
-                const SizedBox(height: 6),
-                _Chip(label: confidenceLabel),
                 const SizedBox(height: 4),
-                const Text(
-                  'Best pick from AgriAI for your soil profile',
-                  style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                Text(
+                  suitability.label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: suitability.color,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(4),
+                  child: LinearProgressIndicator(
+                    value: pct / 100,
+                    minHeight: 6,
+                    backgroundColor: AppColors.border,
+                    color: suitability.color,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '$pct% match',
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
             ),
@@ -347,74 +339,24 @@ class _RecommendationCard extends StatelessWidget {
     );
   }
 
-  String _formatCropName(String raw) {
-    if (raw.isEmpty) return raw;
-    return raw[0].toUpperCase() + raw.substring(1);
+  _Suitability _suitabilityLabel(double confidence) {
+    final value = confidence <= 1 ? confidence : confidence / 100;
+    if (value >= 0.7) {
+      return _Suitability('Highly suitable', AppColors.primary);
+    }
+    if (value >= 0.4) {
+      return const _Suitability('Moderately suitable', Color(0xFFF57C00));
+    }
+    if (value >= 0.1) {
+      return const _Suitability('Low suitability', Color(0xFFE65100));
+    }
+    return const _Suitability('Not recommended', AppColors.error);
   }
 }
 
-class _Chip extends StatelessWidget {
+class _Suitability {
   final String label;
+  final Color color;
 
-  const _Chip({required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: AppColors.primary,
-          fontWeight: FontWeight.w600,
-          fontSize: 12,
-        ),
-      ),
-    );
-  }
-}
-
-class _ErrorState extends StatelessWidget {
-  final String message;
-  final VoidCallback onRetry;
-
-  const _ErrorState({required this.message, required this.onRetry});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.error.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
-      ),
-      child: Column(
-        children: [
-          Text(message, style: const TextStyle(color: AppColors.error)),
-          const SizedBox(height: 12),
-          TextButton(onPressed: onRetry, child: const Text('Try again')),
-        ],
-      ),
-    );
-  }
-}
-
-class _EmptyState extends StatelessWidget {
-  const _EmptyState();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.all(24),
-      child: Text(
-        'No recommendations returned. Pull to refresh or try again later.',
-        textAlign: TextAlign.center,
-      ),
-    );
-  }
+  const _Suitability(this.label, this.color);
 }

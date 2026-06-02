@@ -73,10 +73,9 @@ const PriceForecastPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { data: meta, isLoading: metaLoading } = useQuery({
+  const { data: meta, isLoading: metaLoading } = useQuery<ApiResponse<Metadata>>({
     queryKey: ['price-forecaster-metadata'],
     queryFn: () => agriaiApi.getPriceForecasterMetadata(),
-    select: (res: ApiResponse<Metadata>) => res?.data || { crops: [], regions: [] },
   });
 
   const handleSubmit = async () => {
@@ -122,7 +121,7 @@ const PriceForecastPage = () => {
                       <SelectValue placeholder={metaLoading ? pf.loadingOptions : pf.selectCropPlaceholder} />
                     </SelectTrigger>
                     <SelectContent className="max-h-60">
-                      {meta?.crops?.map((c) => (
+                      {metaLoading ? null : meta?.data?.crops?.map((c) => (
                         <SelectItem key={c} value={c}>{c}</SelectItem>
                       ))}
                     </SelectContent>
@@ -136,7 +135,7 @@ const PriceForecastPage = () => {
                       <SelectValue placeholder={metaLoading ? pf.loadingOptions : pf.selectRegionPlaceholder} />
                     </SelectTrigger>
                     <SelectContent>
-                      {meta?.regions?.map((r) => (
+                      {metaLoading ? null : meta?.data?.regions?.map((r) => (
                         <SelectItem key={r} value={r}>{r}</SelectItem>
                       ))}
                     </SelectContent>

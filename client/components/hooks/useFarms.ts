@@ -1,13 +1,22 @@
 'use client';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, skipToken } from '@tanstack/react-query';
 import { farmsApi, ApiResponse } from '@/lib/api';
 import { Farm, CreateFarmData, UpdateFarmData } from '@/types/farm';
 import { toast } from 'sonner';
+import { useAuth } from '@/app/context/UserContext';
+import { useTranslations } from '@/components/hooks/useTranlations';
 
 export const useFarms = () => {
+  const { user, loading: authLoading } = useAuth();
+  const hasToken =
+    typeof window !== 'undefined' &&
+    !!localStorage.getItem('token') &&
+    localStorage.getItem('token') !== 'none';
+  const isReady = !authLoading && !!user && hasToken;
+
   return useQuery({
-    queryKey: ['farms'],
-    queryFn: () => farmsApi.getMyFarms(),
+    queryKey: ['farms', user?.id],
+    queryFn: isReady ? () => farmsApi.getMyFarms() : skipToken,
     select: (response: ApiResponse<Farm[]>) => {
       if (!response) return { farms: [], count: 0 };
       return {
@@ -31,19 +40,21 @@ export const useFarm = (id: string) => {
 
 export const useFarmMutations = () => {
   const queryClient = useQueryClient();
+  const t = useTranslations();
+  const f = t.dashboard.farms;
 
   const createMutation = useMutation({
     mutationFn: (data: CreateFarmData) => farmsApi.create(data),
     onSuccess: (response: ApiResponse<Farm>) => {
       if (response?.success) {
         queryClient.invalidateQueries({ queryKey: ['farms'] });
-        toast.success(response.message || 'Farm created successfully');
+        toast.success(response.message || f.toastCreated);
       } else {
-        toast.error(response?.message || 'Failed to create farm');
+        toast.error(response?.message || f.toastFailed);
       }
     },
     onError: () => {
-      toast.error('Network error. Please try again.');
+      toast.error(f.toastNetworkError);
     },
   });
 
@@ -53,13 +64,13 @@ export const useFarmMutations = () => {
     onSuccess: (response: ApiResponse<Farm>) => {
       if (response?.success) {
         queryClient.invalidateQueries({ queryKey: ['farms'] });
-        toast.success(response.message || 'Farm updated successfully');
+        toast.success(response.message || f.toastUpdated);
       } else {
-        toast.error(response?.message || 'Failed to update farm');
+        toast.error(response?.message || f.toastUpdated);
       }
     },
     onError: () => {
-      toast.error('Network error. Please try again.');
+      toast.error(f.toastNetworkError);
     },
   });
 
@@ -68,13 +79,13 @@ export const useFarmMutations = () => {
     onSuccess: (response: ApiResponse<unknown>) => {
       if (response?.success) {
         queryClient.invalidateQueries({ queryKey: ['farms'] });
-        toast.success('Farm deleted successfully');
+        toast.success(f.toastDeleted);
       } else {
-        toast.error(response?.message || 'Failed to delete farm');
+        toast.error(response?.message || f.toastDeleted);
       }
     },
     onError: () => {
-      toast.error('Network error. Please try again.');
+      toast.error(f.toastNetworkError);
     },
   });
 

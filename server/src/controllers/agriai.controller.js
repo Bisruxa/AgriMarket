@@ -2,6 +2,8 @@ const {
   getHealth,
   recommendCrop,
   predictPrice,
+  getToolDefinitions,
+  executeToolFunction,
 } = require('../services/agriai.service');
 
 function requireFields(body, fields) {
@@ -118,6 +120,33 @@ exports.getPriceForecasterMetadata = async (req, res, next) => {
       success: true,
       data,
     });
+  } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({ success: false, message: error.message });
+    }
+    next(error);
+  }
+};
+
+exports.getToolDefinitions = async (req, res, next) => {
+  try {
+    const { getToolDefinitions } = require('../services/agriai.service');
+    const tools = await getToolDefinitions();
+    res.status(200).json({ success: true, data: tools });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.executeTool = async (req, res, next) => {
+  try {
+    const { executeToolFunction } = require('../services/agriai.service');
+    const { name, args } = req.body;
+    if (!name) {
+      return res.status(400).json({ success: false, message: 'Tool name is required' });
+    }
+    const result = await executeToolFunction(name, args || {});
+    res.status(200).json({ success: true, data: result });
   } catch (error) {
     if (error.statusCode) {
       return res.status(error.statusCode).json({ success: false, message: error.message });

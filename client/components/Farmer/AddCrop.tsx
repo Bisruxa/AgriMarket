@@ -9,6 +9,13 @@ import { toast } from 'sonner';
 import { Loader2 } from 'lucide-react';
 import { useTranslations } from '@/components/hooks/useTranlations';
 import { useLanguage } from '@/app/context/LanguageContext';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface AddCropProps {
   productId?: string | null;
@@ -138,12 +145,18 @@ const AddCrop = ({ productId, onSuccess }: AddCropProps) => {
 
   if (isFetching) {
     return (
-      <div className={`fixed inset-0 z-[111] flex items-center justify-center bg-black/50 ${language === 'am' ? 'amharic' : ''}`}>
-        <div className="rounded-lg bg-white p-8">
-          <Loader2 className="mx-auto h-8 w-8 animate-spin text-[#0B3D2E]" />
-          <p className="mt-4 text-sm text-gray-700">{pf.loading}</p>
-        </div>
-      </div>
+      <Dialog open onOpenChange={(open) => { if (!open) closeModal(); }}>
+        <DialogContent
+          className={`max-w-sm bg-white sm:max-w-sm ${language === 'am' ? 'amharic' : ''}`}
+          showCloseButton={false}
+        >
+          <DialogHeader className="items-center text-center">
+            <Loader2 className="mx-auto h-8 w-8 animate-spin text-gray-600" />
+            <DialogTitle className="sr-only">{pf.loading}</DialogTitle>
+            <DialogDescription className="text-gray-700">{pf.loading}</DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
     );
   }
 

@@ -43,7 +43,7 @@ class ApiClient {
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseUrl}${endpoint}`;
-
+    
     const config: RequestInit = {
       ...options,
       credentials: 'include',
@@ -57,7 +57,15 @@ class ApiClient {
     try {
       const response = await fetch(url, config);
       const data = await response.json();
-      
+
+      if (
+        response.ok &&
+        typeof window !== 'undefined' &&
+        data?.token &&
+        data.token !== 'none'
+      ) {
+        localStorage.setItem('token', data.token);
+      }
 
       if (!response.ok) {
         return {
@@ -156,6 +164,17 @@ export const agriaiApi = {
 
   getPriceForecasterMetadata: () =>
     api.get<{ crops: string[]; regions: string[] }>('/agriai/price-forecaster/metadata'),
+};
+
+export const chatApi = {
+  getChats: () => api.get('/chat'),
+  getChat: (id: string) => api.get(`/chat/${id}`),
+  createChat: (title?: string) => api.post('/chat', { title: title || 'New Chat' }),
+  deleteChat: (id: string) => api.delete(`/chat/${id}`),
+  sendMessage: (chatId: string, content: string) =>
+    api.post(`/chat/${chatId}/messages`, { content }),
+  appendMessage: (chatId: string, role: string, content: string) =>
+    api.post(`/chat/${chatId}/messages/append`, { role, content }),
 };
 
 export const productsApi = {

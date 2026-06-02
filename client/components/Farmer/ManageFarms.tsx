@@ -1,5 +1,6 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -13,25 +14,19 @@ import { useEthiopianGeoOptions } from '@/components/hooks/useEthiopianGeoOption
 import { Farm } from '@/types/farm';
 import { Plus, Loader2 } from 'lucide-react';
 import { useTranslations } from '@/components/hooks/useTranlations';
-import { useLanguage } from '@/app/context/LanguageContext';
+import { useFormatDate } from '@/components/hooks/useFormatDate';
 
 const SOIL_TYPES = [
-  { value: 'clay', label: 'Clay' },
-  { value: 'sandy', label: 'Sandy' },
-  { value: 'loam', label: 'Loam' },
-  { value: 'silt', label: 'Silt' },
-  { value: 'peaty', label: 'Peaty' },
-  { value: 'chalky', label: 'Chalky' },
-  { value: 'laterite', label: 'Laterite' },
-];
+  'clay',
+  'sandy',
+  'loam',
+  'silt',
+  'peaty',
+  'chalky',
+  'laterite',
+] as const;
 
-const SOIL_COLORS = [
-  { value: 'black', label: 'Black' },
-  { value: 'red', label: 'Red' },
-  { value: 'brown', label: 'Brown' },
-  { value: 'gray', label: 'Gray' },
-  { value: 'yellowish', label: 'Yellowish' },
-];
+const SOIL_COLORS = ['black', 'red', 'brown', 'gray', 'yellowish'] as const;
 
 interface FarmFormData {
   name: string;
@@ -49,7 +44,9 @@ const emptyForm: FarmFormData = {
 const ManageFarms = () => {
   const t = useTranslations();
   const f = t.dashboard.farms;
-  const { language } = useLanguage();
+  const { formatDate, language } = useFormatDate();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { regions, getWoredasForRegion, labelForRegion, labelForWoreda } = useEthiopianGeoOptions();
   const { data, isLoading } = useFarms();
   const { createMutation, updateMutation, deleteMutation } = useFarmMutations();
@@ -59,12 +56,20 @@ const ManageFarms = () => {
   const [form, setForm] = useState<FarmFormData>(emptyForm);
 
   const farms = data?.farms || [];
+  const isAddMode = !editingFarm;
 
   const openAddDialog = () => {
     setEditingFarm(null);
     setForm(emptyForm);
     setDialogOpen(true);
   };
+
+  useEffect(() => {
+    if (searchParams.get('add') === '1') {
+      openAddDialog();
+      router.replace('/farmer/farms', { scroll: false });
+    }
+  }, [searchParams, router]);
 
   const openEditDialog = (farm: Farm) => {
     setEditingFarm(farm);
@@ -77,6 +82,12 @@ const ManageFarms = () => {
       kebele: farm.kebele || '',
     });
     setDialogOpen(true);
+  };
+
+  const closeFormDialog = () => {
+    setDialogOpen(false);
+    setEditingFarm(null);
+    setForm(emptyForm);
   };
 
   const handleSubmit = () => {
@@ -94,7 +105,7 @@ const ManageFarms = () => {
     } else {
       createMutation.mutate(payload);
     }
-    setDialogOpen(false);
+    closeFormDialog();
   };
 
   const handleDelete = () => {
@@ -114,19 +125,6 @@ const ManageFarms = () => {
     f.soilColors[value as keyof typeof f.soilColors] || value;
 
   const dash = f.listNotSet;
-  const locale = language === 'am' ? 'am-ET' : 'en-US';
-
-  const formatDate = (iso: string) => {
-    try {
-      return new Date(iso).toLocaleDateString(locale, {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-      });
-    } catch {
-      return iso;
-    }
-  };
 
   const display = (value: string | null | undefined) =>
     value && String(value).trim() ? value : dash;
@@ -134,15 +132,20 @@ const ManageFarms = () => {
   return (
     <div className={`mt-6 ${language === 'am' ? 'amharic' : ''}`}>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-[#2A5A2A]">{f.title}</h2>
-        <Button onClick={openAddDialog} className="bg-[#2A5A2A] hover:bg-[#1E431E] text-white">
+        <h2 className="text-xl font-bold text-[#0B3D2E]">{f.title}</h2>
+        <Button
+          type="button"
+          onClick={openAddDialog}
+          className="bg-[#0B3D2E] hover:bg-[#082F24] text-white"
+        >
           <Plus className="mr-1 h-4 w-4" /> {f.addFarm}
         </Button>
       </div>
 
       {isLoading ? (
         <div className="flex justify-center py-8">
-          <Loader2 className="h-8 w-8 animate-spin text-[#2A5A2A]" />
+          <Loader2 className="h-8 w-8 animate-spin text-[#0B3D2E]" />
+          <span className="sr-only">{f.loading}</span>
         </div>
       ) : farms.length === 0 ? (
         <div className="rounded-xl border border-dashed border-gray-300 py-10 text-center text-sm text-black/60">
@@ -166,9 +169,9 @@ const ManageFarms = () => {
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div className="min-w-0 flex-1 space-y-4">
                     <div>
-                      <h3 className="text-lg font-semibold text-[#2A5A2A]">{farm.name}</h3>
+                      <h3 className="text-lg font-semibold text-[#0B3D2E]">{farm.name}</h3>
                       <p className="mt-0.5 text-xs text-black/45">
-                        {f.listRegistered}: {formatDate(farm.createdAt)}
+                        {f.listRegistered}: {formatDate(farm.createdAt, 'short')}
                       </p>
                     </div>
 
@@ -226,7 +229,7 @@ const ManageFarms = () => {
 
                     {hasClimate && (
                       <div className="rounded-lg border border-[#5B8C51]/15 bg-[#F5F9F5]/80 px-3 py-2.5">
-                        <p className="mb-2 text-xs font-semibold text-[#2A5A2A]">{f.listClimate}</p>
+                        <p className="mb-2 text-xs font-semibold text-[#0B3D2E]">{f.listClimate}</p>
                         <dl className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs text-black/70 sm:grid-cols-3 lg:grid-cols-6">
                           {farm.ph != null && (
                             <div>
@@ -280,7 +283,7 @@ const ManageFarms = () => {
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="border-[#2A5A2A]/40 text-[#2A5A2A] hover:bg-[#2A5A2A]/5"
+                      className="border-[#0B3D2E]/40 text-[#0B3D2E] hover:bg-[#0B3D2E]/5"
                       onClick={() => openEditDialog(farm)}
                     >
                       {f.update}
@@ -302,12 +305,18 @@ const ManageFarms = () => {
         </div>
       )}
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+      <Dialog
+        open={dialogOpen}
+        onOpenChange={(open) => {
+          if (!open) closeFormDialog();
+          else setDialogOpen(true);
+        }}
+      >
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingFarm ? f.editFarm : f.addFarmDialog}</DialogTitle>
+            <DialogTitle>{isAddMode ? f.addFarmDialog : f.editFarm}</DialogTitle>
             <DialogDescription>
-              {editingFarm ? f.editDescription : f.addDescription}
+              {isAddMode ? f.addDescription : f.editDescription}
             </DialogDescription>
           </DialogHeader>
 
@@ -328,9 +337,9 @@ const ManageFarms = () => {
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder={f.select} />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent position="popper" className="z-[140]">
                     {SOIL_TYPES.map((st) => (
-                      <SelectItem key={st.value} value={st.value}>{soilTypeLabel(st.value)}</SelectItem>
+                      <SelectItem key={st} value={st}>{soilTypeLabel(st)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -342,9 +351,9 @@ const ManageFarms = () => {
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder={f.select} />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent position="popper" className="z-[140]">
                     {SOIL_COLORS.map((c) => (
-                      <SelectItem key={c.value} value={c.value}>{soilColorLabel(c.value)}</SelectItem>
+                      <SelectItem key={c} value={c}>{soilColorLabel(c)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -410,14 +419,24 @@ const ManageFarms = () => {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogOpen(false)}>{t.common.cancel}</Button>
+            <Button variant="outline" onClick={closeFormDialog}>
+              {t.common.cancel}
+            </Button>
             <Button
               onClick={handleSubmit}
               disabled={!form.name.trim() || isPending}
-              className="bg-[#2A5A2A] hover:bg-[#1E431E] text-white"
+              className="bg-[#0B3D2E] hover:bg-[#082F24] text-white"
             >
-              {isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
-              {editingFarm ? f.update : f.saveFarm}
+              {isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-1" />
+                  {f.saving}
+                </>
+              ) : isAddMode ? (
+                f.saveFarm
+              ) : (
+                f.update
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -432,13 +451,17 @@ const ManageFarms = () => {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteDialog(null)}>{t.common.cancel}</Button>
+            <Button variant="outline" onClick={() => setDeleteDialog(null)}>
+              {t.common.cancel}
+            </Button>
             <Button
               onClick={handleDelete}
               disabled={deleteMutation.isPending}
               className="bg-red-600 hover:bg-red-700 text-white"
             >
-              {deleteMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+              {deleteMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-1" />
+              ) : null}
               {f.delete}
             </Button>
           </DialogFooter>
