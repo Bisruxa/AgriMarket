@@ -238,6 +238,26 @@ export const dashboardEn: DashboardTranslations = {
         title: "New crop insights",
         message: "Your farms are ready — run an AI crop recommendation for this season.",
       },
+      "farmer-price-up": {
+        title: "Price surge detected",
+        message: "One of your crops rose by about {{count}}%. This may be a good time to sell.",
+      },
+      "farmer-price-down": {
+        title: "Price drop alert",
+        message: "One of your crops dropped by about {{count}}%. Consider waiting for recovery.",
+      },
+      "farmer-sell-window": {
+        title: "Profitable sell window",
+        message: "Forecast suggests up to {{count}}% better return if you target the best sell month.",
+      },
+      "farmer-weather-rain": {
+        title: "Heavy rain warning",
+        message: "Significant rain is forecast this week. Protect fields and adjust harvest logistics.",
+      },
+      "farmer-weather-heat": {
+        title: "Heat stress warning",
+        message: "High temperatures are expected this week. Plan irrigation and crop protection early.",
+      },
       "trader-pending": {
         title: "Account under review",
         message: "Your trader application is pending admin approval. We'll notify you when it's reviewed.",
@@ -529,6 +549,26 @@ export const dashboardAm: DashboardTranslations = {
       "farmer-crop-tip": {
         title: "አዲስ የሰብል ምክር",
         message: "እርሻዎች ዝግጁ ናቸው — ለዚህ ወቅት የአይአይ የሰብል ምክር ያሂዱ።",
+      },
+      "farmer-price-up": {
+        title: "የዋጋ ግስጋሴ ተገኘ",
+        message: "ከሰብሎችዎ አንዱ በ{{count}}% ያህል ጨምሯል። ለመሸጥ ጥሩ ጊዜ ሊሆን ይችላል።",
+      },
+      "farmer-price-down": {
+        title: "የዋጋ መቀነስ ማስጠንቀቂያ",
+        message: "ከሰብሎችዎ አንዱ በ{{count}}% ያህል ቀንሷል። እስኪመለስ ድረስ መጠበቅ ይሻላል።",
+      },
+      "farmer-sell-window": {
+        title: "ትርፋማ የሽያጭ ጊዜ",
+        message: "በተመረጠው ወር መሸጥ እስከ {{count}}% ተጨማሪ ገቢ ሊያመጣ እንደሚችል ትንበያ ያሳያል።",
+      },
+      "farmer-weather-rain": {
+        title: "ከባድ ዝናብ ማስጠንቀቂያ",
+        message: "በዚህ ሳምንት ከባድ ዝናብ ይጠበቃል። እርሻውን ይጠብቁ እና የመከር እቅድ ያስተካክሉ።",
+      },
+      "farmer-weather-heat": {
+        title: "የከፍተኛ ሙቀት ማስጠንቀቂያ",
+        message: "በዚህ ሳምንት ከፍተኛ ሙቀት ይጠበቃል። ቀድሞ የማጠጣት እና የሰብል ጥበቃ እቅድ ያዘጋጁ።",
       },
       "trader-pending": {
         title: "መለያ በመገምገም ላይ",

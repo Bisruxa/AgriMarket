@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../models/weather_model.dart';
+
 String _formatCurrentDate(DateTime date) {
   const weekdays = [
     'Monday',
@@ -38,18 +40,66 @@ List<String> _forecastDayLabels(DateTime today) {
 
 class FarmerWeatherCard extends StatelessWidget {
   final String greetingName;
-  final String seasonalAlert;
+  final WeatherForecast? forecast;
+  final bool isLoading;
 
   const FarmerWeatherCard({
     super.key,
     required this.greetingName,
-    this.seasonalAlert =
-        'Seasonal Alert: Meher sowing window: 10 days remaining.',
+    this.forecast,
+    this.isLoading = false,
   });
+
+  String _weatherDetail(int? code) {
+    if (code == null) return '—';
+    if (code == 0) return 'Clear';
+    if (code <= 3) return 'Cloudy';
+    if (code <= 67) return 'Rain';
+    return 'Storm';
+  }
+
+  IconData _weatherIcon(int? code) {
+    if (code == null) return Icons.wb_cloudy_rounded;
+    if (code == 0) return Icons.wb_sunny_rounded;
+    if (code <= 3) return Icons.wb_cloudy_rounded;
+    if (code <= 67) return Icons.grain_rounded;
+    return Icons.thunderstorm_rounded;
+  }
 
   @override
   Widget build(BuildContext context) {
     final dayLabels = _forecastDayLabels(DateTime.now());
+    final daily = forecast?.daily ?? [];
+    final currentTemp = forecast?.currentTempC;
+
+    if (isLoading) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            colors: [Color(0xFF1E88E5), Color(0xFF43A047)],
+          ),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: const Center(
+          child: CircularProgressIndicator(color: Colors.white),
+        ),
+      );
+    }
+
+    String seasonalAlert = 'Check field conditions for the week ahead.';
+    if (daily.isNotEmpty) {
+      final maxRain = daily
+          .map((d) => (d['precipitationSumMm'] as num?)?.toDouble() ?? 0)
+          .fold<double>(0, (a, b) => a > b ? a : b);
+      if (maxRain >= 40) {
+        seasonalAlert = 'Heavy rain expected — plan field work accordingly.';
+      }
+    }
+    if (forecast?.farmName != null) {
+      seasonalAlert = '${forecast!.farmName}: $seasonalAlert';
+    }
 
     return Container(
       width: double.infinity,
@@ -90,32 +140,38 @@ class FarmerWeatherCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Row(
-            children: [
-              Expanded(
+            children: List.generate(3, (i) {
+              if (i < daily.length) {
+                final d = daily[i];
+                final code = d['weatherCode'] is num
+                    ? (d['weatherCode'] as num).toInt()
+                    : null;
+                final maxT = d['tempMaxC'];
+                final tempStr = maxT is num
+                    ? '${maxT.round()}°C'
+                    : (currentTemp != null && i == 0
+                        ? '${currentTemp.round()}°C'
+                        : '—');
+                return Expanded(
+                  child: _ForecastDay(
+                    label: dayLabels[i],
+                    temp: tempStr,
+                    detail: _weatherDetail(code),
+                    icon: _weatherIcon(code),
+                  ),
+                );
+              }
+              return Expanded(
                 child: _ForecastDay(
-                  label: dayLabels[0],
-                  temp: '24°C',
-                  detail: 'Sunny',
-                  icon: Icons.wb_sunny_rounded,
+                  label: dayLabels[i],
+                  temp: i == 0 && currentTemp != null
+                      ? '${currentTemp.round()}°C'
+                      : '—',
+                  detail: '—',
+                  icon: Icons.wb_cloudy_rounded,
                 ),
-              ),
-              Expanded(
-                child: _ForecastDay(
-                  label: dayLabels[1],
-                  temp: '25°C',
-                  detail: 'Rain 20%',
-                  icon: Icons.grain_rounded,
-                ),
-              ),
-              Expanded(
-                child: _ForecastDay(
-                  label: dayLabels[2],
-                  temp: '23°C',
-                  detail: 'Sunny',
-                  icon: Icons.wb_sunny_outlined,
-                ),
-              ),
-            ],
+              );
+            }),
           ),
           const SizedBox(height: 14),
           Container(

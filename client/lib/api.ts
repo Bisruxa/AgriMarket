@@ -178,6 +178,57 @@ export interface PriceRecord {
   source: string | null;
 }
 
+export interface SalesTimingResult {
+  cropName: string;
+  region: string | null;
+  hasData: boolean;
+  recommendation: {
+    bestSellMonth: number;
+    bestSellMonthName: string;
+    averageBestPrice: number;
+    lowestMonth: number;
+    lowestMonthName: string;
+    averageLowestPrice: number;
+    latestKnownPrice: number;
+    latestKnownPeriod: string;
+    expectedGainPercent: number;
+  } | null;
+  topMonths?: Array<{ month: number; monthName: string; avgPrice: number; samples: number }>;
+  dataPoints?: number;
+}
+
+export interface MultiCropProfitabilityResult {
+  hasData: boolean;
+  summary: {
+    farmsAnalyzed: number;
+    cropsAnalyzed: number;
+    profitableNow: number;
+    diversificationIndex: number;
+    topRecommendation: string | null;
+  } | null;
+  topRecommendations?: Array<{
+    cropName: string;
+    hasPriceData: boolean;
+    region?: string;
+    latestPrice?: number;
+    recentAverage?: number;
+    annualAverage?: number;
+    trendPercent?: number;
+    score?: number;
+  }>;
+  items?: Array<{
+    cropName: string;
+    hasPriceData: boolean;
+    region?: string;
+    latestPrice?: number;
+    recentAverage?: number;
+    annualAverage?: number;
+    trendPercent?: number;
+    score?: number;
+  }>;
+  message?: string;
+}
+
 export const pricesApi = {
   getTrends: (params?: { cropName?: string; region?: string; limit?: number }) => {
     const query = new URLSearchParams();
@@ -189,6 +240,16 @@ export const pricesApi = {
   getCrops: () => api.get<string[]>('/prices/crops'),
   getRegions: () => api.get<string[]>('/prices/regions'),
   getYearRange: () => api.get<{ minYear: number; maxYear: number }>('/prices/year-range'),
+  getSalesTiming: (params: { cropName: string; region?: string }) => {
+    const query = new URLSearchParams();
+    query.set('cropName', params.cropName);
+    if (params.region) query.set('region', params.region);
+    return api.get<SalesTimingResult>(`/prices/sales-timing?${query.toString()}`);
+  },
+  getMultiCropProfitability: (farmId?: string) =>
+    api.get<MultiCropProfitabilityResult>(
+      farmId ? `/prices/multi-crop-profitability?farmId=${farmId}` : '/prices/multi-crop-profitability'
+    ),
 };
 
 export const chatApi = {

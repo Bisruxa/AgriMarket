@@ -1,7 +1,10 @@
 import 'package:agrimatketapp/config/api_config.dart';
 import 'package:agrimatketapp/models/agriai_model.dart';
 import 'package:agrimatketapp/models/farm_model.dart';
+import 'package:agrimatketapp/models/notification_model.dart';
+import 'package:agrimatketapp/models/price_model.dart';
 import 'package:agrimatketapp/models/profile_model.dart';
+import 'package:agrimatketapp/models/weather_model.dart';
 import 'package:agrimatketapp/services/token_storage.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
@@ -258,6 +261,9 @@ class ApiService {
   Future<Response> getProducts({
     String? category,
     bool? available,
+    String? search,
+    double? minPrice,
+    double? maxPrice,
     int page = 1,
     int limit = 10,
   }) async {
@@ -271,10 +277,29 @@ class ApiService {
     if (available != null) {
       params['available'] = available.toString();
     }
+    if (search != null && search.trim().isNotEmpty) {
+      params['search'] = search.trim();
+    }
+    if (minPrice != null) {
+      params['minPrice'] = minPrice.toString();
+    }
+    if (maxPrice != null) {
+      params['maxPrice'] = maxPrice.toString();
+    }
     final query = params.entries
         .map((e) => '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}')
         .join('&');
     return get('${ApiConfig.products}?$query');
+  }
+
+  Future<Response> getProductById(String id) async {
+    return get(ApiConfig.productById(id));
+  }
+
+  Future<Response> getFarmerProducts(String farmerId, {int page = 1, int limit = 10}) async {
+    return get(
+      '${ApiConfig.farmerProducts(farmerId)}?page=$page&limit=$limit',
+    );
   }
 
   Future<Response> createProduct(Map<String, dynamic> data) async {
@@ -378,6 +403,72 @@ class ApiService {
       );
     } catch (_) {
       return const CropRecommendResult(
+        success: false,
+        message: 'Network error. Please try again.',
+      );
+    }
+  }
+
+  Future<Farm?> getFarmById(String id) async {
+    try {
+      final response = await get(ApiConfig.farmById(id));
+      final data = response.data;
+      if (response.statusCode == 200 &&
+          data is Map<String, dynamic> &&
+          data['success'] == true) {
+        final farm = data['data'];
+        if (farm is Map<String, dynamic>) {
+          return Farm.fromJson(farm);
+        }
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<FarmMutationResult> updateFarm(String id, Map<String, dynamic> payload) async {
+    try {
+      final response = await put(ApiConfig.farmById(id), payload);
+      final data = response.data;
+      if (response.statusCode == 200 &&
+          data is Map<String, dynamic> &&
+          data['success'] == true) {
+        return FarmMutationResult(
+          success: true,
+          message: data['message']?.toString() ?? 'Farm updated',
+        );
+      }
+      return FarmMutationResult(
+        success: false,
+        message: _messageFromBody(data) ?? 'Failed to update farm',
+      );
+    } catch (_) {
+      return FarmMutationResult(
+        success: false,
+        message: 'Network error. Please try again.',
+      );
+    }
+  }
+
+  Future<FarmMutationResult> deleteFarm(String id) async {
+    try {
+      final response = await delete(ApiConfig.farmById(id));
+      final data = response.data;
+      if (response.statusCode == 200 &&
+          data is Map<String, dynamic> &&
+          data['success'] == true) {
+        return FarmMutationResult(
+          success: true,
+          message: data['message']?.toString() ?? 'Farm deleted',
+        );
+      }
+      return FarmMutationResult(
+        success: false,
+        message: _messageFromBody(data) ?? 'Failed to delete farm',
+      );
+    } catch (_) {
+      return FarmMutationResult(
         success: false,
         message: 'Network error. Please try again.',
       );
@@ -536,10 +627,277 @@ class ApiService {
   Future<bool> deleteChat(String chatId) async {
     try {
       final response = await delete('${ApiConfig.chat}/$chatId');
-      return response.statusCode == 200;
+      final data = response.data;
+      return response.statusCode == 200 &&
+          data is Map<String, dynamic> &&
+          data['success'] == true;
     } catch (_) {
       return false;
     }
+  }
+
+  Future<bool> appendChatMessage(
+    String chatId, {
+    required String role,
+    required String content,
+  }) async {
+    try {
+      final response = await post(ApiConfig.chatAppend(chatId), {
+        'role': role,
+        'content': content,
+      });
+      final data = response.data;
+      return response.statusCode == 200 &&
+          data is Map<String, dynamic> &&
+          data['success'] == true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  // ── Notifications ───────────────────────────────────────────────────────
+
+  Future<NotificationsResult> getNotifications() async {
+    try {
+      final response = await get(ApiConfig.notifications);
+      final data = response.data;
+      if (response.statusCode == 200 &&
+          data is Map<String, dynamic> &&
+          data['success'] == true) {
+        final payload = data['data'];
+        final list = <AppNotification>[];
+        var unread = 0;
+        if (payload is Map<String, dynamic>) {
+          unread = payload['unreadCount'] is num
+              ? (payload['unreadCount'] as num).toInt()
+              : 0;
+          final raw = payload['notifications'];
+          if (raw is List) {
+            for (final item in raw) {
+              if (item is Map<String, dynamic>) {
+                list.add(AppNotification.fromJson(item));
+              }
+            }
+          }
+        }
+        return NotificationsResult(
+          success: true,
+          notifications: list,
+          unreadCount: unread,
+        );
+      }
+      return NotificationsResult(
+        success: false,
+        message: _messageFromBody(data) ?? 'Failed to load notifications',
+      );
+    } catch (_) {
+      return const NotificationsResult(
+        success: false,
+        message: 'Network error',
+      );
+    }
+  }
+
+  // ── Weather ─────────────────────────────────────────────────────────────
+
+  Future<WeatherForecast?> getWeatherForecast({
+    required double latitude,
+    required double longitude,
+  }) async {
+    try {
+      final response = await get(
+        '${ApiConfig.weatherForecast}?latitude=$latitude&longitude=$longitude',
+      );
+      final data = response.data;
+      if (response.statusCode == 200 &&
+          data is Map<String, dynamic> &&
+          data['success'] == true &&
+          data['data'] is Map<String, dynamic>) {
+        return WeatherForecast.fromJson(data['data'] as Map<String, dynamic>);
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<WeatherForecast?> getWeatherForFarm(String farmId) async {
+    try {
+      final response = await get(ApiConfig.weatherFarm(farmId));
+      final data = response.data;
+      if (response.statusCode == 200 &&
+          data is Map<String, dynamic> &&
+          data['success'] == true &&
+          data['data'] is Map<String, dynamic>) {
+        return WeatherForecast.fromJson(data['data'] as Map<String, dynamic>);
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // ── Prices ──────────────────────────────────────────────────────────────
+
+  Future<List<PriceRecord>> getPriceTrends({
+    String? cropName,
+    String? region,
+    int limit = 100,
+  }) async {
+    try {
+      final params = <String, String>{'limit': limit.toString()};
+      if (cropName != null && cropName.isNotEmpty) {
+        params['cropName'] = cropName;
+      }
+      if (region != null && region.isNotEmpty) {
+        params['region'] = region;
+      }
+      final query = params.entries
+          .map((e) => '${Uri.encodeComponent(e.key)}=${Uri.encodeComponent(e.value)}')
+          .join('&');
+      final response = await get('${ApiConfig.pricesTrends}?$query');
+      final data = response.data;
+      if (response.statusCode == 200 &&
+          data is Map<String, dynamic> &&
+          data['success'] == true &&
+          data['data'] is List) {
+        return (data['data'] as List)
+            .whereType<Map<String, dynamic>>()
+            .map(PriceRecord.fromJson)
+            .toList();
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<List<String>> getPriceCrops() async {
+    try {
+      final response = await get(ApiConfig.pricesCrops);
+      final data = response.data;
+      if (data is Map<String, dynamic> &&
+          data['success'] == true &&
+          data['data'] is List) {
+        return (data['data'] as List).map((e) => e.toString()).toList();
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<List<String>> getPriceRegions() async {
+    try {
+      final response = await get(ApiConfig.pricesRegions);
+      final data = response.data;
+      if (data is Map<String, dynamic> &&
+          data['success'] == true &&
+          data['data'] is List) {
+        return (data['data'] as List).map((e) => e.toString()).toList();
+      }
+      return [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<SalesTimingResult?> getSalesTiming({
+    required String cropName,
+    String? region,
+  }) async {
+    try {
+      var path = '${ApiConfig.pricesSalesTiming}?cropName=${Uri.encodeComponent(cropName)}';
+      if (region != null && region.isNotEmpty) {
+        path += '&region=${Uri.encodeComponent(region)}';
+      }
+      final response = await get(path);
+      final data = response.data;
+      if (response.statusCode == 200 &&
+          data is Map<String, dynamic> &&
+          data['success'] == true &&
+          data['data'] is Map<String, dynamic>) {
+        return SalesTimingResult.fromJson(data['data'] as Map<String, dynamic>);
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<MultiCropProfitabilityResult?> getMultiCropProfitability({String? farmId}) async {
+    try {
+      var path = ApiConfig.pricesMultiCrop;
+      if (farmId != null && farmId.isNotEmpty) {
+        path += '?farmId=${Uri.encodeComponent(farmId)}';
+      }
+      final response = await get(path);
+      final data = response.data;
+      if (response.statusCode == 200 &&
+          data is Map<String, dynamic> &&
+          data['success'] == true &&
+          data['data'] is Map<String, dynamic>) {
+        return MultiCropProfitabilityResult.fromJson(
+          data['data'] as Map<String, dynamic>,
+        );
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // ── Auth extras ─────────────────────────────────────────────────────────
+
+  Future<bool> checkEmailAvailable(String email) async {
+    try {
+      final response = await post(ApiConfig.checkEmail, {'email': email.trim()});
+      final data = response.data;
+      if (data is Map<String, dynamic> && data['success'] == true) {
+        return data['available'] == true;
+      }
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<ProfileMutationResult> deleteMyAccount() async {
+    try {
+      final response = await delete(ApiConfig.deleteAccount);
+      final data = response.data;
+      if (response.statusCode == 200 &&
+          data is Map<String, dynamic> &&
+          data['success'] == true) {
+        await TokenStorage.clear();
+        return ProfileMutationResult(
+          success: true,
+          message: data['message']?.toString() ?? 'Account deleted',
+        );
+      }
+      return ProfileMutationResult(
+        success: false,
+        message: _messageFromBody(data) ?? 'Failed to delete account',
+      );
+    } catch (_) {
+      return const ProfileMutationResult(
+        success: false,
+        message: 'Network error. Please try again.',
+      );
+    }
+  }
+
+  Future<Map<String, dynamic>> executeAgriAiTool({
+    required String name,
+    Map<String, dynamic>? args,
+  }) async {
+    final response = await post(ApiConfig.agriaiToolsExecute, {
+      'name': name,
+      'args': args ?? {},
+    });
+    return response.data is Map<String, dynamic>
+        ? response.data as Map<String, dynamic>
+        : {};
   }
 
   // ── Helpers ─────────────────────────────────────────────────────────────

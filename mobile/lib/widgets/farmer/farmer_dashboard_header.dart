@@ -21,6 +21,7 @@ class FarmerDashboardHeader extends StatelessWidget {
   final String farmerName;
   final String profileImageUrl;
   final VoidCallback? onLogout;
+  final VoidCallback? onOpenFarms;
   final List<FarmerInboxMessage> messages;
 
   const FarmerDashboardHeader({
@@ -28,31 +29,9 @@ class FarmerDashboardHeader extends StatelessWidget {
     required this.farmerName,
     required this.profileImageUrl,
     this.onLogout,
-    this.messages = _defaultMessages,
+    this.onOpenFarms,
+    this.messages = const [],
   });
-
-  static const _defaultMessages = [
-    FarmerInboxMessage(
-      id: '1',
-      title: 'New offer on Wheat',
-      body: 'A trader offered ETB 3,400/qtl for your wheat listing.',
-      timeAgo: '12 min ago',
-    ),
-    FarmerInboxMessage(
-      id: '2',
-      title: 'Listing viewed',
-      body: 'Your Premium Teff listing was viewed 8 times today.',
-      timeAgo: '2h ago',
-      isRead: true,
-    ),
-    FarmerInboxMessage(
-      id: '3',
-      title: 'Market alert',
-      body: 'Teff prices in Oromia rose 3% this week.',
-      timeAgo: 'Yesterday',
-      isRead: true,
-    ),
-  ];
 
   int get _unreadCount => messages.where((m) => !m.isRead).length;
 
@@ -247,6 +226,23 @@ class FarmerDashboardHeader extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 24),
+                if (onOpenFarms != null)
+                  SizedBox(
+                    width: double.infinity,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        onOpenFarms?.call();
+                      },
+                      icon: const Icon(Icons.agriculture_rounded, color: AppColors.primary),
+                      label: const Text('My Farms'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        side: const BorderSide(color: AppColors.primary),
+                      ),
+                    ),
+                  ),
+                if (onOpenFarms != null) const SizedBox(height: 12),
                 SizedBox(
                   width: double.infinity,
                   child: OutlinedButton.icon(

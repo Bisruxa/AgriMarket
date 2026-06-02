@@ -37,7 +37,7 @@ const TopActionControls = () => {
   const t = useTranslations();
   const { language } = useLanguage();
   const n = t.dashboard.notifications;
-  const { data, isLoading, isError, refetch } = useNotifications();
+  const { data, isLoading, isError, refetch, isReady } = useNotifications();
 
   useEffect(() => {
     setDismissed(loadDismissed());
@@ -106,7 +106,9 @@ const TopActionControls = () => {
     setIsOpen((prev) => {
       const next = !prev;
       if (next) {
-        refetch();
+        if (isReady) {
+          void refetch();
+        }
         requestAnimationFrame(updatePanelPosition);
       }
       return next;

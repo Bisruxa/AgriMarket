@@ -18,8 +18,6 @@ from .schemas import (
     PriceForecasterMetadataResponse,
 )
 from .services.service_factory import service_factory
-from .services.gemini_service import send_message as gemini_send_message
-from .services.gemini_service import send_message_stream
 from .services.function_executor import get_tool_definitions, execute_function
 
 load_dotenv()
@@ -121,8 +119,15 @@ def predict_price(request: PriceForecastRequest) -> Dict[str, Any]:
 
 @app.post("/recommend/crop", response_model=CropRecommendationResponse)
 def recommend_crop(request: CropRecommendationRequest) -> Dict[str, Any]:
+    if app.state.recommender_service is None:
+        raise HTTPException(
+            status_code=503,
+            detail="Crop recommender model is not loaded. Check server logs on startup.",
+        )
     try:
         return app.state.recommender_service.predict(request.model_dump())
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {exc}") from exc
 
@@ -132,6 +137,8 @@ def recommend_crop(request: CropRecommendationRequest) -> Dict[str, Any]:
 @app.post("/chat", response_model=ChatResponse)
 def chat(request: ChatRequest) -> Dict[str, Any]:
     try:
+        from .services.gemini_service import send_message as gemini_send_message
+
         result = gemini_send_message(
             message=request.message,
             conversation_history=request.conversation_history,
@@ -149,6 +156,8 @@ def chat(request: ChatRequest) -> Dict[str, Any]:
 
 @app.post("/chat/stream")
 def chat_stream(request: ChatRequest):
+    from .services.gemini_service import send_message_stream
+
     async def event_stream():
         for event in send_message_stream(
             message=request.message,

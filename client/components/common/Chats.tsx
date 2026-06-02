@@ -4,6 +4,7 @@ import { User, Send, Sparkles, Mic, MicOff, Radio } from "lucide-react";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { VoiceSettings } from "./VoiceSettings";
 import { Language, Voice } from "@/types/real-time";
+import { useLanguage } from "@/app/context/LanguageContext";
 
 interface Message {
   id: string;
@@ -45,6 +46,8 @@ export function Chats({
   onToggleMute,
   className,
 }: ChatsProps) {
+  const { language } = useLanguage();
+  const isAm = language === "am";
   const [inputValue, setInputValue] = React.useState("");
   const [isListening, setIsListening] = React.useState(false);
   const [isSpeechSupported, setIsSpeechSupported] = React.useState(false);
@@ -149,7 +152,7 @@ export function Chats({
             <div className="flex flex-col items-center justify-center h-full text-center text-[#6ea584] mt-16">
               <Sparkles className="h-12 w-12 mb-4 opacity-50" />
               <h3 className="text-lg font-medium text-[#1d4a2e]">
-                How Can I Help You Today
+                {isAm ? "ዛሬ እንዴት ልረዳዎ?" : "How Can I Help You Today"}
               </h3>
             </div>
           )}
@@ -273,7 +276,7 @@ export function Chats({
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ask about crops, prices, weather..."
+              placeholder={isAm ? "ስለ ሰብል፣ ዋጋ ወይም አየር ሁኔታ ይጠይቁ..." : "Ask about crops, prices, weather..."}
               className="flex-1 bg-transparent border-none py-4 text-sm outline-none text-[#1b4027] placeholder-[#8cb99e]"
             />
           )}

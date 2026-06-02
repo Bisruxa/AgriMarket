@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery, skipToken } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { notificationsApi, ApiResponse, AppNotification } from '@/lib/api';
 import { useAuth } from '@/app/context/UserContext';
 
@@ -14,9 +14,10 @@ export function useNotifications() {
   const { user, loading: authLoading } = useAuth();
   const isReady = !authLoading && !!user && hasStoredToken();
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ['notifications', user?.id],
-    queryFn: isReady ? () => notificationsApi.getAll() : skipToken,
+    enabled: isReady,
+    queryFn: () => notificationsApi.getAll(),
     refetchInterval: isReady ? 60_000 : false,
     select: (res: ApiResponse<{ notifications: AppNotification[]; unreadCount: number }>) => {
       if (!res.success || !res.data) {
@@ -29,4 +30,6 @@ export function useNotifications() {
       };
     },
   });
+
+  return { ...query, isReady };
 }

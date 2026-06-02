@@ -8,8 +8,12 @@ import '../../widgets/custom_dropdown.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/location_picker.dart';
 
+import '../../models/farm_model.dart';
+
 class AddFarmScreen extends StatefulWidget {
-  const AddFarmScreen({super.key});
+  final Farm? existingFarm;
+
+  const AddFarmScreen({super.key, this.existingFarm});
 
   @override
   State<AddFarmScreen> createState() => _AddFarmScreenState();
@@ -27,6 +31,22 @@ class _AddFarmScreenState extends State<AddFarmScreen> {
   String? _woreda;
   bool _isSaving = false;
 
+  bool get _isEdit => widget.existingFarm != null;
+
+  @override
+  void initState() {
+    super.initState();
+    final farm = widget.existingFarm;
+    if (farm != null) {
+      _nameController.text = farm.name;
+      _kebeleController.text = farm.kebele ?? '';
+      _soilType = farm.soilType;
+      _soilColor = farm.soilColor ?? 'brown';
+      _region = farm.region;
+      _woreda = farm.woreda;
+    }
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -39,7 +59,7 @@ class _AddFarmScreenState extends State<AddFarmScreen> {
 
     setState(() => _isSaving = true);
 
-    final result = await _api.createFarm({
+    final payload = {
       'name': _nameController.text.trim(),
       if (_soilType != null && _soilType!.isNotEmpty) 'soilType': _soilType,
       'soilColor': _soilColor,
@@ -47,7 +67,11 @@ class _AddFarmScreenState extends State<AddFarmScreen> {
       if (_woreda != null && _woreda!.isNotEmpty) 'woreda': _woreda,
       if (_kebeleController.text.trim().isNotEmpty)
         'kebele': _kebeleController.text.trim(),
-    });
+    };
+
+    final result = _isEdit
+        ? await _api.updateFarm(widget.existingFarm!.id, payload)
+        : await _api.createFarm(payload);
 
     if (!mounted) return;
     setState(() => _isSaving = false);
@@ -76,7 +100,7 @@ class _AddFarmScreenState extends State<AddFarmScreen> {
     return Scaffold(
       backgroundColor: AppColors.surface,
       appBar: AppBar(
-        title: const Text('Add Farm'),
+        title: Text(_isEdit ? 'Edit Farm' : 'Add Farm'),
         backgroundColor: AppColors.surface,
         elevation: 0,
         foregroundColor: AppColors.textPrimary,
@@ -155,7 +179,7 @@ class _AddFarmScreenState extends State<AddFarmScreen> {
               ),
               const SizedBox(height: 8),
               CustomButton(
-                text: 'Save Farm',
+                text: _isEdit ? 'Update Farm' : 'Save Farm',
                 isLoading: _isSaving,
                 onPressed: _submit,
               ),

@@ -5,7 +5,6 @@ from typing import Dict
 
 from .base_service import InferenceService
 from .crop_recommender_service import CropRecommenderService
-from .price_forecaster_service import PriceForecasterService
 
 
 class ServiceFactory:
@@ -15,7 +14,6 @@ class ServiceFactory:
 
     def __init__(self):
         self._services: Dict[str, type[InferenceService]] = {
-            "price_forecaster": PriceForecasterService,
             "crop_recommender": CropRecommenderService,
         }
 
@@ -25,6 +23,11 @@ class ServiceFactory:
         """
         Returns an instance of the specified service.
         """
+        if service_name == "price_forecaster":
+            from .price_forecaster_service import PriceForecasterService
+
+            return PriceForecasterService(**kwargs)
+
         service = self._services.get(service_name)
         if not service:
             raise ValueError(f"Service '{service_name}' not found.")

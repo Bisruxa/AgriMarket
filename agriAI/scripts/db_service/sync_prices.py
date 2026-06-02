@@ -41,9 +41,6 @@ if not SERVER_ENV.exists():
     SERVER_ENV = AGRI_ROOT / ".env"
 load_dotenv(SERVER_ENV)
 
-import torch
-from api.services.service_factory import service_factory
-
 CSV_PATH = AGRI_ROOT / "data" / "processed" / "crop_price_history_v2.csv"
 BATCH_SIZE = 1000
 
@@ -275,6 +272,8 @@ def main():
 
     if forecast_pairs:
         print(f"Forecasting missing periods for {len(forecast_pairs)} crop-region pairs ...")
+        from api.services.service_factory import service_factory
+
         forecaster = service_factory.get_price_forecaster()
 
         future_periods: List[Tuple[int, int]] = []

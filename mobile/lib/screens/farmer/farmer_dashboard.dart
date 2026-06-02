@@ -1,17 +1,22 @@
 import 'package:flutter/material.dart';
-import '../../models/crop_model.dart';
+
+import '../../models/product_model.dart';
 import '../../models/profile_model.dart';
+import '../../models/weather_model.dart';
 import '../../services/api_service.dart';
 import '../../services/token_storage.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/logout_helper.dart';
+import '../../utils/notification_labels.dart';
 import '../../widgets/common/app_bottom_nav.dart';
 import '../../widgets/farmer/farmer_dashboard_header.dart';
 import '../../widgets/farmer/farmer_dashboard_sections.dart';
 import '../../widgets/farmer/farmer_weather_card.dart';
-import 'farmer_chat_screen.dart';
+import 'agri_chat_screen.dart';
+import 'farmer_profile.dart';
+import 'farmer_trends_screen.dart';
+import 'farms_screen.dart';
 import 'marketplace.dart';
-import 'farmer.chat.dart';
 
 class FarmerDashboard extends StatefulWidget {
   const FarmerDashboard({super.key});
@@ -25,6 +30,14 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
   final ApiService _apiService = ApiService();
   UserProfile? _profile;
   bool _isLoadingProfile = true;
+
+  List<FarmerInboxMessage> _inboxMessages = [];
+  WeatherForecast? _weather;
+  bool _weatherLoading = true;
+  List<Product> _myProducts = [];
+  List<CommodityTickerItem> _commodities = [];
+  String? _featuredCropName;
+  double? _featuredCropScore;
 
   static const _defaultImage = 'assets/images/welcome.png';
 
@@ -44,41 +57,33 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
       activeIcon: Icons.store_rounded,
       label: 'Market',
     ),
-  ];
-
-  static const _activeListings = [
-    ActiveListingItem(
-      name: 'Premium Teff',
-      priceLine: 'ETB 6200/qtl',
-      statusLine: '15 qtl',
-      imageAsset: 'assets/images/Crop1.jpg',
+    AppNavItem(
+      icon: Icons.insights_outlined,
+      activeIcon: Icons.insights_rounded,
+      label: 'Insights',
     ),
-    ActiveListingItem(
-      name: 'White Maize',
-      priceLine: 'ETB 2950/qtl',
-      statusLine: '20 qtl',
-      imageAsset: 'assets/images/Crop2.jpg',
-    ),
-    ActiveListingItem(
-      name: 'Sorghum',
-      priceLine: 'ETB 3200/qtl',
-      statusLine: '10 qtl',
-      imageAsset: 'assets/images/Crop3.jpg',
-      statusHighlight: true,
-    ),
-    ActiveListingItem(
-      name: 'Wheat',
-      priceLine: 'ETB 3500/qtl',
-      statusLine: 'Offer Received',
-      imageAsset: 'assets/images/Crop4.jpg',
-      statusHighlight: true,
+    AppNavItem(
+      icon: Icons.person_outline_rounded,
+      activeIcon: Icons.person_rounded,
+      label: 'Profile',
     ),
   ];
 
   @override
   void initState() {
     super.initState();
-    _loadProfile();
+    _loadAll();
+  }
+
+  Future<void> _loadAll() async {
+    await _loadProfile();
+    await Future.wait([
+      _loadNotifications(),
+      _loadWeatherAndFarms(),
+      _loadProducts(),
+      _loadCommodities(),
+      _loadMultiCrop(),
+    ]);
   }
 
   Future<void> _loadProfile() async {
@@ -119,6 +124,107 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
     }
   }
 
+  Future<void> _loadNotifications() async {
+    final result = await _apiService.getNotifications();
+    if (!mounted || !result.success) return;
+    setState(() {
+      _inboxMessages = result.notifications.map((n) {
+        final labels = NotificationLabels.label(n);
+        return FarmerInboxMessage(
+          id: n.id,
+          title: labels.title,
+          body: labels.body,
+          timeAgo: NotificationLabels.timeAgo(n.createdAt),
+        );
+      }).toList();
+    });
+  }
+
+  Future<void> _loadWeatherAndFarms() async {
+    setState(() => _weatherLoading = true);
+    final farmsResult = await _apiService.getFarms();
+    WeatherForecast? forecast;
+
+    if (farmsResult.success && farmsResult.farms.isNotEmpty) {
+      final withCoords = farmsResult.farms.where(
+        (f) => f.latitude != null && f.longitude != null,
+      );
+      if (withCoords.isNotEmpty) {
+        forecast = await _apiService.getWeatherForFarm(withCoords.first.id);
+      }
+    }
+
+    forecast ??= await _apiService.getWeatherForecast(
+      latitude: 9.03,
+      longitude: 38.74,
+    );
+
+    if (!mounted) return;
+    setState(() {
+      _weather = forecast;
+      _weatherLoading = false;
+    });
+  }
+
+  Future<void> _loadProducts() async {
+    try {
+      final response = await _apiService.getMyProducts(page: 1, limit: 20);
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        final list = response.data['data'] as List? ?? [];
+        if (!mounted) return;
+        setState(() {
+          _myProducts = list.map((j) => Product.fromJson(j)).toList();
+        });
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _loadCommodities() async {
+    const cropNames = ['Teff', 'Wheat', 'Maize', 'Barley'];
+    final items = <CommodityTickerItem>[];
+
+    for (final crop in cropNames) {
+      final records = await _apiService.getPriceTrends(
+        cropName: crop,
+        limit: 2,
+      );
+      if (records.length >= 2) {
+        final latest = records.first.avgPrice;
+        final prev = records[1].avgPrice;
+        final pct = prev > 0 ? ((latest - prev) / prev) * 100 : 0.0;
+        items.add(CommodityTickerItem(
+          name: crop,
+          price: 'ETB ${latest.toStringAsFixed(0)}',
+          change: '${pct >= 0 ? '+' : ''}${pct.toStringAsFixed(0)}%',
+          up: pct >= 0,
+        ));
+      } else if (records.length == 1) {
+        items.add(CommodityTickerItem(
+          name: crop,
+          price: 'ETB ${records.first.avgPrice.toStringAsFixed(0)}',
+          change: '—',
+          up: true,
+        ));
+      }
+    }
+
+    if (!mounted) return;
+    setState(() => _commodities = items);
+  }
+
+  Future<void> _loadMultiCrop() async {
+    final multi = await _apiService.getMultiCropProfitability();
+    if (!mounted || multi == null || !multi.hasData || multi.items.isEmpty) {
+      return;
+    }
+    final top = multi.items.first;
+    setState(() {
+      _featuredCropName = top['cropName']?.toString();
+      final score = top['score'];
+      _featuredCropScore = score is num ? score.toDouble() : null;
+    });
+  }
+
   String get _farmerName => _profile?.name ?? 'Farmer';
 
   String get _firstName {
@@ -128,12 +234,34 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
 
   String get _cropRegion => _profile?.region?.trim() ?? 'Oromia';
 
+  int get _activeListingsCount =>
+      _myProducts.where((p) => p.isAvailable && p.stock > 0).length;
+
+  int get _soldOutCount =>
+      _myProducts.where((p) => !p.isAvailable || p.stock == 0).length;
+
+  List<ActiveListingItem> get _activeListings => _myProducts
+      .where((p) => p.isAvailable && p.stock > 0)
+      .take(4)
+      .map(
+        (p) => ActiveListingItem(
+          name: p.name,
+          priceLine: 'ETB ${p.price.toStringAsFixed(0)}/${p.unit}',
+          statusLine: '${p.stock} in stock',
+          imageAsset: p.images.isNotEmpty
+              ? p.images.first
+              : 'assets/images/Crop1.jpg',
+          statusHighlight: p.stock <= 5,
+        ),
+      )
+      .toList();
+
   List<Widget> get _screens => [
         _buildHomeScreen(),
-        FarmerChatScreen(defaultRegion: _cropRegion),
-        _selectedIndex == 2
-            ? const MarketplaceScreen()
-            : const SizedBox.shrink(),
+        AgriChatScreen(defaultRegion: _cropRegion, showAppBar: false),
+        const MarketplaceScreen(),
+        const FarmerTrendsScreen(),
+        const FarmerProfileScreen(),
       ];
 
   @override
@@ -149,17 +277,13 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
         onTap: (index) => setState(() => _selectedIndex = index),
         items: _navItems,
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const FarmerChatScreen()),
-          );
-        },
-        backgroundColor: AppColors.primary,
-        elevation: 4,
-        child: const Icon(Icons.auto_awesome_rounded, color: Colors.white),
-      ),
+      floatingActionButton: _selectedIndex == 1
+          ? null
+          : FloatingActionButton(
+              onPressed: () => setState(() => _selectedIndex = 1),
+              backgroundColor: AppColors.primary,
+              child: const Icon(Icons.auto_awesome_rounded, color: Colors.white),
+            ),
     );
   }
 
@@ -173,47 +297,64 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
       );
     }
 
-    final featuredCrop = topProfitableCrops.firstWhere(
-      (c) => c.isRecommended,
-      orElse: () => topProfitableCrops.first,
-    );
-
     return ColoredBox(
       color: AppColors.surface,
-      child: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
-            child: FarmerDashboardHeader(
-              farmerName: _farmerName,
-              profileImageUrl: _profile?.avatarUrl ?? _defaultImage,
-              onLogout: () => logoutAndRedirect(context),
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  FarmerWeatherCard(greetingName: _firstName),
-                  const SizedBox(height: 16),
-                  const FarmerVerificationBanner(),
-                  const SizedBox(height: 16),
-                  const MarketplaceAnalyticsCard(),
-                  const CommodityTickerCard(),
-                  AiCropRecommendationsCard(
-                    region: _cropRegion,
-                    featuredCrop: featuredCrop,
-                  ),
-                  ActiveListingsSection(
-                    listings: _activeListings,
-                    onViewAll: () => setState(() => _selectedIndex = 2),
-                  ),
-                ],
+      child: RefreshIndicator(
+        color: AppColors.primary,
+        onRefresh: _loadAll,
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverToBoxAdapter(
+              child: FarmerDashboardHeader(
+                farmerName: _farmerName,
+                profileImageUrl: _profile?.avatarUrl ?? _defaultImage,
+                messages: _inboxMessages,
+                onLogout: () => logoutAndRedirect(context),
+                onOpenFarms: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const FarmsScreen()),
+                  );
+                },
               ),
             ),
-          ),
-        ],
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    FarmerWeatherCard(
+                      greetingName: _firstName,
+                      forecast: _weather,
+                      isLoading: _weatherLoading,
+                    ),
+                    const SizedBox(height: 16),
+                    const FarmerVerificationBanner(),
+                    const SizedBox(height: 16),
+                    MarketplaceAnalyticsCard(
+                      activeListings: _activeListingsCount,
+                      soldOut: _soldOutCount,
+                      totalProducts: _myProducts.length,
+                    ),
+                    CommodityTickerCard(items: _commodities),
+                    if (_featuredCropName != null)
+                      AiCropRecommendationsCard(
+                        region: _cropRegion,
+                        cropName: _featuredCropName!,
+                        score: _featuredCropScore,
+                      ),
+                    ActiveListingsSection(
+                      listings: _activeListings,
+                      onViewAll: () => setState(() => _selectedIndex = 2),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

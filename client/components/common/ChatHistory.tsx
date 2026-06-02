@@ -2,6 +2,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Trash2 } from "lucide-react";
+import { useLanguage } from "@/app/context/LanguageContext";
 
 interface ChatHistoryItem {
   id: string;
@@ -26,6 +27,8 @@ export function ChatHistory({
   className,
 }: ChatHistoryProps) {
   const router = useRouter();
+  const { language } = useLanguage();
+  const isAm = language === "am";
 
   return (
     <div
@@ -38,7 +41,7 @@ export function ChatHistory({
         aria-label="Go back"
       >
         <ArrowLeft className="h-4 w-4 text-[#2f7e4c] transition-transform group-hover:-translate-x-0.5" />
-        <span className="text-sm font-medium">Back</span>
+        <span className="text-sm font-medium">{isAm ? "ተመለስ" : "Back"}</span>
       </button>
 
       <button
@@ -46,17 +49,17 @@ export function ChatHistory({
         onClick={onNewChat}
         className="w-full px-4 py-3 rounded-full bg-white border border-[#c0decb] text-[#1c4a2e] font-medium text-sm hover:bg-[#e7f5ec] hover:border-[#8fc9a8] transition-all mb-8 shadow-sm"
       >
-        New chat
+        {isAm ? "አዲስ ውይይት" : "New chat"}
       </button>
 
       <p className="mb-4 text-[#3d6b4e] text-xs font-medium uppercase tracking-wide">
-        Recent
+        {isAm ? "ቅርብ" : "Recent"}
       </p>
 
       <div className="flex-1 overflow-y-auto scrollbar-thin scrollbar-track-[#e2f0e8] scrollbar-thumb-[#9fc0ae]">
         <div className="flex flex-col gap-1">
           {items.length === 0 ? (
-            <p className="px-2 py-3 text-sm text-[#569f73]">No chats yet</p>
+            <p className="px-2 py-3 text-sm text-[#569f73]">{isAm ? "እስካሁን ውይይት የለም" : "No chats yet"}</p>
           ) : (
             items.map((item) => (
               <div

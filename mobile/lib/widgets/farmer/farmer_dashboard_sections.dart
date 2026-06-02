@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../models/crop_model.dart';
 import '../../theme/app_theme.dart';
 
 class FarmerVerificationBanner extends StatelessWidget {
@@ -46,28 +45,37 @@ class FarmerVerificationBanner extends StatelessWidget {
 }
 
 class MarketplaceAnalyticsCard extends StatelessWidget {
-  const MarketplaceAnalyticsCard({super.key});
+  final int activeListings;
+  final int soldOut;
+  final int totalProducts;
+
+  const MarketplaceAnalyticsCard({
+    super.key,
+    this.activeListings = 0,
+    this.soldOut = 0,
+    this.totalProducts = 0,
+  });
 
   @override
   Widget build(BuildContext context) {
     return _DashboardCard(
       title: 'Marketplace Analytics',
-      subtitle: 'My Sales Summary',
+      subtitle: 'My listings',
       child: Column(
         children: [
           Row(
             children: [
               Expanded(
                 child: _AnalyticsTile(
-                  value: 'ETB 28,500.00',
-                  label: 'this month',
+                  value: '$totalProducts',
+                  label: 'Total products',
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: _AnalyticsTile(
-                  value: '6',
-                  label: 'Sold items',
+                  value: '$soldOut',
+                  label: 'Sold out',
                 ),
               ),
             ],
@@ -77,15 +85,16 @@ class MarketplaceAnalyticsCard extends StatelessWidget {
             children: [
               Expanded(
                 child: _AnalyticsTile(
-                  value: '12',
-                  label: 'Active Listings',
+                  value: '$activeListings',
+                  label: 'Active listings',
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: _AnalyticsTile(
-                  value: '3',
-                  label: 'Unread Offers',
+                  value:
+                      '${(totalProducts - activeListings - soldOut).clamp(0, 999)}',
+                  label: 'Other',
                 ),
               ),
             ],
@@ -96,22 +105,46 @@ class MarketplaceAnalyticsCard extends StatelessWidget {
   }
 }
 
-class CommodityTickerCard extends StatelessWidget {
-  const CommodityTickerCard({super.key});
+class CommodityTickerItem {
+  final String name;
+  final String price;
+  final String change;
+  final bool up;
 
-  static const _items = [
-    _Commodity(name: 'Teff', price: 'ETB 6,100', change: '+3%', up: true),
-    _Commodity(name: 'Wheat', price: 'ETB 3,500', change: '-1%', up: false),
-    _Commodity(name: 'Maize', price: 'ETB 2,950', change: '+2%', up: true),
-    _Commodity(name: 'Barley', price: 'ETB 3,200', change: '+1%', up: true),
-  ];
+  const CommodityTickerItem({
+    required this.name,
+    required this.price,
+    required this.change,
+    required this.up,
+  });
+}
+
+class CommodityTickerCard extends StatelessWidget {
+  final List<CommodityTickerItem> items;
+
+  const CommodityTickerCard({super.key, this.items = const []});
 
   @override
   Widget build(BuildContext context) {
+    if (items.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    final tickerItems = items
+        .map(
+          (e) => _Commodity(
+            name: e.name,
+            price: e.price,
+            change: e.change,
+            up: e.up,
+          ),
+        )
+        .toList();
+
     return _DashboardCard(
-      title: 'Real-Time Commodity Ticker',
+      title: 'Commodity Ticker',
       trailing: const Text(
-        '(ETB/qtl)',
+        '(market avg)',
         style: TextStyle(
           fontSize: 12,
           color: AppColors.textSecondary,
@@ -121,7 +154,8 @@ class CommodityTickerCard extends StatelessWidget {
       child: LayoutBuilder(
         builder: (context, constraints) {
           const gap = 10.0;
-          final count = _items.length;
+          final count = tickerItems.length.clamp(1, 4);
+          final visible = tickerItems.take(count).toList();
           final cardWidth =
               (constraints.maxWidth - gap * (count - 1)) / count;
           final cardHeight = (cardWidth * 1.05).clamp(96.0, 128.0);
@@ -131,9 +165,9 @@ class CommodityTickerCard extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                for (var i = 0; i < count; i++) ...[
+                for (var i = 0; i < visible.length; i++) ...[
                   if (i > 0) const SizedBox(width: gap),
-                  Expanded(child: _CommodityTile(item: _items[i])),
+                  Expanded(child: _CommodityTile(item: visible[i])),
                 ],
               ],
             ),
@@ -146,17 +180,18 @@ class CommodityTickerCard extends StatelessWidget {
 
 class AiCropRecommendationsCard extends StatelessWidget {
   final String region;
-  final Crop featuredCrop;
+  final String cropName;
+  final double? score;
 
   const AiCropRecommendationsCard({
     super.key,
     required this.region,
-    required this.featuredCrop,
+    required this.cropName,
+    this.score,
   });
 
   @override
   Widget build(BuildContext context) {
-    final cropName = featuredCrop.name.split(' ').first;
     return _DashboardCard(
       title: 'AI Crop Recommendations',
       subtitle: 'Top for $region',
@@ -180,15 +215,15 @@ class AiCropRecommendationsCard extends StatelessWidget {
                   height: 1.45,
                 ),
                 children: [
-                  const TextSpan(text: 'Featured Crop: '),
+                  const TextSpan(text: 'Featured crop: '),
                   TextSpan(
                     text: cropName,
                     style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
-                  TextSpan(
-                    text:
-                        ' (High Demand, ${featuredCrop.season}, ${featuredCrop.profitMargin.toStringAsFixed(0)}% Margin)',
-                  ),
+                  if (score != null)
+                    TextSpan(
+                      text: ' (profitability score ${score!.toStringAsFixed(0)})',
+                    ),
                 ],
               ),
             ),
@@ -246,7 +281,15 @@ class ActiveListingsSection extends StatelessWidget {
           builder: (context, constraints) {
             const gap = 12.0;
             final count = listings.length;
-            if (count == 0) return const SizedBox.shrink();
+            if (count == 0) {
+              return const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Text(
+                  'No active listings. Add products in Market.',
+                  style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                ),
+              );
+            }
 
             return Row(
               crossAxisAlignment: CrossAxisAlignment.start,
