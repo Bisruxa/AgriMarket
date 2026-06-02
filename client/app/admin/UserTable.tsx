@@ -14,43 +14,33 @@ export const UserTable = ({ users, onEdit, getRoleBadge }: UserTableProps) =>{
     const t = useTranslations();
   return (
 
-  <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
-    <div className="overflow-x-auto">
-      <table className="w-full">
+  <div className="w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+      <table className="w-full table-fixed">
         <thead>
-          <tr className="bg-linear-to-r from-gray-50 to-gray-100/50 border-b border-gray-200">
-            <th className="px-6 py-4 text-left">
-              <div className="flex items-center gap-2 text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                <UserIcon className="w-3.5 h-3.5" />
-                 {/* {t.admin.users.table.name} */}
+          <tr className="border-b border-gray-200 bg-gray-50">
+            <th className="w-[28%] px-3 py-3 text-left sm:px-4">
+              <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-600">
+                <UserIcon className="h-3.5 w-3.5 shrink-0" />
                 Name
               </div>
             </th>
-            <th className="px-6 py-4 text-left">
-              <div className="flex items-center gap-2 text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                <Mail className="w-3.5 h-3.5" />
-                {/* {t.admin.users.table.email} */}
+            <th className="w-[32%] px-3 py-3 text-left sm:px-4">
+              <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-600">
+                <Mail className="h-3.5 w-3.5 shrink-0" />
                 Email
               </div>
             </th>
-            <th className="px-6 py-4 text-left">
-              <div className="flex items-center gap-2 text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                <Phone className="w-3.5 h-3.5" />
-                 {/* {t.admin.users.table.phone}  */}
+            <th className="w-[18%] px-3 py-3 text-left sm:px-4">
+              <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-gray-600">
+                <Phone className="h-3.5 w-3.5 shrink-0" />
                 Phone
               </div>
             </th>
-            <th className="px-6 py-4 text-left">
-              <div className="flex items-center gap-2 text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                 {/* {t.admin.users.table.role} */}
-                Role
-              </div>
+            <th className="w-[12%] px-3 py-3 text-left sm:px-4">
+              <span className="text-xs font-semibold uppercase tracking-wider text-gray-600">Role</span>
             </th>
-            <th className="px-6 py-4 text-left">
-              <div className="flex items-center gap-2 text-xs font-semibold text-gray-600 uppercase tracking-wider">
-               {/* {t.admin.users.table.actions} */}
-                Actions
-              </div>
+            <th className="w-[10%] px-3 py-3 text-left sm:px-4">
+              <span className="text-xs font-semibold uppercase tracking-wider text-gray-600">Actions</span>
             </th>
           </tr>
         </thead>
@@ -58,53 +48,49 @@ export const UserTable = ({ users, onEdit, getRoleBadge }: UserTableProps) =>{
           {users.map((user, index) => (
             <tr 
               key={user.id} 
-              className="group hover:bg-gray-50/80 transition-all duration-200 ease-in-out"
+              className="group transition-colors hover:bg-gray-50/80"
               style={{ animationDelay: `${index * 50}ms` }}
             >
-              <td className="px-6 py-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-linear-to-br from-[#5B8C51]/10 to-[#4a7342]/10 flex items-center justify-center">
+              <td className="px-3 py-3 sm:px-4">
+                <div className="flex min-w-0 items-center gap-2">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#5B8C51]/10">
                     <span className="text-sm font-medium text-[#5B8C51]">
                       {user.name.charAt(0).toUpperCase()}
                     </span>
                   </div>
-                  <span className="text-sm font-medium text-gray-900">{user.name}</span>
+                  <span className="truncate text-sm font-medium text-gray-900">{user.name}</span>
                 </div>
               </td>
-              <td className="px-6 py-4">
-                <span className="text-sm text-gray-600">{user.email}</span>
+              <td className="px-3 py-3 sm:px-4">
+                <span className="block truncate text-sm text-gray-600">{user.email}</span>
               </td>
-              <td className="px-6 py-4">
-                <span className="text-sm text-gray-600">{user.phone || '—'}</span>
+              <td className="px-3 py-3 sm:px-4">
+                <span className="block truncate text-sm text-gray-600">{user.phone || '—'}</span>
               </td>
-              <td className="px-6 py-4">
+              <td className="px-3 py-3 sm:px-4">
                 {getRoleBadge(user.role)}
               </td>
-              <td className="px-6 py-4">
-                <div className="flex items-center gap-2">
-                  <button 
-                    onClick={() => onEdit(user)} 
-                    className="p-2 rounded-lg text-gray-400 hover:text-[#5B8C51] hover:bg-[#5B8C51]/10 transition-all duration-200 group/btn"
-                    title="View user details"
-                  >
-                    <Eye className="w-4 h-4 group-hover/btn:scale-110 transition-transform" />
-                  </button>
-                 
-                </div>
+              <td className="px-3 py-3 sm:px-4">
+                <button 
+                  type="button"
+                  onClick={() => onEdit(user)} 
+                  className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-[#5B8C51]/10 hover:text-[#5B8C51]"
+                  title="View user details"
+                >
+                  <Eye className="h-4 w-4" />
+                </button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-    </div>
     
     {users.length === 0 && (
-      <div className="flex flex-col items-center justify-center py-16 px-4">
-        <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-          <UserIcon className="w-8 h-8 text-gray-400" />
+      <div className="flex flex-col items-center justify-center px-4 py-16">
+        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
+          <UserIcon className="h-8 w-8 text-gray-400" />
         </div>
-        <p className="text-gray-600 font-medium mb-1">No users found</p>
-
+        <p className="font-medium text-gray-600">No users found</p>
       </div>
     )}
   </div>

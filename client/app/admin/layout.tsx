@@ -1,62 +1,42 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
-import React, { useState, useEffect } from 'react';
+
 import { ReactNode } from "react";
-import AdminSidebar from './sidebar';
+import AdminSidebar from "./sidebar";
 
 interface NodeProp {
   children: ReactNode;
 }
 
-const Framerlayout = ({ children }: NodeProp) => {
-  const [isMobile, setIsMobile] = useState<boolean>(false);
-
-  // Check if screen is mobile
-  useEffect(() => {
-    const checkIfMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    checkIfMobile();
-    window.addEventListener('resize', checkIfMobile);
-    
-    return () => window.removeEventListener('resize', checkIfMobile);
-  }, []);
-
+const AdminLayout = ({ children }: NodeProp) => {
   return (
-    <div className="relative flex min-h-screen bg-black/1.5">
-      {/* Sidebar - Fixed on desktop, overlay on mobile */}
-      <div className={`
-        ${isMobile ? 'fixed inset-0 z-50' : 'fixed top-0 left-0 h-full border-r border-black/6'}
-      `}>
+    <div className="min-h-screen overflow-x-hidden bg-[#F4F7F4]">
+      {/* Mobile: header + drawer */}
+      <div className="md:hidden">
         <AdminSidebar />
       </div>
 
-      {/* Main Content */}
-      <div className={`
-        flex-1 min-h-screen px-3 py-2 flex flex-col
-        ${isMobile ? 'w-full' : 'md:ml-64 lg:ml-72'}
-        transition-all duration-300 ease-in-out
-      `}>
-        {/* Add padding-top for mobile header */}
-        {isMobile && <div className="h-16" />}
-        
-        <div className="flex-1">
-          {children}
-        </div>
-      
-        {/* Footer */}
-        <div className="flex items-center mt-4 space-x-1">
-          <img className="w-5 h-5" src="/corn.avif" alt="cornImage" />
-          <p className="text-black/70 text-xs">
-            Ready to farm smarter? Grow with AgriMarket.
-            <br />
-            &copy;2026 AgriMarket
-          </p>
-        </div>
+      {/* Desktop: sidebar + content share one row (no margin + width:100% overflow) */}
+      <div className="flex w-full max-w-[100dvw] overflow-x-hidden">
+        <aside className="sticky top-0 hidden h-screen w-64 shrink-0 overflow-x-hidden overflow-y-auto border-r border-[#E2E8E2] bg-white md:block lg:w-72">
+          <AdminSidebar />
+        </aside>
+
+        <main className="box-border flex min-h-screen min-w-0 flex-1 flex-col overflow-x-hidden px-3 py-2 pt-16 md:pt-2">
+          <div className="min-w-0 flex-1">{children}</div>
+
+          <footer className="mt-4 flex shrink-0 items-center space-x-1 pb-2">
+            <img className="h-5 w-5" src="/corn.avif" alt="cornImage" />
+            <p className="text-xs text-black/70">
+              Ready to farm smarter? Grow with AgriMarket.
+              <br />
+              &copy;2026 AgriMarket
+            </p>
+          </footer>
+        </main>
       </div>
     </div>
   );
 };
 
-export default Framerlayout;
+export default AdminLayout;
