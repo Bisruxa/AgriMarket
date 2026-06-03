@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../services/api_service.dart';
-import '../../services/voice_chat_service.dart';
+import '../../services/gemini_live_service.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/app_locale_scope.dart';
 import 'crop_recommendation.dart';
@@ -35,140 +35,153 @@ class _AgriChatScreenState extends State<AgriChatScreen> {
   String? _currentChatId;
   bool _isLoadingChats = true;
   bool _isSending = false;
-  final VoiceChatService _voice = VoiceChatService();
-  bool _voiceMode = false;
-  String _partialVoiceText = '';
-  String? _voiceHint;
+  final GeminiLiveService _liveVoice = GeminiLiveService();
+  bool _liveMode = false;
+  String _liveStatusText = '';
+  String _liveTranscript = '';
+  String _pendingUserText = '';
+  String _pendingModelText = '';
 
   @override
   void initState() {
     super.initState();
     _loadChats();
-    _voice.initialize();
   }
 
   @override
   void dispose() {
-    _voice.dispose();
+    _liveVoice.dispose();
     _inputController.dispose();
     _scrollController.dispose();
     _focusNode.dispose();
     super.dispose();
   }
 
-  Future<void> _toggleVoiceMode() async {
-    if (!_voiceMode) {
-      if (!kIsWeb) {
-        final mic = await Permission.microphone.request();
-        if (!mic.isGranted) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Microphone permission is required for voice mode')),
-            );
-          }
-          return;
-        }
-      }
-    } else {
-      await _voice.stopListening();
-      await _voice.stopSpeaking();
-    }
-    setState(() {
-      _voiceMode = !_voiceMode;
-      _voiceHint = _voiceMode ? 'Tap the mic to speak' : null;
-      _partialVoiceText = '';
-    });
-  }
-
-  Future<void> _toggleVoiceListen() async {
-    if (_voice.isListening) {
-      await _voice.stopListening();
-      setState(() => _voiceHint = 'Tap mic to speak');
+  Future<void> _toggleLiveVoice() async {
+    if (_liveMode) {
+      await _liveVoice.disconnect();
+      setState(() {
+        _liveMode = false;
+        _liveStatusText = '';
+        _liveTranscript = '';
+      });
       return;
     }
 
+    if (!kIsWeb) {
+      final mic = await Permission.microphone.request();
+      if (!mic.isGranted) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Microphone permission is required for live voice')),
+          );
+        }
+        return;
+      }
+    }
+
+    if (!mounted) return;
+    final localeService = AppLocaleScope.serviceOf(context);
+    final language = localeService.language.name;
+
     setState(() {
-      _voiceHint = 'Listening…';
-      _partialVoiceText = '';
+      _liveMode = true;
+      _liveStatusText = 'Connecting…';
     });
 
-    try {
-      await _voice.startListening(
-        onPartial: (partial) {
-          if (mounted) setState(() => _partialVoiceText = partial);
-        },
-        onFinal: (text) async {
+    _liveVoice.onStateChange = (state) {
+      if (!mounted) return;
+      setState(() {
+        switch (state) {
+          case LiveConnectionState.connecting:
+            _liveStatusText = 'Connecting…';
+            break;
+          case LiveConnectionState.connected:
+            _liveStatusText = 'Listening…';
+            break;
+          case LiveConnectionState.error:
+            _liveStatusText = 'Error';
+            break;
+          case LiveConnectionState.idle:
+            _liveStatusText = '';
+            break;
+        }
+      });
+    };
+
+    _liveVoice.onError = (message) {
+      if (!mounted) return;
+      setState(() {
+        _liveStatusText = 'Error';
+        _liveTranscript = message;
+      });
+    };
+
+    _liveVoice.onTranscript = (role, text) {
+      if (!mounted) return;
+      setState(() {
+        _liveTranscript = role == 'user' ? 'You: $text' : 'AI: $text';
+        if (role == 'user') {
+          _pendingUserText = text;
+        } else {
+          _pendingModelText = text;
+        }
+      });
+    };
+
+    _liveVoice.onTurnComplete = (userText, modelText) async {
+      if (!mounted || (userText.isEmpty && modelText.isEmpty)) return;
+      final now = DateTime.now();
+      final userMsg = userText.isNotEmpty
+          ? {'id': 'live-${now.millisecondsSinceEpoch}-user', 'role': 'user', 'content': userText, 'createdAt': now.toIso8601String()}
+          : null;
+      final modelMsg = modelText.isNotEmpty
+          ? {'id': 'live-${now.millisecondsSinceEpoch}-model', 'role': 'assistant', 'content': modelText, 'createdAt': now.toIso8601String()}
+          : null;
+
+      if (!mounted) return;
+
+      var chatId = _currentChatId;
+      if (chatId == null) {
+        final createResult = await _apiService.createChat();
+        if (createResult['success'] == true && createResult['data'] != null) {
+          chatId = (createResult['data'] as Map<String, dynamic>)['id'];
           if (!mounted) return;
           setState(() {
-            _partialVoiceText = '';
-            _voiceHint = 'Thinking…';
+            _currentChatId = chatId;
+            _chats.insert(0, createResult['data'] as Map<String, dynamic>);
           });
-          await _sendVoiceMessage(text);
-        },
-      );
-    } catch (e) {
-      if (mounted) {
-        setState(() => _voiceHint = e.toString());
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
-      }
-    }
-  }
-
-  Future<void> _sendVoiceMessage(String text) async {
-    if (text.trim().isEmpty || _isSending) return;
-
-    if (_currentChatId == null) {
-      await _createNewChat();
-    }
-    if (_currentChatId == null) return;
-
-    setState(() {
-      _messages.add({
-        'id': 'voice-${DateTime.now().millisecondsSinceEpoch}',
-        'role': 'user',
-        'content': text.trim(),
-        'createdAt': DateTime.now().toIso8601String(),
-      });
-      _isSending = true;
-      _voiceHint = 'AgriAI is responding…';
-    });
-    _scrollToBottom();
-
-    try {
-      final localeService = AppLocaleScope.serviceOf(context);
-      final result = await _apiService.sendMessage(_currentChatId!, text.trim(), language: localeService.language.name);
-      if (!mounted) return;
-      if (result['success'] == true && result['data'] != null) {
-        final data = result['data'] as Map<String, dynamic>;
-        final assistantMsg = data['assistantMessage'] as Map<String, dynamic>?;
-        if (assistantMsg != null) {
-          final content = assistantMsg['content']?.toString() ?? '';
-          setState(() => _messages.add(assistantMsg));
-          _scrollToBottom();
-          if (_voiceMode && content.isNotEmpty) {
-            await _voice.speak(content);
-          }
         }
       }
-    } catch (_) {
-      if (mounted) {
-        setState(() {
-          _messages.add({
-            'id': 'error-voice',
-            'role': 'assistant',
-            'content': 'Sorry, something went wrong. Please try again.',
-            'createdAt': DateTime.now().toIso8601String(),
-          });
-        });
+
+      if (chatId == null) return;
+
+      if (userMsg != null) {
+        await _apiService.appendChatMessage(chatId!, role: 'user', content: userText);
       }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isSending = false;
-          _voiceHint = _voiceMode ? 'Tap the mic to speak' : null;
-        });
+      if (modelMsg != null) {
+        await _apiService.appendChatMessage(chatId!, role: 'assistant', content: modelText);
       }
-    }
+
+      if (!mounted) return;
+      setState(() {
+        if (userMsg != null) _messages.add(userMsg);
+        if (modelMsg != null) _messages.add(modelMsg);
+        _pendingUserText = '';
+        _pendingModelText = '';
+        _liveTranscript = '';
+      });
+      _scrollToBottom();
+
+      if (_messages.length == 1 && userText.isNotEmpty) {
+        final title = userText.length > 50 ? '${userText.substring(0, 50)}…' : userText;
+        await _apiService.createChat(title: title);
+      }
+    };
+
+    _liveVoice.connect(language: language);
+
+    setState(() => _liveStatusText = 'Connecting…');
   }
 
   Future<void> _loadChats() async {
@@ -272,6 +285,7 @@ class _AgriChatScreenState extends State<AgriChatScreen> {
         }
       }
 
+      if (!mounted) return;
       final localeService = AppLocaleScope.serviceOf(context);
       final result = await _apiService.sendMessage(chatId, text, language: localeService.language.name);
       if (!mounted) return;
@@ -312,45 +326,14 @@ class _AgriChatScreenState extends State<AgriChatScreen> {
     });
   }
 
-  void _openToolsMenu() {
-    showModalBottomSheet<void>(
-      context: context,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.eco_rounded, color: AppColors.primary),
-              title: const Text('Crop recommendation'),
-              onTap: () {
-                Navigator.pop(ctx);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const CropRecommendation()),
-                );
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.trending_up_rounded, color: AppColors.primary),
-              title: const Text('Price forecast'),
-              onTap: () {
-                Navigator.pop(ctx);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => PriceForecastScreen(
-                      defaultRegion: widget.defaultRegion,
-                    ),
-                  ),
-                );
-              },
-            ),
-          ],
-        ),
-      ),
+  void _navigateToCropRecommendation() {
+    Navigator.push(context, MaterialPageRoute(builder: (_) => const CropRecommendation()));
+  }
+
+  void _navigateToPriceForecast() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => PriceForecastScreen(defaultRegion: widget.defaultRegion)),
     );
   }
 
@@ -358,7 +341,6 @@ class _AgriChatScreenState extends State<AgriChatScreen> {
   Widget build(BuildContext context) {
     final body = Column(
       children: [
-        _buildVoiceBar(),
         if (_currentChatId != null) _buildChatHeader(),
         Expanded(
           child: _currentChatId == null ? _buildChatList() : _buildMessages(),
@@ -376,16 +358,17 @@ class _AgriChatScreenState extends State<AgriChatScreen> {
       appBar: AppBar(
         title: const Text('Agri Chat'),
         actions: [
-          IconButton(
-            icon: Icon(_voiceMode ? Icons.mic_rounded : Icons.mic_none_rounded),
-            color: _voiceMode ? AppColors.primary : null,
-            onPressed: _toggleVoiceMode,
-            tooltip: 'Live voice mode',
-          ),
-          IconButton(
+          PopupMenuButton<String>(
             icon: const Icon(Icons.tune_rounded),
-            onPressed: _openToolsMenu,
             tooltip: 'Tools',
+            onSelected: (value) {
+              if (value == 'crop') _navigateToCropRecommendation();
+              if (value == 'price') _navigateToPriceForecast();
+            },
+            itemBuilder: (_) => [
+              const PopupMenuItem(value: 'crop', child: ListTile(leading: Icon(Icons.eco_rounded, color: AppColors.primary), title: Text('Crop recommendation'), contentPadding: EdgeInsets.zero)),
+              const PopupMenuItem(value: 'price', child: ListTile(leading: Icon(Icons.trending_up_rounded, color: AppColors.primary), title: Text('Price forecast'), contentPadding: EdgeInsets.zero)),
+            ],
           ),
           IconButton(
             icon: const Icon(Icons.add_comment_rounded),
@@ -395,81 +378,6 @@ class _AgriChatScreenState extends State<AgriChatScreen> {
         ],
       ),
       body: body,
-    );
-  }
-
-  Widget _buildVoiceBar() {
-    if (!_voiceMode && _voiceHint == null && _partialVoiceText.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-        child: Align(
-          alignment: Alignment.centerRight,
-          child: TextButton.icon(
-            onPressed: _toggleVoiceMode,
-            icon: const Icon(Icons.mic_rounded, size: 18),
-            label: const Text('Live voice'),
-          ),
-        ),
-      );
-    }
-
-    return Container(
-      width: double.infinity,
-      margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: _voice.isListening
-            ? AppColors.error.withValues(alpha: 0.08)
-            : AppColors.primary.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: _voice.isListening ? AppColors.error : AppColors.primary,
-        ),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _voice.isListening
-                      ? 'Listening…'
-                      : (_voice.isSpeaking ? 'Speaking…' : 'Live voice mode'),
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
-                    color: AppColors.primary,
-                  ),
-                ),
-                if (_partialVoiceText.isNotEmpty)
-                  Text(
-                    _partialVoiceText,
-                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                  )
-                else if (_voiceHint != null)
-                  Text(
-                    _voiceHint!,
-                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                  ),
-              ],
-            ),
-          ),
-          IconButton(
-            onPressed: _toggleVoiceListen,
-            icon: Icon(
-              _voice.isListening ? Icons.stop_circle_rounded : Icons.mic_rounded,
-              color: _voice.isListening ? AppColors.error : AppColors.primary,
-              size: 32,
-            ),
-          ),
-          IconButton(
-            onPressed: _toggleVoiceMode,
-            icon: const Icon(Icons.close_rounded, size: 20),
-            tooltip: 'Exit voice mode',
-          ),
-        ],
-      ),
     );
   }
 
@@ -570,7 +478,7 @@ class _AgriChatScreenState extends State<AgriChatScreen> {
     return ListView.separated(
       padding: const EdgeInsets.all(16),
       itemCount: _chats.length,
-      separatorBuilder: (_, __) => const Divider(height: 1, color: AppColors.border),
+      separatorBuilder: (_, _) => const Divider(height: 1, color: AppColors.border),
       itemBuilder: (context, index) {
         final chat = _chats[index];
         final id = chat['id']?.toString() ?? '';
@@ -722,65 +630,129 @@ class _AgriChatScreenState extends State<AgriChatScreen> {
       ),
       child: SafeArea(
         top: false,
-        child: Row(
-          children: [
-            if (_voiceMode)
-              IconButton(
-                onPressed: _isSending ? null : _toggleVoiceListen,
-                icon: Icon(
-                  _voice.isListening ? Icons.stop_circle : Icons.mic_rounded,
-                  color: _voice.isListening ? AppColors.error : AppColors.primary,
-                ),
-              )
-            else
-              IconButton(
-                icon: const Icon(Icons.add_circle_outline_rounded),
-                color: AppColors.primary,
-                onPressed: _openToolsMenu,
+        child: _liveMode ? _buildLiveInputRow() : _buildTextInputRow(),
+      ),
+    );
+  }
+
+  Widget _buildTextInputRow() {
+    return Row(
+      children: [
+        IconButton(
+          icon: Icon(_liveMode ? Icons.mic_rounded : Icons.mic_none_rounded),
+          color: AppColors.primary,
+          onPressed: _toggleLiveVoice,
+          tooltip: 'Live voice',
+        ),
+        Expanded(
+          child: TextField(
+            controller: _inputController,
+            focusNode: _focusNode,
+            textInputAction: TextInputAction.send,
+            onSubmitted: (_) => _sendMessage(),
+            decoration: InputDecoration(
+              hintText: 'Ask about crops, prices...',
+              filled: true,
+              fillColor: AppColors.surface,
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(24),
+                borderSide: BorderSide.none,
               ),
-            Expanded(
-              child: TextField(
-                controller: _inputController,
-                focusNode: _focusNode,
-                textInputAction: TextInputAction.send,
-                onSubmitted: (_) => _sendMessage(),
-                decoration: InputDecoration(
-                  hintText: 'Ask about crops, prices...',
-                  filled: true,
-                  fillColor: AppColors.surface,
-                  contentPadding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(24),
-                    borderSide: BorderSide.none,
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Material(
+          color: AppColors.primary,
+          borderRadius: BorderRadius.circular(24),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(24),
+            onTap: _isSending ? null : _sendMessage,
+            child: SizedBox(
+              width: 48,
+              height: 48,
+              child: _isSending
+                  ? const Padding(
+                      padding: EdgeInsets.all(14),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
+                  : const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLiveInputRow() {
+    final isConnected = _liveVoice.state == LiveConnectionState.connected;
+    final isConnecting = _liveVoice.state == LiveConnectionState.connecting;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: isConnected
+            ? AppColors.primary.withValues(alpha: 0.08)
+            : AppColors.error.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: isConnected ? AppColors.primary : AppColors.error,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            isConnecting ? Icons.hourglass_top_rounded : Icons.mic_rounded,
+            color: isConnected ? AppColors.primary : AppColors.error,
+            size: 20,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  _liveStatusText.isNotEmpty ? _liveStatusText : 'Gemini Live',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                    color: isConnected ? AppColors.primary : AppColors.error,
                   ),
                 ),
+                if (_liveTranscript.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      _liveTranscript,
+                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          if (isConnecting)
+            const Padding(
+              padding: EdgeInsets.all(4),
+              child: SizedBox(
+                width: 16,
+                height: 16,
+                child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.primary),
               ),
             ),
-            const SizedBox(width: 8),
-            Material(
-              color: AppColors.primary,
-              borderRadius: BorderRadius.circular(24),
-              child: InkWell(
-                borderRadius: BorderRadius.circular(24),
-                onTap: _isSending ? null : _sendMessage,
-                child: SizedBox(
-                  width: 48,
-                  height: 48,
-                  child: _isSending
-                      ? const Padding(
-                          padding: EdgeInsets.all(14),
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Icon(Icons.send_rounded, color: Colors.white, size: 20),
-                ),
-              ),
-            ),
-          ],
-        ),
+          IconButton(
+            onPressed: _toggleLiveVoice,
+            icon: const Icon(Icons.stop_rounded, size: 20),
+            color: AppColors.error,
+            tooltip: 'Stop live voice',
+          ),
+        ],
       ),
     );
   }

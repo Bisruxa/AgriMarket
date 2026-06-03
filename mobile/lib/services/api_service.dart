@@ -731,7 +731,7 @@ class ApiService {
     }
   }
 
-  Future<bool> appendChatMessage(
+  Future<Map<String, dynamic>?> appendChatMessage(
     String chatId, {
     required String role,
     required String content,
@@ -742,11 +742,16 @@ class ApiService {
         'content': content,
       });
       final data = response.data;
-      return response.statusCode == 200 &&
+      if (response.statusCode == 200 &&
           data is Map<String, dynamic> &&
-          data['success'] == true;
+          data['success'] == true) {
+        return data['data'] is Map<String, dynamic>
+            ? data['data'] as Map<String, dynamic>
+            : null;
+      }
+      return null;
     } catch (_) {
-      return false;
+      return null;
     }
   }
 

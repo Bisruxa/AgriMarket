@@ -1,4 +1,6 @@
 const express = require('express');
+const http = require('http');
+const { WebSocketServer } = require('ws');
 const cors = require('cors');
 const morgan = require('morgan');
 const dotenv = require('dotenv');
@@ -90,8 +92,16 @@ app.use((err, req, res, next) => {
   });
 });
 
+const { handleLiveVoiceConnection } = require('./controllers/live-voice.controller');
+
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+const server = http.createServer(app);
+
+const wss = new WebSocketServer({ server, path: '/ws/chat/live' });
+wss.on('connection', handleLiveVoiceConnection);
+
+server.listen(PORT, () => {
   console.log(`🚀 Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
+  console.log(`🔊 Live voice WebSocket: ws://localhost:${PORT}/ws/chat/live`);
 });
