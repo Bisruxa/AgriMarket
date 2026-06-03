@@ -34,15 +34,67 @@ def _call_express(path: str, method: str = "GET", body: Optional[Dict] = None) -
         return {"error": f"Failed to reach server: {str(e)}"}
 
 
+def _normalize_region(region: Optional[str]) -> Optional[str]:
+    """Try to match a user-supplied region name to the database format."""
+    if not region:
+        return None
+    region_clean = region.strip().lower()
+
+    REGION_MAP = {
+        "addis": "Addis Ababa", "addis ababa": "Addis Ababa", "a.a": "Addis Ababa",
+        "afar": "Afar", "amhara": "Amhara", "benshangul": "Benshangul-Gumuz",
+        "benshangul gumuz": "Benshangul-Gumuz", "benishangul": "Benshangul-Gumuz",
+        "bg": "Benshangul-Gumuz", "dire": "Dire Dawa", "dire dawa": "Dire Dawa",
+        "gambella": "Gambella", "gambela": "Gambella",
+        "harari": "Harari", "harar": "Harari",
+        "oromia": "Oromia", "oromiya": "Oromia",
+        "sidama": "Sidama", "snnp": "SNNP", "south": "SNNP",
+        "somali": "Somali", "tigray": "Tigray", "tigrai": "Tigray",
+    }
+    return REGION_MAP.get(region_clean, region)
+
+
+def _normalize_crop(crop_name: Optional[str]) -> Optional[str]:
+    """Try to normalize common crop name variations to database format."""
+    if not crop_name:
+        return None
+    name = crop_name.strip().lower()
+    CROP_MAP = {
+        "teff": "Teff (white)", "tef": "Teff (white)",
+        "white teff": "Teff (white)", "red teff": "Teff (red)",
+        "maize": "Maize", "corn": "Maize",
+        "coffee": "Coffee (beans)", "coffee beans": "Coffee (beans)",
+        "wheat": "Wheat", "barley": "Barley (white)",
+        "sorghum": "Sorghum", "chat": "Chat", "khat": "Chat",
+        "chickpea": "Chickpea", "shiro": "Chickpea",
+        "haricot bean": "Haricot Bean (white)", "haricot beans": "Haricot Bean (white)",
+        "horse bean": "Horse Bean", "field pea": "Field Pea",
+    }
+    return CROP_MAP.get(name, crop_name)
+
+
 def get_price_trends(crop_name: str, region: Optional[str] = None):
     """Fetch recent price trends from the database (last 6 months)."""
     try:
+        db_crop = _normalize_crop(crop_name)
+        db_region = _normalize_region(region)
+
         path = f"/prices/trends?limit=6"
-        if crop_name:
-            path += f"&cropName={crop_name}"
-        if region:
-            path += f"&region={region}"
+        if db_crop:
+            path += f"&cropName={db_crop}"
+        if db_region:
+            path += f"&region={db_region}"
+
         data = _call_express(path)
+
+        # If no data with region filter, try without region
+        if (not isinstance(data, list) or len(data) == 0) and db_region:
+            fallback_path = f"/prices/trends?limit=6"
+            if db_crop:
+                fallback_path += f"&cropName={db_crop}"
+            data = _call_express(fallback_path)
+            region = f"{db_region} (using national data)"
+
         if isinstance(data, list) and len(data) > 0:
             prices = [{"year": r.get("year"), "month": r.get("month"),
                        "avgPrice": r.get("avgPrice"), "minPrice": r.get("minPrice"),
@@ -55,8 +107,8 @@ def get_price_trends(crop_name: str, region: Optional[str] = None):
             ci_lower = round(avg * 0.85, 2)
             ci_upper = round(avg * 1.15, 2)
             return {
-                "crop_name": crop_name,
-                "region": region or "all",
+                "crop_name": db_crop or crop_name,
+                "region": db_region or "all regions",
                 "recent_prices": prices,
                 "average_price": round(avg, 2),
                 "price_range": [round(min(p.get("avgPrice", 0) or 0 for p in prices), 2),
@@ -65,14 +117,14 @@ def get_price_trends(crop_name: str, region: Optional[str] = None):
                 "trend_percentage": round(change_pct, 1),
                 "confidence_interval": [ci_lower, ci_upper],
                 "summary": (
-                    f"{crop_name or 'Crops'} in {region or 'all regions'}: "
+                    f"{db_crop or crop_name} in {db_region or 'all regions'}: "
                     f"avg ETB {avg:.2f}, {trend} trend ({change_pct:+.1f}%), "
                     f"CI: [{ci_lower:.2f} - {ci_upper:.2f}]"
                 ),
             }
-        return {"message": f"No price data available for {crop_name or 'crops'} in {region or 'any region'}.", "recent_prices": []}
+        return {"message": f"No specific price data found for {crop_name} in {region or 'your region'}.", "suggestion": "Try asking about a common crop like Teff, Maize, or Coffee.", "recent_prices": []}
     except Exception as e:
-        return {"error": f"Price trends fetch failed: {str(e)}"}
+        return {"message": f"Could not fetch price data right now, but here's general market info.", "error_detail": str(e)}
 
 
 def get_farm_details(farm_id: str):

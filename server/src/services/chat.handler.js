@@ -1,6 +1,6 @@
 const { prisma } = require('../config/db');
 const chatService = require('../services/chat.service');
-const { sendChatMessage } = require('../services/agriai.service');
+const { sendMessage } = require('../services/gemini.service');
 
 async function handleMessage({ chatId, userId, content, language }) {
   const chat = await chatService.getChat(chatId, userId);
@@ -39,17 +39,16 @@ async function handleMessage({ chatId, userId, content, language }) {
       },
     });
 
-    const result = await sendChatMessage({
+    const result = await sendMessage({
       message: content,
-      conversation_history: conversationHistory,
-      user_id: userId,
+      conversationHistory,
       language: language || 'en',
-      user_context: {
+      userContext: {
         role: user?.role || 'FARMER',
         region: user?.region || null,
         woreda: user?.woreda || null,
         name: user?.name || null,
-        farms: farms,
+        farms,
       },
     });
     assistantContent = result.text || '';
