@@ -1,24 +1,21 @@
 class CropRecommendationItem {
   final String crop;
-  final String confidence;
+  final double confidence;
 
-  CropRecommendationItem({
-    required this.crop,
-    required this.confidence,
-  });
+  const CropRecommendationItem({required this.crop, required this.confidence});
 
   factory CropRecommendationItem.fromJson(Map<String, dynamic> json) {
+    final confRaw = json['confidence'];
+    final confidence = confRaw is num
+        ? confRaw.toDouble()
+        : double.tryParse(confRaw?.toString() ?? '') ?? 0;
     return CropRecommendationItem(
       crop: json['crop']?.toString() ?? 'Unknown',
-      confidence: json['confidence']?.toString() ?? '0',
+      confidence: confidence,
     );
   }
 
-  double? get confidencePercent {
-    final value = double.tryParse(confidence);
-    if (value == null) return null;
-    return value <= 1 ? value * 100 : value;
-  }
+  double get confidencePercent => confidence <= 1 ? confidence * 100 : confidence;
 }
 
 class CropPriceForecast {

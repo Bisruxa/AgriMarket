@@ -705,10 +705,14 @@ class ApiService {
         : {};
   }
 
-  Future<Map<String, dynamic>> sendMessage(String chatId, String content) async {
+  Future<Map<String, dynamic>> sendMessage(String chatId, String content, {String? language}) async {
+    final body = <String, dynamic>{'content': content};
+    if (language != null && language.isNotEmpty) {
+      body['language'] = language;
+    }
     final response = await post(
       '${ApiConfig.chat}/$chatId/messages',
-      {'content': content},
+      body,
     );
     return response.data is Map<String, dynamic>
         ? response.data as Map<String, dynamic>
@@ -1161,24 +1165,6 @@ class FarmMutationResult {
   final String? message;
 
   FarmMutationResult({required this.success, this.message});
-}
-
-class CropRecommendationItem {
-  final String crop;
-  final double confidence;
-
-  const CropRecommendationItem({required this.crop, required this.confidence});
-
-  factory CropRecommendationItem.fromJson(Map<String, dynamic> json) {
-    final confRaw = json['confidence'];
-    final confidence = confRaw is num
-        ? confRaw.toDouble()
-        : double.tryParse(confRaw?.toString() ?? '') ?? 0;
-    return CropRecommendationItem(
-      crop: json['crop']?.toString() ?? '',
-      confidence: confidence,
-    );
-  }
 }
 
 class CropRecommendResult {
