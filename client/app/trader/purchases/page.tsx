@@ -1,6 +1,7 @@
 // app/trader/products/page.tsx or components/Trader/ProductsTable.tsx
 'use client';
 import React, { useState } from 'react';
+import Link from 'next/link';
 import {
   Table,
   TableHeader,
@@ -13,7 +14,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { 
   Search, 
-  Filter, 
+  Sparkles,
+  Users,
+  Sprout,
   Loader2, 
   AlertCircle,
   ChevronLeft,
@@ -36,6 +39,7 @@ const ProductsTable = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [showFarmersPanel, setShowFarmersPanel] = useState(false);
   const [priceRange, setPriceRange] = useState<{ min: number; max: number }>({
     min: 0,
     max: 10000,
@@ -54,6 +58,25 @@ const ProductsTable = () => {
   const products: Product[] = data?.products || [];
   const totalPages = data?.pages || 1;
   const totalItems = data?.total || 0;
+  const farmerSummaries = React.useMemo(() => {
+    const grouped = new Map<string, { id: string; name: string; email?: string; count: number }>();
+    for (const product of products) {
+      const farmer = product.farmer;
+      if (!farmer?.id) continue;
+      const existing = grouped.get(farmer.id);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        grouped.set(farmer.id, {
+          id: farmer.id,
+          name: farmer.name,
+          email: farmer.email,
+          count: 1,
+        });
+      }
+    }
+    return Array.from(grouped.values()).sort((a, b) => b.count - a.count);
+  }, [products]);
 
   const formatPrice = (price: string | number) => {
     const numPrice = typeof price === 'string' ? parseFloat(price) : price;
@@ -113,6 +136,53 @@ const ProductsTable = () => {
             Browse products from farmers
           </p>
         </div>
+
+        <div className="mb-4 flex flex-wrap gap-2">
+          <Link href="/trader/price-forecast">
+            <Button className="bg-[#2A5A2A] hover:bg-[#1f4f1f]">
+              <Sparkles className="mr-1.5 h-4 w-4" />
+              Forecast (AI)
+            </Button>
+          </Link>
+          <Button
+            variant="outline"
+            onClick={() => setShowFarmersPanel((prev) => !prev)}
+            disabled={farmerSummaries.length === 0}
+          >
+            <Users className="mr-1.5 h-4 w-4" />
+            Farmers
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              setSelectedCategory('all');
+              setSearchTerm('');
+              setCurrentPage(1);
+            }}
+          >
+            <Sprout className="mr-1.5 h-4 w-4" />
+            Crops
+          </Button>
+        </div>
+
+        {showFarmersPanel && (
+          <div className="mb-6 rounded-lg border border-gray-200 bg-white p-4">
+            <p className="mb-3 text-sm font-medium text-[#2A5A2A]">Farmers in current listings</p>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+              {farmerSummaries.map((farmer) => (
+                <Link
+                  key={farmer.id}
+                  href={`/trader/farmers/${farmer.id}`}
+                  className="rounded-md border border-gray-200 px-3 py-2 hover:bg-gray-50"
+                >
+                  <p className="text-sm font-medium text-gray-900">{farmer.name}</p>
+                  <p className="text-xs text-gray-500">{farmer.email || 'No email'}</p>
+                  <p className="text-xs text-[#2A5A2A] mt-1">{farmer.count} listing(s)</p>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Filters Section */}
         <div className="bg-white p-4 rounded-lg border border-gray-200 mb-6">
@@ -176,7 +246,46 @@ const ProductsTable = () => {
         </div>
 
         {/* Products Table */}
-        <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+        <div className="md:hidden space-y-3">
+          {isLoading && products.length === 0 ? (
+            <div className="rounded-lg border border-gray-200 p-5 text-center">
+              <Loader2 className="h-7 w-7 animate-spin text-[#2A5A2A] mx-auto" />
+              <p className="mt-2 text-sm text-gray-600">Loading products...</p>
+            </div>
+          ) : products.length === 0 ? (
+            <div className="rounded-lg border border-gray-200 p-5 text-center text-gray-500">
+              <Package className="h-10 w-10 mx-auto mb-2 text-gray-400" />
+              No products found.
+            </div>
+          ) : (
+            products.map((product) => (
+              <div key={product.id} className="rounded-lg border border-gray-200 p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="font-semibold text-gray-900">{product.name}</p>
+                    <p className="text-xs text-gray-500">{product.category}</p>
+                  </div>
+                  <p className="font-semibold text-[#2A5A2A]">{formatPrice(product.price)}</p>
+                </div>
+                <p className="mt-1 text-xs text-gray-600">Stock: {product.stock} {product.unit}</p>
+                <p className="mt-1 text-xs text-gray-600">{formatFarmerLocation(product)}</p>
+                <div className="mt-2 flex items-center justify-between">
+                  <span className="text-xs text-gray-500">{product.farmer?.name || 'Unknown farmer'}</span>
+                  {product.farmer?.id && (
+                    <Link
+                      href={`/trader/farmers/${product.farmer.id}`}
+                      className="text-xs font-medium text-[#2A5A2A] underline"
+                    >
+                      View farmer profile
+                    </Link>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        <div className="hidden md:block border border-gray-200 rounded-xl overflow-hidden shadow-sm">
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50">
@@ -218,7 +327,16 @@ const ProductsTable = () => {
                     </TableCell>
                     <TableCell className="py-4 text-sm px-5">
                       <div>
-                        <p className="font-medium">{product.farmer?.name}</p>
+                        {product.farmer?.id ? (
+                          <Link
+                            href={`/trader/farmers/${product.farmer.id}`}
+                            className="font-medium text-[#2A5A2A] hover:underline"
+                          >
+                            {product.farmer?.name}
+                          </Link>
+                        ) : (
+                          <p className="font-medium">{product.farmer?.name}</p>
+                        )}
                         <p className="text-xs text-gray-500">{product.farmer?.email}</p>
                       </div>
                     </TableCell>

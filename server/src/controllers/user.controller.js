@@ -36,6 +36,21 @@ exports.getUser = async (req, res, next) => {
   }
 };
 
+// @desc    Get farmer public profile for trader view
+// @route   GET /api/user/farmers/:id/profile
+// @access  Private/Trader|Admin
+exports.getFarmerProfile = async (req, res, next) => {
+  try {
+    const data = await userService.getFarmerPublicProfile(req.params.id);
+    res.status(200).json({
+      success: true,
+      data,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Update user profile
 // @route   PUT /api/user/profile
 // @access  Private

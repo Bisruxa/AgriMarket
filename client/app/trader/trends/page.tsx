@@ -19,7 +19,13 @@ import { DataTable } from "@/components/common/Table"
 import { InfoCards } from "@/components/common/Info"
 import type { ChartConfig } from "@/components/ui/chart"
 import { useLanguage } from "@/app/context/LanguageContext"
-import { pricesApi, PriceRecord } from "@/lib/api"
+import {
+  pricesApi,
+  marketApi,
+  PriceRecord,
+  MarketTrendPoint,
+  BuyingOpportunityItem,
+} from "@/lib/api"
 
 const MONTH_NAMES = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
 
@@ -49,15 +55,6 @@ const CROP_LABELS: Record<string, { en: string; am: string }> = {
 
 const COMMON_CROPS = Object.keys(CROP_LABELS)
 
-const DEMAND_DATA = [
-  { label: "Jan", value: 95 },
-  { label: "Feb", value: 104 },
-  { label: "Mar", value: 116 },
-  { label: "Apr", value: 126 },
-  { label: "May", value: 139 },
-  { label: "Jun", value: 148 },
-]
-
 const DEMAND_CONFIG = {
   value: { label: "Demand index", color: "#479e73" },
 } satisfies ChartConfig
@@ -71,6 +68,10 @@ export default function FarmsteadDashboard() {
   const [loading, setLoading] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = React.useState<string>("")
+  const [demandData, setDemandData] = React.useState<Array<{ label: string; value: number }>>([])
+  const [demandLoading, setDemandLoading] = React.useState(false)
+  const [opportunities, setOpportunities] = React.useState<BuyingOpportunityItem[]>([])
+  const [opportunitiesLoading, setOpportunitiesLoading] = React.useState(false)
 
   const availableRegions = [
     "Addis Ababa","Oromia","Amhara","Tigray","SNNP","Somali",
@@ -127,6 +128,57 @@ export default function FarmsteadDashboard() {
   React.useEffect(() => {
     fetchPrices(selectedCrop, selectedRegion)
   }, [selectedCrop, selectedRegion, fetchPrices])
+
+  React.useEffect(() => {
+    const toWeekLabel = (dateValue: string) => {
+      const d = new Date(dateValue)
+      return `${MONTH_NAMES[d.getMonth()]} ${d.getDate()}`
+    }
+
+    const aggregateDemand = (rows: MarketTrendPoint[]) => {
+      const byWeek = new Map<string, number>()
+      for (const row of rows) {
+        const key = row.weekStart
+        byWeek.set(key, (byWeek.get(key) || 0) + (row.newListings || 0))
+      }
+      return [...byWeek.entries()]
+        .sort((a, b) => new Date(a[0]).getTime() - new Date(b[0]).getTime())
+        .slice(-8)
+        .map(([weekStart, total]) => ({ label: toWeekLabel(weekStart), value: total }))
+    }
+
+    const loadDemand = async () => {
+      setDemandLoading(true)
+      try {
+        const res = await marketApi.getTrends({ weeks: 8, region: selectedRegion })
+        if (res.success && res.data) {
+          setDemandData(aggregateDemand(res.data.weeklyNewListings || []))
+        } else {
+          setDemandData([])
+        }
+      } finally {
+        setDemandLoading(false)
+      }
+    }
+
+    const loadOpportunities = async () => {
+      setOpportunitiesLoading(true)
+      try {
+        const cropHint = CROP_LABELS[selectedCrop]?.en || selectedCrop
+        const res = await marketApi.getBuyingOpportunities({
+          region: selectedRegion,
+          crop: cropHint,
+          limit: 5,
+        })
+        setOpportunities(res.success && res.data ? res.data.opportunities || [] : [])
+      } finally {
+        setOpportunitiesLoading(false)
+      }
+    }
+
+    void loadDemand()
+    void loadOpportunities()
+  }, [selectedRegion, selectedCrop])
 
   const handleCropSelect = (crop: string) => {
     setSelectedCrop(crop)
@@ -286,6 +338,91 @@ export default function FarmsteadDashboard() {
         </div>
       )}
 
+      {!loading && !error && (
+        <>
+          <div className="mb-8 grid grid-cols-1 gap-5 lg:grid-cols-2">
+            <BarGraph
+              data={demandData}
+              title={language === "am" ? "ፍላጎት አዝማሚያ" : "Demand trend (index)"}
+              badge={
+                demandData.length >= 2
+                  ? `${Math.max(0, demandData[demandData.length - 1].value - demandData[0].value)}`
+                  : ""
+              }
+              badgeIcon={<TrendingUp className="mr-1 h-3 w-3" />}
+              leftNote={
+                demandLoading
+                  ? "loading live demand..."
+                  : demandData.length
+                  ? "weekly new listings"
+                  : "no live demand data"
+              }
+              rightNote={selectedRegion}
+              config={DEMAND_CONFIG}
+            />
+          </div>
+
+          <div className="mb-8 rounded-xl border border-[#bfdfce] bg-white p-4 sm:p-5">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="text-base font-semibold text-[#1f543c]">
+                {language === "am" ? "የግዢ እድሎች (AI)" : "Buying opportunities (AI)"}
+              </h3>
+              {opportunitiesLoading && <Loader2 className="h-4 w-4 animate-spin text-[#2A5A2A]" />}
+            </div>
+
+            {!opportunitiesLoading && opportunities.length === 0 && (
+              <p className="text-sm text-[#57886c]">
+                {language === "am"
+                  ? "ለዚህ ክልል የተገኙ እድሎች የሉም"
+                  : "No opportunities available for the selected filters."}
+              </p>
+            )}
+
+            <div className="space-y-3">
+              {opportunities.map((item) => (
+                <div
+                  key={`${item.cropName}-${item.region}`}
+                  className="rounded-lg border border-[#e2efe8] p-3"
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <p className="font-medium text-[#1f543c]">{item.cropName}</p>
+                      <p className="text-xs text-[#57886c]">{item.region}</p>
+                    </div>
+                    <span className="rounded-full bg-[#eef7f1] px-2.5 py-1 text-xs font-semibold text-[#2A5A2A]">
+                      {item.recommendation.replace('_', ' ')}
+                    </span>
+                  </div>
+
+                  <div className="mt-2 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
+                    <div>
+                      <p className="text-black/40">Avg listing</p>
+                      <p className="font-medium">ETB {item.avgListingPrice.toLocaleString()}</p>
+                    </div>
+                    <div>
+                      <p className="text-black/40">AI forecast</p>
+                      <p className="font-medium">
+                        {item.aiForecast ? `ETB ${item.aiForecast.predictedPrice.toLocaleString()}` : '—'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-black/40">Spread</p>
+                      <p className={`font-medium ${(item.spreadPercent || 0) >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+                        {item.spreadPercent == null ? '—' : `${item.spreadPercent >= 0 ? '+' : ''}${item.spreadPercent}%`}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-black/40">Score</p>
+                      <p className="font-medium">{item.score.toFixed(1)}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+
       {!loading && !error && chartData.length > 0 && (
         <>
           <div className="mb-8 grid grid-cols-1 gap-5 lg:grid-cols-2">
@@ -299,15 +436,6 @@ export default function FarmsteadDashboard() {
               minNotice={`${language === "am" ? "አማካይ" : "avg"} ${avgPrice}`}
               maxNotice={selectedRegion}
               config={priceConfig}
-            />
-            <BarGraph
-              data={DEMAND_DATA}
-              title={language === "am" ? "ፍላጎት አዝማሚያ" : "Demand trend (index)"}
-              badge="+12%"
-              badgeIcon={<TrendingUp className="mr-1 h-3 w-3" />}
-              leftNote="mandi active"
-              rightNote="procurement high"
-              config={DEMAND_CONFIG}
             />
           </div>
 

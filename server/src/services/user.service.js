@@ -195,6 +195,98 @@ const restoreUser = async (userId) => {
   });
 };
 
+const getFarmerPublicProfile = async (farmerId) => {
+  const farmer = await prisma.user.findFirst({
+    where: {
+      id: farmerId,
+      role: 'FARMER',
+      deletedAt: null,
+    },
+    select: {
+      id: true,
+      name: true,
+      avatar: true,
+      phone: true,
+      region: true,
+      woreda: true,
+      farmSize: true,
+      crops: true,
+      experience: true,
+      isVerified: true,
+      createdAt: true,
+      farms: {
+        where: { isActive: true },
+        select: {
+          id: true,
+          name: true,
+          size: true,
+          sizeUnit: true,
+          region: true,
+          woreda: true,
+          soilType: true,
+          crops: true,
+          updatedAt: true,
+        },
+        orderBy: { updatedAt: 'desc' },
+      },
+      products: {
+        where: { isAvailable: true },
+        select: {
+          id: true,
+          name: true,
+          category: true,
+          unit: true,
+          price: true,
+          stock: true,
+          isOrganic: true,
+          location: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: 'desc' },
+      },
+    },
+  });
+
+  if (!farmer) {
+    throw createError('Farmer not found', 404);
+  }
+
+  const activeProducts = farmer.products || [];
+  const avgPrice =
+    activeProducts.length > 0
+      ? Number(
+          (
+            activeProducts.reduce((sum, item) => sum + Number(item.price || 0), 0) /
+            activeProducts.length
+          ).toFixed(2)
+        )
+      : null;
+
+  return {
+    farmer: {
+      id: farmer.id,
+      name: farmer.name,
+      avatar: farmer.avatar,
+      phone: farmer.phone,
+      region: farmer.region,
+      woreda: farmer.woreda,
+      farmSize: farmer.farmSize,
+      crops: farmer.crops,
+      experience: farmer.experience,
+      isVerified: farmer.isVerified,
+      joinedAt: farmer.createdAt,
+    },
+    stats: {
+      farmCount: farmer.farms.length,
+      activeProductCount: activeProducts.length,
+      averageListingPrice: avgPrice,
+      totalAvailableStock: activeProducts.reduce((sum, p) => sum + (p.stock || 0), 0),
+    },
+    farms: farmer.farms,
+    activeProducts: activeProducts.slice(0, 12),
+  };
+};
+
 module.exports = {
   getUsers,
   getUserById,
@@ -202,5 +294,6 @@ module.exports = {
   updatePassword,
   deleteUserById,
   deleteMyAccount,
-  restoreUser
+  restoreUser,
+  getFarmerPublicProfile,
 };

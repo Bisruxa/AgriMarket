@@ -3,6 +3,7 @@ const router = express.Router();
 const {
   getUsers,
   getUser,
+  getFarmerProfile,
   updateProfile,
   updatePassword,
   deleteUser,
@@ -18,6 +19,7 @@ router.use(protect);
 router.put('/profile', updateProfile);
 router.put('/password', updatePassword);
 router.delete('/me', deleteMyAccount);  // User deletes own account
+router.get('/farmers/:id/profile', authorize('TRADER', 'ADMIN'), getFarmerProfile);
 
 // Admin only routes
 router.get('/', authorize('ADMIN'), getUsers);
