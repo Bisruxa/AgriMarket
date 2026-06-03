@@ -2,6 +2,9 @@ const {
   getHealth,
   recommendCrop,
   predictPrice,
+  getPriceForecasterMetadata,
+  getToolDefinitions,
+  executeToolFunction,
 } = require('../services/agriai.service');
 
 function requireFields(body, fields) {
@@ -11,14 +14,11 @@ function requireFields(body, fields) {
 
 // @desc    Check AgriAI upstream health
 // @route   GET /api/agriai/health
-// @access  Private
+// @access  Public
 exports.getAgriAIHealth = async (req, res, next) => {
   try {
     const data = await getHealth();
-    res.status(200).json({
-      success: true,
-      data,
-    });
+    res.status(200).json({ success: true, data });
   } catch (error) {
     if (error.statusCode) {
       return res.status(error.statusCode).json({ success: false, message: error.message });
@@ -27,26 +27,15 @@ exports.getAgriAIHealth = async (req, res, next) => {
   }
 };
 
-// @desc    Get crop recommendations from AgriAI
+// @desc    Get crop recommendations from AgriAI (uses ML model)
 // @route   POST /api/agriai/recommend/crop
 // @access  Private
 exports.recommendCropFromAI = async (req, res, next) => {
   try {
-    const requiredFields = [
-      'nitrogen',
-      'phosphorus',
-      'potassium',
-      'temperature',
-      'humidity',
-      'ph',
-      'rainfall',
-    ];
+    const requiredFields = ['nitrogen', 'phosphorus', 'potassium', 'temperature', 'humidity', 'ph', 'rainfall'];
     const missing = requireFields(req.body, requiredFields);
     if (missing.length) {
-      return res.status(400).json({
-        success: false,
-        message: `Missing required fields: ${missing.join(', ')}`,
-      });
+      return res.status(400).json({ success: false, message: `Missing required fields: ${missing.join(', ')}` });
     }
 
     const payload = {
@@ -61,10 +50,7 @@ exports.recommendCropFromAI = async (req, res, next) => {
     };
 
     const data = await recommendCrop(payload);
-    res.status(200).json({
-      success: true,
-      data,
-    });
+    res.status(200).json({ success: true, data });
   } catch (error) {
     if (error.statusCode) {
       return res.status(error.statusCode).json({ success: false, message: error.message });
@@ -73,7 +59,7 @@ exports.recommendCropFromAI = async (req, res, next) => {
   }
 };
 
-// @desc    Get crop price forecast from AgriAI (single point)
+// @desc    Get price prediction from AgriAI (uses ML model)
 // @route   POST /api/agriai/predict/price
 // @access  Private
 exports.predictPriceFromAI = async (req, res, next) => {
@@ -81,10 +67,7 @@ exports.predictPriceFromAI = async (req, res, next) => {
     const requiredFields = ['crop_name', 'region', 'year', 'month'];
     const missing = requireFields(req.body, requiredFields);
     if (missing.length) {
-      return res.status(400).json({
-        success: false,
-        message: `Missing required fields: ${missing.join(', ')}`,
-      });
+      return res.status(400).json({ success: false, message: `Missing required fields: ${missing.join(', ')}` });
     }
 
     const payload = {
@@ -95,10 +78,7 @@ exports.predictPriceFromAI = async (req, res, next) => {
     };
 
     const data = await predictPrice(payload);
-    res.status(200).json({
-      success: true,
-      data,
-    });
+    res.status(200).json({ success: true, data });
   } catch (error) {
     if (error.statusCode) {
       return res.status(error.statusCode).json({ success: false, message: error.message });
@@ -112,12 +92,33 @@ exports.predictPriceFromAI = async (req, res, next) => {
 // @access  Private
 exports.getPriceForecasterMetadata = async (req, res, next) => {
   try {
-    const { getPriceForecasterMetadata: fetchMeta } = require('../services/agriai.service');
-    const data = await fetchMeta();
-    res.status(200).json({
-      success: true,
-      data,
-    });
+    const data = await getPriceForecasterMetadata();
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({ success: false, message: error.message });
+    }
+    next(error);
+  }
+};
+
+exports.getToolDefinitions = async (req, res, next) => {
+  try {
+    const tools = await getToolDefinitions();
+    res.status(200).json({ success: true, data: tools });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.executeTool = async (req, res, next) => {
+  try {
+    const { name, args } = req.body;
+    if (!name) {
+      return res.status(400).json({ success: false, message: 'Tool name is required' });
+    }
+    const result = await executeToolFunction(name, args || {});
+    res.status(200).json({ success: true, data: result });
   } catch (error) {
     if (error.statusCode) {
       return res.status(error.statusCode).json({ success: false, message: error.message });

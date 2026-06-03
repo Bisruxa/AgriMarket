@@ -54,8 +54,8 @@ export default function TableFilter({
   }, []);
 
   return (
-    <div className="relative">
-      <div className="flex flex-col sm:flex-row gap-4">
+    <div className="relative w-full min-w-0 max-w-full">
+      <div className="flex flex-col gap-4 sm:flex-row">
         {/* Search Input */}
         <div className="flex-1 relative group">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 group-focus-within:text-[#5B8C51] transition-colors duration-200" />

@@ -1,5 +1,5 @@
 const chatService = require('../services/chat.service');
-const agriaiService = require('../services/agriai.service');
+const { handleMessage } = require('../services/chat.handler');
 
 exports.getChats = async (req, res, next) => {
   try {
@@ -43,58 +43,41 @@ exports.deleteChat = async (req, res, next) => {
   }
 };
 
-exports.sendMessage = async (req, res, next) => {
+exports.appendMessage = async (req, res, next) => {
   try {
-    const { content } = req.body;
-    const { id: chatId } = req.params;
-
-    if (!content || !content.trim()) {
-      return res.status(400).json({ success: false, message: 'Message content is required' });
+    const { role, content } = req.body;
+    if (!role || !content) {
+      return res.status(400).json({ success: false, message: 'role and content are required' });
     }
-
-    let chat = await chatService.getChat(chatId, req.user.id);
-    if (!chat) {
+    const entry = await chatService.appendMessage(
+      req.params.id,
+      req.user.id,
+      role,
+      content
+    );
+    if (!entry) {
       return res.status(404).json({ success: false, message: 'Chat not found' });
     }
-
-    const userMessage = await chatService.addMessage(
-      chatId, req.user.id, 'user', content
-    );
-
-    const conversationHistory = chat.messages.map(m => ({
-      role: m.role,
-      content: m.content,
-      ...(m.metadata ? { metadata: m.metadata } : {}),
-    }));
-
-    conversationHistory.push({ role: 'user', content });
-
-    const aiResponse = await agriaiService.sendChatMessage({
-      message: content,
-      conversationHistory,
-      userId: req.user.id,
-    });
-
-    const assistantMessage = await chatService.addMessage(
-      chatId, req.user.id, 'assistant',
-      aiResponse.text,
-      aiResponse.functionCalls ? { functionCalls: aiResponse.functionCalls } : undefined
-    );
-
-    if (chat.messages.length === 0) {
-      const title = content.length > 50 ? content.slice(0, 50) + '...' : content;
-      await chatService.updateChatTitle(chatId, req.user.id, title);
-    }
-
-    res.status(200).json({
-      success: true,
-      data: {
-        userMessage,
-        assistantMessage,
-        functionCalls: aiResponse.functionCalls,
-      },
-    });
+    res.status(200).json({ success: true, data: entry });
   } catch (error) {
     next(error);
+  }
+};
+
+exports.sendMessage = async (req, res, next) => {
+  try {
+    const result = await handleMessage({
+      chatId: req.params.id,
+      userId: req.user.id,
+      content: req.body.content,
+      language: req.body.language || 'en',
+    });
+    res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({ success: false, message: error.message });
+    }
+    console.error('[Chat Error]', error);
+    res.status(500).json({ success: false, message: 'Failed to process message' });
   }
 };

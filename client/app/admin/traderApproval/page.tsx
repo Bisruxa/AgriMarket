@@ -8,8 +8,22 @@ import TraderStats from '@/components/cards/trader/traderStats';
 import CTA from '@/app/farmer/market/CTA';
 import TableFilter from '@/components/filters/TableFilter';
 import { useTranslations } from '@/components/hooks/useTranlations';
-import { useAdminStats ,usePendingTraders} from '@/components/hooks/userAdminQueries';
+import { useAdminStats, usePendingTraders } from '@/components/hooks/userAdminQueries';
+import { TableSkeleton } from '../LoadingState';
+import { ErrorState } from '../ErrorState';
+
 type StatusFilter = 'all' | 'pending' | 'approved' | 'rejected';
+
+type PendingTrader = {
+  id: string;
+  businessName: string;
+  ownerName: string;
+  email: string;
+  phone: string;
+  businessType: string;
+  registrationDate: string;
+  status: string;
+};
 
 export default function TraderApprovalPage() {
   const [search, setSearch] = useState('');
@@ -18,29 +32,22 @@ export default function TraderApprovalPage() {
   const ITEMS_PER_PAGE = 4;
   const t = useTranslations();
 
-  // Use React Query hooks
-  const { 
-    data: stats, 
-    isLoading: statsLoading, 
-    error: statsError 
-  } = useAdminStats();
-  
-  const { 
-    data: traders = [], 
-    isLoading: tradersLoading, 
-    error: tradersError 
+  const { data: stats, isLoading: statsLoading, error: statsError, refetch: refetchStats } = useAdminStats();
+  const {
+    data: traders = [],
+    isLoading: tradersLoading,
+    error: tradersError,
+    refetch: refetchTraders,
   } = usePendingTraders();
 
-  // Combine loading and error states
   const loading = statsLoading || tradersLoading;
   const error = statsError || tradersError;
 
-  // Filter options
   const filterOptions = [
     { value: 'all', label: t.filters?.status?.all || 'All Status' },
     { value: 'pending', label: t.filters?.status?.pending || 'Pending' },
     { value: 'approved', label: t.filters?.status?.approved || 'Approved' },
-    { value: 'rejected', label: t.filters?.status?.rejected || 'Rejected' }
+    { value: 'rejected', label: t.filters?.status?.rejected || 'Rejected' },
   ];
 
   const tableHeaders = [
@@ -49,144 +56,177 @@ export default function TraderApprovalPage() {
     { key: 'contact', label: t.traderTable?.contact || 'Contact' },
     { key: 'registrationDate', label: t.traderTable?.registrationDate || 'Registration Date' },
     { key: 'status', label: t.traderTable?.status || 'Status' },
-    { key: 'action', label: t.traderTable?.action || 'Action' }
+    { key: 'action', label: t.traderTable?.action || 'Action' },
   ];
 
   const filteredTraders = useMemo(() => {
-    return traders.filter(trader => {
-      const matchesStatus = statusFilter === 'all' || trader.status === statusFilter;
-      const matchesSearch = search === '' || 
+    return (traders as PendingTrader[]).filter((trader) => {
+      const normalizedStatus = (trader.status || 'pending').toLowerCase();
+      const matchesStatus = statusFilter === 'all' || normalizedStatus === statusFilter;
+      const matchesSearch =
+        search === '' ||
         trader.businessName.toLowerCase().includes(search.toLowerCase()) ||
         trader.ownerName.toLowerCase().includes(search.toLowerCase()) ||
         trader.email.toLowerCase().includes(search.toLowerCase());
-      
       return matchesStatus && matchesSearch;
     });
   }, [traders, search, statusFilter]);
 
   const getStatusBadge = (status: string) => {
-    switch(status) {
+    const normalized = (status || 'pending').toLowerCase();
+    switch (normalized) {
       case 'approved':
         return (
-          <span className="flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
             <CheckCircle className="w-3 h-3" /> {t.status?.approved || 'Approved'}
           </span>
         );
       case 'rejected':
         return (
-          <span className="flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800">
             <XCircle className="w-3 h-3" /> {t.status?.rejected || 'Rejected'}
           </span>
         );
       default:
         return (
-          <span className="flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
             <Clock className="w-3 h-3" /> {t.status?.pending || 'Pending'}
           </span>
         );
     }
   };
 
-  const totalPages = Math.ceil(filteredTraders.length / ITEMS_PER_PAGE);
+  const totalPages = Math.max(1, Math.ceil(filteredTraders.length / ITEMS_PER_PAGE));
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-  const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentData = filteredTraders.slice(startIndex, endIndex);
+  const currentData = filteredTraders.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
-  // Reset to first page when filters change
-  useMemo(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-render
-    setCurrentPage(1);
-  }, [search, statusFilter]);
+  if (loading) {
+    return (
+      <div className="w-full min-w-0 max-w-full py-4">
+        <Header />
+        <hr className="border-[#E2E8E2]" />
+        <div className="space-y-5 py-4">
+          <div>
+            <h1 className="text-2xl font-bold text-[#1A2E1A]">
+              {t.traderApproval?.title || 'Trader Approvals'}
+            </h1>
+            <p className="text-[#6B7B6B] mt-1 text-sm">
+              {t.traderApproval?.subtitle || 'Review and manage trader registration requests'}
+            </p>
+          </div>
+          <TraderStats stats={undefined} loading />
+          <TableSkeleton />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <ErrorState
+        error={error.message}
+        onRetry={() => {
+          refetchStats();
+          refetchTraders();
+        }}
+      />
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="w-full min-w-0 max-w-full py-4">
       <Header />
-      <hr />
-      <div className="max-w-7xl mx-auto py-8">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold text-gray-900">{t.traderApproval?.title || 'Trader Approvals'}</h1>
-          <p className="text-gray-600 mt-1">{t.traderApproval?.subtitle || 'Review and manage trader registration requests'}</p>
+      <hr className="border-[#E2E8E2]" />
+      <div className="space-y-5 py-4">
+        <div>
+          <h1 className="text-2xl font-bold text-[#1A2E1A]">
+            {t.traderApproval?.title || 'Trader Approvals'}
+          </h1>
+          <p className="text-[#6B7B6B] mt-1 text-sm">
+            {t.traderApproval?.subtitle || 'Review and manage trader registration requests'}
+          </p>
         </div>
 
-        {/* Pass stats to TraderStats component */}
-        <TraderStats 
-          stats={stats} 
-          loading={statsLoading} 
-          error={statsError?.message || null} 
-        />
+        <TraderStats stats={stats} loading={false} error={null} />
 
         <TableFilter
-          searchPlaceholder={t.traderApproval?.searchPlaceholder || "Search by business name, owner, or email..."}
-          onSearch={setSearch}
+          searchPlaceholder={
+            t.traderApproval?.searchPlaceholder || 'Search by business name, owner, or email...'
+          }
+          onSearch={(value) => {
+            setSearch(value);
+            setCurrentPage(1);
+          }}
           filterValue={statusFilter}
-          onFilterChange={(value) => setStatusFilter(value as StatusFilter)}
+          onFilterChange={(value) => {
+            setStatusFilter(value as StatusFilter);
+            setCurrentPage(1);
+          }}
           filterOptions={filterOptions}
         />
 
-        <div className="bg-white rounded-lg shadow-sm overflow-hidden mt-4">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                {tableHeaders.map(header => (
-                  <th key={header.key} className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    {header.label}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {currentData.map(trader => (
-                <tr key={trader.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">
-                    <div className="text-sm font-medium text-gray-900">{trader.businessName}</div>
-                    <div className="text-xs text-gray-500">{trader.businessType}</div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-900">{trader.ownerName}</td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900">{trader.email}</div>
-                    <div className="text-xs text-gray-500">{trader.phone}</div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500">
-                    {new Date(trader.registrationDate).toLocaleDateString()}
-                  </td>
-                  <td className="px-6 py-4">{getStatusBadge(trader.status)}</td>
-                  <td className="px-6 py-4">
-                    <Link 
-                      href={`/admin/traderApproval/${trader.id}`} 
-                      className="inline-flex items-center gap-1 text-sm text-[#5B8C51] hover:text-[#4a7342] font-medium"
-                    >
-                      {t.traderApproval?.review || 'Review'} <ChevronRight className="w-4 h-4" />
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-              
-              {loading && (
+        <div className="w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-[#E2E8E2] bg-white shadow-sm">
+            <table className="w-full table-fixed">
+              <thead className="border-b border-[#E2E8E2] bg-[#F4F7F4]">
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center">
-                    <div className="flex justify-center">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#5B8C51]"></div>
-                    </div>
-                  </td>
+                  {tableHeaders.map((header) => (
+                    <th
+                      key={header.key}
+                      className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-[#6B7B6B] sm:px-4"
+                    >
+                      <span className="line-clamp-2">{header.label}</span>
+                    </th>
+                  ))}
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-[#E2E8E2]">
+                {currentData.map((trader) => (
+                  <tr key={trader.id} className="transition-colors hover:bg-[#F4F7F4]/60">
+                    <td className="px-3 py-3 sm:px-4">
+                      <div className="truncate text-sm font-medium text-[#1A2E1A]">{trader.businessName}</div>
+                      {trader.businessType ? (
+                        <div className="truncate text-xs text-[#6B7B6B]">{trader.businessType}</div>
+                      ) : null}
+                    </td>
+                    <td className="truncate px-3 py-3 text-sm text-[#1A2E1A] sm:px-4">{trader.ownerName}</td>
+                    <td className="px-3 py-3 sm:px-4">
+                      <div className="truncate text-sm text-[#1A2E1A]">{trader.email}</div>
+                      <div className="truncate text-xs text-[#6B7B6B]">{trader.phone}</div>
+                    </td>
+                    <td className="truncate px-3 py-3 text-sm text-[#6B7B6B] sm:px-4">
+                      {new Date(trader.registrationDate).toLocaleDateString()}
+                    </td>
+                    <td className="px-3 py-3 sm:px-4">{getStatusBadge(trader.status)}</td>
+                    <td className="px-3 py-3 sm:px-4">
+                      <Link
+                        href={`/admin/traderApproval/${trader.id}`}
+                        className="inline-flex items-center gap-1 text-sm font-medium text-[#2A5A2A] hover:text-[#1B3D1B]"
+                      >
+                        <span className="truncate">{t.traderApproval?.review || 'Review'}</span>
+                        <ChevronRight className="h-4 w-4 shrink-0" />
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
 
-          {!loading && filteredTraders.length === 0 && (
+          {filteredTraders.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-gray-500">{t.common?.noResults || 'No traders found'}</p>
+              <p className="text-[#6B7B6B]">{t.common?.noResults || 'No traders found'}</p>
             </div>
           )}
         </div>
 
-        <CTA
-          currentPage={currentPage}
-          totalPages={totalPages}
-          totalItems={filteredTraders.length}
-          onNext={() => setCurrentPage(p => Math.min(p + 1, totalPages))}
-          onPrev={() => setCurrentPage(p => Math.max(p - 1, 1))}
-        />
+        {filteredTraders.length > 0 && (
+          <CTA
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={filteredTraders.length}
+            onNext={() => setCurrentPage((p) => Math.min(p + 1, totalPages))}
+            onPrev={() => setCurrentPage((p) => Math.max(p - 1, 1))}
+          />
+        )}
       </div>
     </div>
   );

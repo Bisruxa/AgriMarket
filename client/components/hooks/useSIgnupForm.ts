@@ -7,6 +7,7 @@ import { authApi, API_URL } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 import { RegistrationData } from '@/types/auth-page';
 import { useDebounce } from './useDebounce';
+import { useAuth } from '@/app/context/UserContext';
 
 interface ApiError {
   message: string;
@@ -19,6 +20,7 @@ interface ApiError {
 
 export const useSignupForm = () => {
   const router = useRouter();
+  const { login } = useAuth();
   const [role, setRole] = useState<'FARMER' | 'TRADER'>('FARMER');
   const [step, setStep] = useState(1);
   const [errors, setErrors] = useState<string[]>([]);
@@ -164,10 +166,10 @@ export const useSignupForm = () => {
         return;
       }
 
-      // Token is now stored in HTTP-only cookie (set by server)
-      // Only store user info in localStorage for UI purposes
-      if (response.user) {
-        localStorage.setItem('user', JSON.stringify(response.user));
+      if (response.user && response.token) {
+        login(response.user, response.token);
+      } else if (response.user) {
+        login(response.user);
       }
 
       const redirectPath = role === 'FARMER' ? '/farmer/dashboard' : '/trader/dashboard';

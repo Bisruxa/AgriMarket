@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:agrimatketapp/config/api_config.dart';
 import 'package:agrimatketapp/services/api_service.dart';
+import 'package:dio/dio.dart';
 import 'package:agrimatketapp/services/auth_session.dart';
 import 'package:agrimatketapp/screens/farmer/farmer_dashboard.dart';
 import 'package:agrimatketapp/screens/trader/trader_dashboard.dart';
@@ -223,6 +224,21 @@ class _LoginScreenState extends State<LoginScreen> {
           _isLoading = false;
         });
       }
+    } on DioException catch (e) {
+      String message = 'Cannot reach the API server. Start it with: cd server && npm run dev';
+      if (e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.unknown) {
+        message =
+            'Cannot connect to ${ApiConfig.baseUrl}. Start the server: cd server && npm run dev';
+      }
+      final data = e.response?.data;
+      if (data is Map<String, dynamic> && data['message'] is String) {
+        message = data['message'];
+      }
+      setState(() {
+        _errorMessage = message;
+        _isLoading = false;
+      });
     } catch (e) {
       setState(() {
         _errorMessage =

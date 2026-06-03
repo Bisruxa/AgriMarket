@@ -1,0 +1,7 @@
+{
+  "name": "Kalkie-talkie Talk",
+  "description": "A visually stunning website that allows users to talk directly with Kalkie-talkie in real time through both text and voice, supporting English and Amharic languages.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}

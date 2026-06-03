@@ -1,0 +1,30 @@
+/** Crop names stored as product name; labels translated via dashboard.market.productForm.crops */
+export const CROP_OPTION_VALUES = [
+  'Rice',
+  'Wheat',
+  'Maize',
+  'Barley',
+  'Soybean',
+  'Potato',
+  'Tomato',
+  'Coffee',
+  'Tea',
+  'Sorghum',
+  'Millet',
+  'Chickpea',
+  'Sunflower',
+  'Sesame',
+  'Cotton',
+  'Sugarcane',
+  'Cabbage',
+  'Carrot',
+  'Onion',
+  'Garlic',
+  'Pepper',
+  'Strawberry',
+  'Avocado',
+  'Mango',
+  'Banana',
+] as const;
+
+export type CropOptionValue = (typeof CROP_OPTION_VALUES)[number] | 'OTHER';

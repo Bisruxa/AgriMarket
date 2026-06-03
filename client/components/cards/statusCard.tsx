@@ -52,7 +52,7 @@ const StatusCard = ({ stats, isLoading }: StatusCardProps) => {
   );
 
   return (
-    <div className="grid md:grid-cols-3 gap-4 grid-cols-1 p-4">
+    <div className="grid w-full min-w-0 max-w-full grid-cols-1 gap-4 md:grid-cols-3">
       {statConfigs.map((stat, index) => (
         <div 
           key={index} 

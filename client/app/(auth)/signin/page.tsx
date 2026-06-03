@@ -49,14 +49,9 @@ export default function SignInPage() {
         }
         return;
       }
-      if(response.token){
-        localStorage.setItem('token',response.token);
-      }
-      if(response.user){
-        login(response.user);
-        localStorage.setItem('user',JSON.stringify(response.user));
-        
-        // Redirect based on actual user role from API response
+      if (response.success && response.user) {
+        login(response.user, response.token);
+
         const userRole = response.user.role;
         let redirectPath = '/';
         

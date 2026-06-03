@@ -45,5 +45,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>AgriMarket uses the microphone for live voice chat with the farming assistant.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>AgriMarket converts your speech to text for the farming assistant.</string>
 </dict>
 </plist>

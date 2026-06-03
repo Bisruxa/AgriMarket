@@ -1,4 +1,12 @@
+import {
+  dashboardAm,
+  dashboardEn,
+  type DashboardTranslations,
+} from './dashboard.translations';
+
 export type Language = 'en' | 'am';
+
+export type AppTranslations = Translations & { dashboard: DashboardTranslations };
 
 export interface Translations {
   nav: {
@@ -247,6 +255,12 @@ stats:{
     save: string;
 
   };
+  notFound: {
+    title: string;
+    subtitle: string;
+    goHome: string;
+    goDashboard: string;
+  };
   filters?: {
     status?: {
       all: string;
@@ -349,6 +363,12 @@ traderApproval?: {
     portfolio: string;
     chat: string;
     market: string;
+    farms: string;
+    cropdetail: string;
+    trends: string;
+    priceForecast: string;
+    purchases: string;
+    [key: string]: string;
   };
 }
 
@@ -616,6 +636,12 @@ const en: Translations = {
   cancel: "Cancel",
   save: "Save",
 },
+notFound: {
+  title: "Page not found",
+  subtitle: "This field hasn't been planted yet — the page you're looking for doesn't exist or was moved.",
+  goHome: "Back to home",
+  goDashboard: "Go to dashboard",
+},
 filters: {
   status: {
     all: "All Status",
@@ -717,7 +743,12 @@ header: {
   admin: "Admin",
   portfolio: "Portfolio",
   chat: "Chat",
-  market: "Market"
+  market: "Market",
+  farms: "My Farms",
+  cropdetail: "Crop Recommendations",
+  trends: "Trends & Forecast",
+  priceForecast: "Price Forecast",
+  purchases: "Purchases",
 }
 };
 
@@ -983,6 +1014,12 @@ common: {
   cancel: "ሰርዝ",
   save: "አስቀምጥ",
 },
+notFound: {
+  title: "ገጽ አልተገኘም",
+  subtitle: "የሚፈልጉት ገጽ የለም ወይም ተዛውሯል — እንደገና ይሞክሩ ወይም ወደ መነሻ ገጽ ይመለሱ።",
+  goHome: "ወደ መነሻ ገጽ",
+  goDashboard: "ወደ ዳሽቦርድ",
+},
 filters: {
   status: {
     all: "ሁሉም ሁኔታ",
@@ -1083,14 +1120,23 @@ header: {
   admin: "አስተዳዳሪ",
   portfolio: "ፖርትፎሊዮ",
   chat: "ውይይት",
-  market: "ገበያ"
+  market: "ገበያ",
+  farms: "እርሻዎቼ",
+  cropdetail: "የሰብል ምክሮች",
+  trends: "አዝማሚያ እና ትንበያ",
+  priceForecast: "የዋጋ ትንበያ",
+  purchases: "ግዢዎች",
 }
 };
 
 // Export translation function
 export const translations: Record<Language, Translations> = { en, am };
 
-// Helper function to get translations
-export function getTranslations(lang: Language): Translations {
-  return translations[lang];
+// Helper function to get translations (includes dashboard portal strings)
+export function getTranslations(lang: Language): AppTranslations {
+  const base = translations[lang];
+  return {
+    ...base,
+    dashboard: lang === 'am' ? dashboardAm : dashboardEn,
+  };
 }

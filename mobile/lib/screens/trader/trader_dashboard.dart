@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import '../../models/notification_model.dart';
 import '../../models/product_model.dart';
 import '../../models/profile_model.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/logout_helper.dart';
+import '../../utils/notification_labels.dart';
 import '../../widgets/common/app_bottom_nav.dart';
 import '../../widgets/profile_details_card.dart';
 import '../../widgets/welcome_card.dart';
@@ -22,8 +24,10 @@ class _TraderDashboardState extends State<TraderDashboard> {
   bool _isLoadingProfile = true;
   List<Product> _previewProducts = [];
   bool _isLoadingPreview = true;
+  List<AppNotification> _notifications = [];
+  int _unreadCount = 0;
 
-  static const _defaultImage = 'assets/images/welcome.jpg';
+  static const _defaultImage = 'assets/images/welcome.png';
 
   static const _navItems = [
     AppNavItem(
@@ -53,6 +57,55 @@ class _TraderDashboardState extends State<TraderDashboard> {
     super.initState();
     _loadProfile();
     _loadPreviewProducts();
+    _loadNotifications();
+  }
+
+  Future<void> _loadNotifications() async {
+    final result = await _apiService.getNotifications();
+    if (mounted && result.success) {
+      setState(() {
+        _notifications = result.notifications;
+        _unreadCount = result.unreadCount;
+      });
+    }
+  }
+
+  void _showNotifications() {
+    showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text('Notifications', style: Theme.of(ctx).textTheme.titleLarge),
+                const SizedBox(height: 12),
+                if (_notifications.isEmpty)
+                  const Text('No notifications', style: TextStyle(color: AppColors.textSecondary))
+                else
+                  ..._notifications.map((n) {
+                    final labels = NotificationLabels.label(n);
+                    return ListTile(
+                      title: Text(labels.title),
+                      subtitle: Text(labels.body),
+                      trailing: Text(
+                        NotificationLabels.timeAgo(n.createdAt),
+                        style: const TextStyle(fontSize: 11),
+                      ),
+                    );
+                  }),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _loadPreviewProducts() async {
@@ -133,7 +186,7 @@ class _TraderDashboardState extends State<TraderDashboard> {
                         ),
                   ),
                   IconButton(
-                    onPressed: () {},
+                    onPressed: _showNotifications,
                     style: IconButton.styleFrom(
                       backgroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
@@ -141,7 +194,11 @@ class _TraderDashboardState extends State<TraderDashboard> {
                         side: const BorderSide(color: AppColors.border),
                       ),
                     ),
-                    icon: const Icon(Icons.notifications_outlined),
+                    icon: Badge(
+                      isLabelVisible: _unreadCount > 0,
+                      label: Text('$_unreadCount'),
+                      child: const Icon(Icons.notifications_outlined),
+                    ),
                   ),
                 ],
               ),
@@ -167,18 +224,18 @@ class _TraderDashboardState extends State<TraderDashboard> {
                     children: [
                       Expanded(
                         child: _StatCard(
-                          label: 'Active Orders',
-                          value: '3',
-                          icon: Icons.local_shipping_outlined,
+                          label: 'Alerts',
+                          value: '$_unreadCount',
+                          icon: Icons.notifications_active_outlined,
                           color: AppColors.traderAccent,
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: _StatCard(
-                          label: 'Saved Farmers',
-                          value: '12',
-                          icon: Icons.people_outline,
+                          label: 'Listings',
+                          value: '${_previewProducts.length}',
+                          icon: Icons.storefront_outlined,
                           color: AppColors.primary,
                         ),
                       ),

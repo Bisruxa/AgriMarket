@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../services/api_service.dart';
+import '../services/auth_session.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common/auth_shell.dart';
 import '../widgets/common/section_title.dart';
@@ -15,6 +17,7 @@ class FarmerSignupScreen extends StatefulWidget {
 }
 
 class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
+  final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
@@ -27,6 +30,8 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
   String? _selectedRegion;
   String? _selectedWoreda;
   String? _selectedExperience;
+  bool _isLoading = false;
+  String? _errorMessage;
 
   final List<String> _experienceLevels = [
     'Beginner (0-2 years)',
@@ -34,6 +39,60 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
     'Advanced (6-10 years)',
     'Expert (10+ years)',
   ];
+
+  Future<void> _register() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    if (_passwordController.text != _confirmPasswordController.text) {
+      setState(() => _errorMessage = 'Passwords do not match');
+      return;
+    }
+
+    if (_selectedRegion == null || _selectedRegion!.isEmpty) {
+      setState(() => _errorMessage = 'Please select your region');
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    final result = await ApiService().register({
+      'name': _nameController.text.trim(),
+      'email': _emailController.text.trim(),
+      'password': _passwordController.text,
+      'role': 'FARMER',
+      'phone': _phoneController.text.trim(),
+      'region': _selectedRegion,
+      'woreda': _selectedWoreda,
+      'farmSize': _farmSizeController.text.trim().isNotEmpty
+          ? '${_farmSizeController.text.trim()} hectares'
+          : null,
+      'crops': _cropsController.text.trim(),
+      'experience': _selectedExperience,
+    });
+
+    if (!mounted) return;
+
+    if (result.success && result.raw != null) {
+      await AuthSession.saveFromLoginResponse(result.raw!);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Registration successful!'),
+          backgroundColor: AppColors.primary,
+        ),
+      );
+      Navigator.pushReplacementNamed(context, '/login');
+      return;
+    }
+
+    setState(() {
+      _isLoading = false;
+      _errorMessage = result.message ?? 'Registration failed';
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,9 +104,25 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
       child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
         child: Form(
+          key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              if (_errorMessage != null) ...[
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.error.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.error.withValues(alpha: 0.3)),
+                  ),
+                  child: Text(
+                    _errorMessage!,
+                    style: const TextStyle(color: AppColors.error, fontSize: 13),
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
               const SectionTitle(
                 title: 'Personal Information',
                 subtitle: 'Your account details',
@@ -142,16 +217,8 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
               const SizedBox(height: 8),
               CustomButton(
                 text: 'Register as Farmer',
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                        'Registration successful! Pending approval.',
-                      ),
-                    ),
-                  );
-                  Navigator.pushReplacementNamed(context, '/login');
-                },
+                isLoading: _isLoading,
+                onPressed: _register,
               ),
             ],
           ),

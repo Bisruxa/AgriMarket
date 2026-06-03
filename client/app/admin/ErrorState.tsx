@@ -7,11 +7,11 @@ interface ErrorStateProps {
 }
 
 export const ErrorState = ({ error, onRetry }: ErrorStateProps) => (
-  <div>
+  <div className="w-full min-w-0 max-w-full">
     <Header />
     <hr />
     <div className="py-6 space-y-4">
-      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mx-4">
+      <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-red-700">
         {error}
         <button 
           onClick={onRetry}

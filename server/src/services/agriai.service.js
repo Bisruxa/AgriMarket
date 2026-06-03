@@ -1,5 +1,5 @@
-const DEFAULT_BASE_URL = 'http://localhost:8000';
-// const DEFAULT_BASE_URL = 'https://apache-resolutions-spreading-asn.trycloudflare.com/api'; // fallback tunnel
+// Must match `uvicorn` port in agriAI/docs/QUICK_START.md (no /api prefix on routes)
+const DEFAULT_BASE_URL = 'https://concept-locate-gallery-richard.trycloudflare.com/';
 const REQUEST_TIMEOUT_MS = Number(process.env.AGRIAI_TIMEOUT_MS || 12000);
 const CHAT_TIMEOUT_MS = Number(process.env.AGRIAI_CHAT_TIMEOUT_MS || 60000);
 
@@ -53,7 +53,10 @@ async function requestAgriAI(path, options = {}) {
       throw error;
     }
 
-    const networkError = new Error('Unable to reach AgriAI service');
+    const hint = getBaseUrl();
+    const networkError = new Error(
+      `Unable to reach AgriAI at ${hint}. Start it from the agriAI folder: python -m uvicorn api.main:app --reload --port 8001`
+    );
     networkError.statusCode = 502;
     throw networkError;
   } finally {
@@ -81,6 +84,19 @@ async function predictPrice(payload) {
 
 async function getPriceForecasterMetadata() {
   return requestAgriAI('/price-forecaster/metadata', { method: 'GET' });
+}
+
+async function getToolDefinitions() {
+  const data = await requestAgriAI('/tools/definitions', { method: 'GET' });
+  return data;
+}
+
+async function executeToolFunction(name, args) {
+  const data = await requestAgriAI('/tools/execute', {
+    method: 'POST',
+    body: JSON.stringify({ name, args }),
+  });
+  return data;
 }
 
 async function sendChatMessage(payload) {
@@ -138,4 +154,6 @@ module.exports = {
   predictPrice,
   getPriceForecasterMetadata,
   sendChatMessage,
+  getToolDefinitions,
+  executeToolFunction,
 };

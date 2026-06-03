@@ -150,7 +150,7 @@ const EditCrop = ({ productId, onSuccess }: EditCropProps) => {
   return (
     <CropForm
       initialData={initialData}
-      productId={productId}
+      productId={productId ?? undefined}
       onSubmit={handleSubmit}
       onClose={() => setShow(false)}
       isLoading={isLoading}

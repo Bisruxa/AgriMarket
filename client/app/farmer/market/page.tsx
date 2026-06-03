@@ -11,6 +11,8 @@ import Header from "@/components/common/Header";
 import { useProducts, useProductMutations } from "@/components/hooks/useProducts";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { toast } from 'sonner';
+import { useTranslations } from '@/components/hooks/useTranlations';
+import { useLanguage } from '@/app/context/LanguageContext';
 
 interface Product {
   id: string;
@@ -23,9 +25,11 @@ interface Product {
 }
 
 const Page = () => {
-  const { setShow } = useContext(Context)!;
+  const t = useTranslations();
+  const m = t.dashboard.market;
+  const { language } = useLanguage();
+  const { setShow, setSelectedProductId } = useContext(Context)!;
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [productToDelete, setProductToDelete] = useState<string | null>(null);
   
   const { data, isLoading, error, refetch } = useProducts(currentPage);
@@ -69,7 +73,7 @@ const Page = () => {
               <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
               <p className="text-red-600 mb-4">{error.message}</p>
               <Button onClick={() => refetch()} className="bg-red-600 hover:bg-red-700">
-                Try Again
+                {m.tryAgain}
               </Button>
             </div>
           </div>
@@ -82,15 +86,15 @@ const Page = () => {
     <>
       <Header />
       
-      <div className="container mx-auto px-4 py-8">
+      <div className={`container mx-auto px-4 py-8 ${language === 'am' ? 'amharic' : ''}`}>
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="font-bold text-3xl text-[#2A5A2A] mb-2">My Agricultural Products</h1>
-            <p className="text-sm text-gray-600">View, create and manage your agricultural products</p>
+            <h1 className="font-bold text-3xl text-[#0B3D2E] mb-2">{m.title}</h1>
+            <p className="text-sm text-gray-600">{m.subtitle}</p>
           </div>
-          <Button onClick={handleCreateNew} className="bg-[#2A5A2A] hover:bg-[#1E431E] cursor-pointer rounded-lg">
+          <Button onClick={handleCreateNew} className="bg-[#0B3D2E] hover:bg-[#082F24] cursor-pointer rounded-lg">
             <CirclePlus className="mr-2 h-4 w-4" />
-            Create New
+            {m.createNew}
           </Button>
         </div>
 
@@ -98,27 +102,27 @@ const Page = () => {
           <Table>
             <TableHeader>
               <TableRow className="bg-gray-50">
-                <TableHead className="px-5 py-4">Name</TableHead>
-                <TableHead className="px-5 py-4">Stock</TableHead>
-                <TableHead className="px-5 py-4">Price</TableHead>
-                <TableHead className="px-5 py-4">Unit</TableHead>
-                <TableHead className="px-5 py-4">Category</TableHead>
-                <TableHead className="px-5 py-4">Status</TableHead>
-                <TableHead className="px-5 py-4">Actions</TableHead>
+                <TableHead className="px-5 py-4">{m.headers.name}</TableHead>
+                <TableHead className="px-5 py-4">{m.headers.stock}</TableHead>
+                <TableHead className="px-5 py-4">{m.headers.price}</TableHead>
+                <TableHead className="px-5 py-4">{m.headers.unit}</TableHead>
+                <TableHead className="px-5 py-4">{m.headers.category}</TableHead>
+                <TableHead className="px-5 py-4">{m.headers.status}</TableHead>
+                <TableHead className="px-5 py-4">{m.headers.actions}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading && products.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-8">
-                    <Loader2 className="h-8 w-8 animate-spin text-[#2A5A2A] mx-auto" />
-                    <p className="mt-2 text-gray-600">Loading products...</p>
+                    <Loader2 className="h-8 w-8 animate-spin text-[#0B3D2E] mx-auto" />
+                    <p className="mt-2 text-gray-600">{m.loadingProducts}</p>
                   </TableCell>
                 </TableRow>
               ) : products.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-8 text-gray-500">
-                    No products found. Click Create New to add your first product.
+                    {m.noProducts}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -137,14 +141,14 @@ const Page = () => {
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                         product.isAvailable ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
                       }`}>
-                        {product.isAvailable ? "Available" : "Sold Out"}
+                        {product.isAvailable ? m.available : m.soldOut}
                       </span>
                     </TableCell>
                     <TableCell className="py-4 text-sm px-5">
                       <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm" onClick={() => handleEdit(product.id)} 
                           className="h-8 px-3 text-xs border-gray-200 hover:bg-gray-50 hover:text-blue-600">
-                          <Pencil className="h-3.5 w-3.5 mr-1" /> Edit
+                          <Pencil className="h-3.5 w-3.5 mr-1" /> {m.edit}
                         </Button>
                         <Button variant="outline" size="sm" onClick={() => setProductToDelete(product.id)}
                           disabled={deleteMutation.isPending}
@@ -154,7 +158,7 @@ const Page = () => {
                           ) : (
                             <Trash2 className="h-3.5 w-3.5 mr-1" />
                           )}
-                          Delete
+                          {m.delete}
                         </Button>
                       </div>
                     </TableCell>
@@ -181,8 +185,8 @@ const Page = () => {
         open={!!productToDelete}
         onOpenChange={() => setProductToDelete(null)}
         onConfirm={handleDeleteConfirm}
-        title="Delete Product"
-        description="Are you sure you want to delete this product? This action cannot be undone."
+        title={m.deleteTitle}
+        description={m.deleteDescription}
       />
     </>
   );

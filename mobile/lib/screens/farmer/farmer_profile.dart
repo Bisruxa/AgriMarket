@@ -3,9 +3,12 @@ import 'package:flutter/material.dart';
 import '../../models/profile_model.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
+import '../../utils/logout_helper.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/profile_details_card.dart';
+import 'crop_recommendation.dart';
+import 'farms_screen.dart';
 
 class FarmerProfileScreen extends StatefulWidget {
   const FarmerProfileScreen({super.key});
@@ -389,10 +392,72 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
                 isLoading: _isSavingPassword,
                 onPressed: _changePassword,
               ),
+              const SizedBox(height: 24),
+              ListTile(
+                leading: const Icon(Icons.agriculture_rounded, color: AppColors.primary),
+                title: const Text('My Farms'),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const FarmsScreen()),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.eco_rounded, color: AppColors.primary),
+                title: const Text('Crop recommendation'),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const CropRecommendation()),
+                  );
+                },
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.delete_forever_rounded, color: Colors.red),
+                title: const Text('Delete account', style: TextStyle(color: Colors.red)),
+                onTap: _confirmDeleteAccount,
+              ),
             ],
           ),
         ),
       ],
     );
+  }
+
+  Future<void> _confirmDeleteAccount() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete account?'),
+        content: const Text(
+          'Your profile and data will be removed. This cannot be undone.',
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+
+    final result = await _api.deleteMyAccount();
+    if (!mounted) return;
+    if (result.success) {
+      await logoutAndRedirect(context);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result.message ?? 'Failed to delete account'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+    }
   }
 }

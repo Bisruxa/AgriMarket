@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
-import '../../constants/farm_options.dart';
 import '../../models/farm_model.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/farmer/farm_card.dart';
 import 'add_farm_screen.dart';
 
 class FarmsScreen extends StatefulWidget {
@@ -52,6 +52,48 @@ class _FarmsScreenState extends State<FarmsScreen> {
     );
     if (created == true) {
       _loadFarms();
+    }
+  }
+
+  Future<void> _openEditFarm(Farm farm) async {
+    final updated = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => AddFarmScreen(existingFarm: farm)),
+    );
+    if (updated == true) _loadFarms();
+  }
+
+  Future<void> _confirmDeleteFarm(Farm farm) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete farm?'),
+        content: Text('Remove "${farm.name}"? This cannot be undone.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+
+    final result = await _api.deleteFarm(farm.id);
+    if (!mounted) return;
+    if (result.success) {
+      _loadFarms();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result.message ?? 'Farm deleted')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result.message ?? 'Failed to delete'),
+          backgroundColor: AppColors.error,
+        ),
+      );
     }
   }
 
@@ -143,70 +185,16 @@ class _FarmsScreenState extends State<FarmsScreen> {
                   separatorBuilder: (_, __) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     final farm = _farms[index];
-                    return _FarmCard(farm: farm);
+                    return FarmCard(
+                      farm: farm,
+                      onEdit: () => _openEditFarm(farm),
+                      onDelete: () => _confirmDeleteFarm(farm),
+                    );
                   },
                 ),
               ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _FarmCard extends StatelessWidget {
-  final Farm farm;
-
-  const _FarmCard({required this.farm});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            farm.name,
-            style: const TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          if (farm.soilType != null && farm.soilType!.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const Icon(Icons.eco_outlined, size: 18, color: AppColors.primary),
-                const SizedBox(width: 8),
-                Text(
-                  labelForOption(soilTypeOptions, farm.soilType),
-                  style: const TextStyle(color: AppColors.textSecondary),
-                ),
-              ],
-            ),
-          ],
-          const SizedBox(height: 8),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Icon(Icons.location_on_outlined, size: 18, color: AppColors.primary),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  farm.locationLabel,
-                  style: const TextStyle(color: AppColors.textSecondary),
-                ),
-              ),
-            ],
-          ),
-        ],
       ),
     );
   }

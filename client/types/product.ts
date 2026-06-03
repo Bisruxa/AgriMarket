@@ -10,8 +10,14 @@ export interface Product {
   isAvailable: boolean;
   createdAt: string;
   updatedAt: string;
+  location?: string;
+  harvestDate?: string;
+  isOrganic?: boolean;
   farmer: {
     id: string;
     name: string;
+    email?: string;
+    region?: string;
+    woreda?: string;
   };
 }

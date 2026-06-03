@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '../../models/product_model.dart';
 import '../../services/api_service.dart';
@@ -25,6 +27,7 @@ class _TraderProductsScreenState extends State<TraderProductsScreen> {
 
   String? _selectedCategory;
   bool? _availableOnly = true;
+  Timer? _searchDebounce;
 
   static const _categories = [
     'VEGETABLES',
@@ -39,25 +42,25 @@ class _TraderProductsScreenState extends State<TraderProductsScreen> {
   void initState() {
     super.initState();
     fetchProducts();
-    _searchController.addListener(() => setState(() {}));
+    _searchController.addListener(_onSearchChanged);
+  }
+
+  void _onSearchChanged() {
+    setState(() {});
+    _searchDebounce?.cancel();
+    _searchDebounce = Timer(const Duration(milliseconds: 450), () {
+      if (mounted) fetchProducts(resetPage: true);
+    });
   }
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _searchController.dispose();
     super.dispose();
   }
 
-  List<Product> get _filteredProducts {
-    final query = _searchController.text.trim().toLowerCase();
-    if (query.isEmpty) return products;
-
-    return products.where((p) {
-      return p.name.toLowerCase().contains(query) ||
-          p.location.toLowerCase().contains(query) ||
-          p.category.toLowerCase().contains(query);
-    }).toList();
-  }
+  List<Product> get _filteredProducts => products;
 
   void _showFarmerInfoDialog(Product product) {
     showDialog<void>(
@@ -66,7 +69,8 @@ class _TraderProductsScreenState extends State<TraderProductsScreen> {
     );
   }
 
-  Future<void> fetchProducts() async {
+  Future<void> fetchProducts({bool resetPage = false}) async {
+    if (resetPage) currentPage = 1;
     setState(() {
       isLoading = true;
       errorMessage = null;
@@ -76,6 +80,9 @@ class _TraderProductsScreenState extends State<TraderProductsScreen> {
       final response = await _apiService.getProducts(
         category: _selectedCategory,
         available: _availableOnly,
+        search: _searchController.text.trim().isEmpty
+            ? null
+            : _searchController.text.trim(),
         page: currentPage,
         limit: _pageLimit,
       );

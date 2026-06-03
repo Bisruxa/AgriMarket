@@ -37,7 +37,8 @@ exports.getMe = async (req, res, next) => {
 
     res.status(200).json({
       success: true,
-      data: user
+      data: user,
+      token: generateToken(user)
     });
   } catch (error) {
     next(error);
@@ -105,16 +106,18 @@ const sendTokenResponse = (user, statusCode, res) => {
     .cookie('token', token, cookieOptions)
     .json({
       success: true,
+      token,
       user: {
         id: user.id,
         name: user.name,
         email: user.email,
         role: user.role,
-         region: user.region || null,        
-        woreda: user.woreda || null,       
-        farmSize: user.farmSize || null,   
-        crops: user.crops || null,       
-        experience: user.experience || null
-      }
+        region: user.region || null,
+        woreda: user.woreda || null,
+        farmSize: user.farmSize || null,
+        crops: user.crops || null,
+        experience: user.experience || null,
+        approvalStatus: user.approvalStatus || null,
+      },
     });
 };
