@@ -17,6 +17,7 @@ class TraderProductsScreen extends StatefulWidget {
 class _TraderProductsScreenState extends State<TraderProductsScreen> {
   final ApiService _apiService = ApiService();
   final _searchController = TextEditingController();
+  final FocusNode _searchFocusNode = FocusNode();
 
   List<Product> products = [];
   bool isLoading = true;
@@ -57,6 +58,7 @@ class _TraderProductsScreenState extends State<TraderProductsScreen> {
   void dispose() {
     _searchDebounce?.cancel();
     _searchController.dispose();
+    _searchFocusNode.dispose();
     super.dispose();
   }
 
@@ -108,6 +110,74 @@ class _TraderProductsScreenState extends State<TraderProductsScreen> {
     }
   }
 
+  void _openForecast() {
+    Navigator.of(context).pushNamed('/farmer-price-forecast');
+  }
+
+  void _focusCropSearch() {
+    if (!mounted) return;
+    // Avoid direct FocusNode.requestFocus on Flutter web interop path.
+    FocusScope.of(context).requestFocus(_searchFocusNode);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Search by crop name (e.g., teff, coffee, maize).')),
+    );
+  }
+
+  void _showFarmersQuickSheet() {
+    final farmersById = <String, Product>{};
+    for (final product in products) {
+      final farmer = product.farmer;
+      if (farmer == null || farmer.id.isEmpty) continue;
+      farmersById.putIfAbsent(farmer.id, () => product);
+    }
+    final farmerProducts = farmersById.values.toList();
+
+    if (farmerProducts.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No farmer profiles available in current listings.')),
+      );
+      return;
+    }
+
+    showModalBottomSheet<void>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) {
+        return SafeArea(
+          child: ListView.separated(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+            itemCount: farmerProducts.length,
+            separatorBuilder: (context, index) => const Divider(height: 1),
+            itemBuilder: (context, index) {
+              final product = farmerProducts[index];
+              final farmer = product.farmer!;
+              return ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const CircleAvatar(
+                  backgroundColor: AppColors.surface,
+                  child: Icon(Icons.person_outline_rounded),
+                ),
+                title: Text(farmer.name),
+                subtitle: Text(
+                  farmer.locationLabel.isNotEmpty ? farmer.locationLabel : product.location,
+                ),
+                trailing: farmer.isVerified
+                    ? const Icon(Icons.verified_rounded, color: Colors.green, size: 18)
+                    : null,
+                onTap: () {
+                  Navigator.of(context).pop();
+                  _showFarmerInfoDialog(product);
+                },
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -124,9 +194,32 @@ class _TraderProductsScreenState extends State<TraderProductsScreen> {
                       fontSize: 24,
                     ),
               ),
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: _openForecast,
+                    icon: const Icon(Icons.auto_awesome_rounded, size: 18),
+                    label: const Text('Forecast (AI)'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: _showFarmersQuickSheet,
+                    icon: const Icon(Icons.groups_rounded, size: 18),
+                    label: const Text('Farmers'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: _focusCropSearch,
+                    icon: const Icon(Icons.eco_rounded, size: 18),
+                    label: const Text('Crops'),
+                  ),
+                ],
+              ),
               const SizedBox(height: 12),
               TextField(
                 controller: _searchController,
+                focusNode: _searchFocusNode,
                 decoration: InputDecoration(
                   hintText: 'Search crops, regions...',
                   prefixIcon: const Icon(Icons.search),
@@ -147,7 +240,7 @@ class _TraderProductsScreenState extends State<TraderProductsScreen> {
             children: [
               Expanded(
                 child: DropdownButtonFormField<String?>(
-                  value: _selectedCategory,
+                  initialValue: _selectedCategory,
                   decoration: const InputDecoration(
                     labelText: 'Category',
                     contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),

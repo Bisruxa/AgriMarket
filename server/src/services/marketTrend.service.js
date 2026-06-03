@@ -1,5 +1,6 @@
 const { prisma } = require('../config/db');
 const { Prisma } = require('@prisma/client');
+const { predictPrice } = require('./agriai.service');
 
 const PRODUCT_CATEGORIES = [
   'VEGETABLES',
@@ -24,6 +25,26 @@ function toNumber(value) {
   if (value === null || value === undefined) return null;
   const n = Number(value);
   return Number.isFinite(n) ? n : null;
+}
+
+function clampLimit(value, fallback = 5) {
+  const n = parseInt(value, 10);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(10, Math.max(1, n));
+}
+
+function normalizeCropName(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, ' ');
+}
+
+function getNextMonthRef(date = new Date()) {
+  const year = date.getUTCFullYear();
+  const month = date.getUTCMonth() + 1;
+  if (month === 12) return { year: year + 1, month: 1 };
+  return { year, month: month + 1 };
 }
 
 function buildProductWhere(region, category) {
@@ -207,7 +228,151 @@ async function getMarketTrends(query = {}) {
   };
 }
 
+/**
+ * AI-assisted buying opportunities for traders.
+ * Score is driven by expected spread (AI predicted next-month price vs current listing avg).
+ * @param {{ region?: string, crop?: string, limit?: string|number }} query
+ */
+async function getBuyingOpportunities(query = {}) {
+  const region = query.region?.trim() || null;
+  const crop = query.crop?.trim() || null;
+  const limit = clampLimit(query.limit, 5);
+
+  const where = {
+    isAvailable: true,
+    farmer: {
+      deletedAt: null,
+      ...(region ? { region: { contains: region, mode: 'insensitive' } } : {}),
+    },
+    ...(crop ? { name: { contains: crop, mode: 'insensitive' } } : {}),
+  };
+
+  const listings = await prisma.product.findMany({
+    where,
+    select: {
+      name: true,
+      category: true,
+      price: true,
+      stock: true,
+      farmer: { select: { region: true } },
+    },
+    take: 500,
+    orderBy: { createdAt: 'desc' },
+  });
+
+  if (!listings.length) {
+    return {
+      generatedAt: new Date().toISOString(),
+      filters: { region, crop, limit },
+      opportunities: [],
+      message: 'No active listings found for the selected filters.',
+    };
+  }
+
+  const grouped = new Map();
+  for (const row of listings) {
+    const key = normalizeCropName(row.name);
+    if (!grouped.has(key)) {
+      grouped.set(key, {
+        cropName: row.name.trim(),
+        category: row.category,
+        listingCount: 0,
+        totalPrice: 0,
+        totalStock: 0,
+        regionVotes: {},
+      });
+    }
+    const bucket = grouped.get(key);
+    bucket.listingCount += 1;
+    bucket.totalPrice += Number(row.price);
+    bucket.totalStock += row.stock || 0;
+    const voteRegion = row.farmer?.region || region || 'Addis Ababa';
+    bucket.regionVotes[voteRegion] = (bucket.regionVotes[voteRegion] || 0) + 1;
+  }
+
+  const candidates = [...grouped.values()]
+    .map((item) => {
+      const avgListingPrice = item.listingCount ? item.totalPrice / item.listingCount : 0;
+      const dominantRegion = Object.entries(item.regionVotes).sort((a, b) => b[1] - a[1])[0]?.[0] || 'Addis Ababa';
+      return {
+        cropName: item.cropName,
+        category: item.category,
+        region: dominantRegion,
+        avgListingPrice: Number(avgListingPrice.toFixed(2)),
+        listingCount: item.listingCount,
+        totalStock: item.totalStock,
+      };
+    })
+    .sort((a, b) => b.listingCount - a.listingCount)
+    .slice(0, limit);
+
+  const forecastRef = getNextMonthRef();
+  const withAi = await Promise.all(
+    candidates.map(async (candidate) => {
+      try {
+        const ai = await predictPrice({
+          crop_name: candidate.cropName,
+          region: candidate.region,
+          year: forecastRef.year,
+          month: forecastRef.month,
+        });
+        const predictedPrice = Number(ai?.predicted_price);
+        if (!Number.isFinite(predictedPrice)) {
+          throw new Error('Invalid prediction value');
+        }
+        const spreadPercent =
+          candidate.avgListingPrice > 0
+            ? Number((((predictedPrice - candidate.avgListingPrice) / candidate.avgListingPrice) * 100).toFixed(1))
+            : null;
+        const stockSignal = Math.min(12, Math.log10(candidate.totalStock + 1) * 6);
+        const demandSignal = Math.min(15, candidate.listingCount * 1.5);
+        const score = Number(((spreadPercent || 0) + stockSignal + demandSignal).toFixed(1));
+        let recommendation = 'HOLD';
+        if ((spreadPercent || 0) >= 8) recommendation = 'STRONG_BUY';
+        else if ((spreadPercent || 0) >= 3) recommendation = 'CONSIDER_BUY';
+        else if ((spreadPercent || 0) <= -4) recommendation = 'AVOID';
+
+        return {
+          ...candidate,
+          aiForecast: {
+            predictedPrice: Number(predictedPrice.toFixed(2)),
+            trend: ai?.trend || null,
+            trendPercentage: ai?.trend_percentage ?? null,
+            confidenceInterval: ai?.confidence_interval ?? null,
+            forecastMonth: forecastRef.month,
+            forecastYear: forecastRef.year,
+          },
+          spreadPercent,
+          score,
+          recommendation,
+        };
+      } catch (error) {
+        return {
+          ...candidate,
+          aiForecast: null,
+          spreadPercent: null,
+          score: 0,
+          recommendation: 'INSUFFICIENT_DATA',
+        };
+      }
+    })
+  );
+
+  withAi.sort((a, b) => b.score - a.score);
+
+  return {
+    generatedAt: new Date().toISOString(),
+    filters: { region, crop, limit },
+    opportunities: withAi,
+    notes: [
+      'AI forecast uses the same AgriAI price predictor used in farmer price forecast.',
+      'Score combines expected price spread, active listing depth, and stock liquidity.',
+    ],
+  };
+}
+
 module.exports = {
   getMarketTrends,
+  getBuyingOpportunities,
   PRODUCT_CATEGORIES,
 };
