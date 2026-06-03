@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
+import '../language_toggle.dart';
 
 /// Shared auth layout: hero header + rounded white content panel.
 class AuthShell extends StatelessWidget {
@@ -117,6 +118,11 @@ class _HeroHeader extends StatelessWidget {
                 onPressed: () => Navigator.maybePop(context),
               ),
             ),
+          Positioned(
+            top: topPadding + 8,
+            right: 16,
+            child: const LanguageToggle(light: true),
+          ),
           Positioned(
             left: 24,
             right: 24,

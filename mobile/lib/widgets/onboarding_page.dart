@@ -14,55 +14,72 @@ class OnboardingPage extends StatelessWidget {
     required this.description,
     required this.imagePath,
     this.isLastPage = false,
-    this.isLottie = false
+    this.isLottie = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(24.0),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          
-          // Image
-          Expanded(
-            flex: 3,
-            child: isLottie?
-            Lottie.asset(
-              imagePath,
-              fit: BoxFit.contain,
-              width:double.infinity,
-            ):
-            Image.asset(
-              imagePath,
-              fit:BoxFit.contain,
-              width:double.infinity,
-            ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isCompact = constraints.maxHeight < 320;
+
+        return Padding(
+          padding: EdgeInsets.all(isCompact ? 12 : 24),
+          child: Column(
+            children: [
+              Expanded(
+                flex: 3,
+                child: isLottie
+                    ? Lottie.asset(
+                        imagePath,
+                        fit: BoxFit.contain,
+                        width: double.infinity,
+                      )
+                    : Image.asset(
+                        imagePath,
+                        fit: BoxFit.contain,
+                        width: double.infinity,
+                      ),
+              ),
+              Flexible(
+                flex: 2,
+                child: SingleChildScrollView(
+                  physics: const ClampingScrollPhysics(),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(height: isCompact ? 8 : 16),
+                      Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: isCompact ? 20 : 28,
+                          fontWeight: FontWeight.bold,
+                          color: const Color(0xFF2A5A2A),
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      SizedBox(height: isCompact ? 8 : 16),
+                      Text(
+                        description,
+                        style: TextStyle(
+                          fontSize: isCompact ? 14 : 16,
+                          color: Colors.grey,
+                          height: 1.5,
+                        ),
+                        textAlign: TextAlign.center,
+                        maxLines: 4,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 40),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF2A5A2A), 
-            ),
-            textAlign: TextAlign.center,
-          ),     
-          const SizedBox(height: 16),
-          Text(
-            description,
-            style: const TextStyle(
-              fontSize: 16,
-              color: Colors.grey,
-              height: 1.5,
-            ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 20),
-        ],
-      ),
+        );
+      },
     );
   }
 }

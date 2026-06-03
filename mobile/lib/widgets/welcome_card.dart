@@ -72,6 +72,8 @@ class WelcomeCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   farmerName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 20,
@@ -81,6 +83,8 @@ class WelcomeCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   farmName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: Colors.white.withValues(alpha: 0.85),
                     fontSize: 13,

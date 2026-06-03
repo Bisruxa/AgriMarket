@@ -6,6 +6,8 @@ import '../widgets/common/section_title.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/location_picker.dart';
+import '../widgets/registration_location_capture.dart';
+import '../widgets/app_locale_scope.dart';
 
 class TraderSignupScreen extends StatefulWidget {
   const TraderSignupScreen({super.key});
@@ -27,17 +29,20 @@ class _TraderSignupScreenState extends State<TraderSignupScreen> {
   String? _selectedWoreda;
   bool _isLoading = false;
   String? _errorMessage;
+  double? _latitude;
+  double? _longitude;
 
   Future<void> _register() async {
+    final l10n = AppLocaleScope.l10nOf(context);
     if (!_formKey.currentState!.validate()) return;
 
     if (_passwordController.text != _confirmPasswordController.text) {
-      setState(() => _errorMessage = 'Passwords do not match');
+      setState(() => _errorMessage = l10n.passwordsDoNotMatch);
       return;
     }
 
     if (_selectedRegion == null || _selectedRegion!.isEmpty) {
-      setState(() => _errorMessage = 'Please select your region');
+      setState(() => _errorMessage = l10n.pleaseSelectRegion);
       return;
     }
 
@@ -54,16 +59,16 @@ class _TraderSignupScreenState extends State<TraderSignupScreen> {
       'phone': _phoneController.text.trim(),
       'region': _selectedRegion,
       'woreda': _selectedWoreda,
+      if (_latitude != null) 'latitude': _latitude,
+      if (_longitude != null) 'longitude': _longitude,
     });
 
     if (!mounted) return;
 
     if (result.success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Registration submitted! Your account is pending admin approval.',
-          ),
+        SnackBar(
+          content: Text(l10n.traderRegistrationSubmitted),
           backgroundColor: AppColors.traderAccent,
         ),
       );
@@ -73,15 +78,17 @@ class _TraderSignupScreenState extends State<TraderSignupScreen> {
 
     setState(() {
       _isLoading = false;
-      _errorMessage = result.message ?? 'Registration failed';
+      _errorMessage = result.message ?? l10n.registrationFailed;
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocaleScope.l10nOf(context);
+
     return AuthShell(
-      title: 'Trader Registration',
-      subtitle: 'Connect with farmers across Ethiopia',
+      title: l10n.traderRegistration,
+      subtitle: l10n.traderRegistrationSubtitle,
       heroGradient: AppColors.traderGradient,
       heroIcon: Icons.storefront_rounded,
       child: SingleChildScrollView(
@@ -106,40 +113,40 @@ class _TraderSignupScreenState extends State<TraderSignupScreen> {
                 ),
                 const SizedBox(height: 16),
               ],
-              const SectionTitle(
-                title: 'Business Information',
-                subtitle: 'Your company or trading details',
+              SectionTitle(
+                title: l10n.businessInformation,
+                subtitle: l10n.businessInformationSubtitle,
                 icon: Icons.business_outlined,
               ),
               CustomTextField(
-                label: 'Full Name / Business Name',
-                hint: 'Enter your name or business name',
+                label: l10n.fullNameBusinessName,
+                hint: l10n.enterBusinessName,
                 controller: _nameController,
                 prefixIcon: Icons.business_outlined,
               ),
               CustomTextField(
-                label: 'Email Address',
-                hint: 'Enter your email',
+                label: l10n.emailAddress,
+                hint: l10n.enterEmailAddress,
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 prefixIcon: Icons.email_outlined,
               ),
               CustomTextField(
-                label: 'Phone Number',
-                hint: 'Enter your phone number',
+                label: l10n.phoneNumber,
+                hint: l10n.enterPhoneNumber,
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
                 prefixIcon: Icons.phone_outlined,
               ),
               CustomTextField(
-                label: 'TIN Number',
-                hint: 'Tax Identification Number',
+                label: l10n.tinNumber,
+                hint: l10n.tinNumberHint,
                 controller: _tinNumberController,
                 keyboardType: TextInputType.number,
                 prefixIcon: Icons.numbers_outlined,
               ),
-              const SectionTitle(
-                title: 'Business Location',
+              SectionTitle(
+                title: l10n.businessLocation,
                 icon: Icons.location_on_outlined,
               ),
               LocationPicker(
@@ -155,20 +162,28 @@ class _TraderSignupScreenState extends State<TraderSignupScreen> {
                   setState(() => _selectedWoreda = value);
                 },
               ),
-              const SectionTitle(
-                title: 'Account Security',
+              RegistrationLocationCapture(
+                onLocationChanged: (latitude, longitude) {
+                  setState(() {
+                    _latitude = latitude;
+                    _longitude = longitude;
+                  });
+                },
+              ),
+              SectionTitle(
+                title: l10n.accountSecurity,
                 icon: Icons.shield_outlined,
               ),
               CustomTextField(
-                label: 'Password',
-                hint: 'Create a password',
+                label: l10n.password,
+                hint: l10n.createPassword,
                 controller: _passwordController,
                 obscureText: true,
                 prefixIcon: Icons.lock_outline,
               ),
               CustomTextField(
-                label: 'Confirm Password',
-                hint: 'Confirm your password',
+                label: l10n.confirmPassword,
+                hint: l10n.confirmYourPassword,
                 controller: _confirmPasswordController,
                 obscureText: true,
                 prefixIcon: Icons.lock_outline,
@@ -196,7 +211,7 @@ class _TraderSignupScreenState extends State<TraderSignupScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Approval Required',
+                            l10n.approvalRequired,
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
                               color: AppColors.traderAccent.withValues(alpha: 0.95),
@@ -204,7 +219,7 @@ class _TraderSignupScreenState extends State<TraderSignupScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            'Your account will be verified by admin before you can log in.',
+                            l10n.approvalRequiredDesc,
                             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                   fontSize: 12,
                                 ),
@@ -216,7 +231,7 @@ class _TraderSignupScreenState extends State<TraderSignupScreen> {
                 ),
               ),
               CustomButton(
-                text: 'Register as Trader',
+                text: l10n.registerAsTrader,
                 backgroundColor: AppColors.traderAccent,
                 isLoading: _isLoading,
                 onPressed: _register,
@@ -226,15 +241,15 @@ class _TraderSignupScreenState extends State<TraderSignupScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'Already have an account? ',
+                    l10n.alreadyHaveAccount,
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   GestureDetector(
                     onTap: () =>
                         Navigator.pushReplacementNamed(context, '/login'),
-                    child: const Text(
-                      'Login',
-                      style: TextStyle(
+                    child: Text(
+                      l10n.login,
+                      style: const TextStyle(
                         color: AppColors.traderAccent,
                         fontWeight: FontWeight.w600,
                       ),

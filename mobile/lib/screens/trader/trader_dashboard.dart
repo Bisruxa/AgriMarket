@@ -7,6 +7,8 @@ import '../../theme/app_theme.dart';
 import '../../utils/logout_helper.dart';
 import '../../utils/notification_labels.dart';
 import '../../widgets/common/app_bottom_nav.dart';
+import '../../widgets/app_locale_scope.dart';
+import '../../widgets/language_toggle.dart';
 import '../../widgets/profile_details_card.dart';
 import '../../widgets/welcome_card.dart';
 import 'trader_products_screen.dart';
@@ -29,28 +31,31 @@ class _TraderDashboardState extends State<TraderDashboard> {
 
   static const _defaultImage = 'assets/images/welcome.png';
 
-  static const _navItems = [
-    AppNavItem(
-      icon: Icons.home_outlined,
-      activeIcon: Icons.home_rounded,
-      label: 'Home',
-    ),
-    AppNavItem(
-      icon: Icons.search_outlined,
-      activeIcon: Icons.search_rounded,
-      label: 'Browse',
-    ),
-    AppNavItem(
-      icon: Icons.receipt_long_outlined,
-      activeIcon: Icons.receipt_long_rounded,
-      label: 'Orders',
-    ),
-    AppNavItem(
-      icon: Icons.person_outline,
-      activeIcon: Icons.person_rounded,
-      label: 'Profile',
-    ),
-  ];
+  List<AppNavItem> _navItems(BuildContext context) {
+    final l10n = AppLocaleScope.l10nOf(context);
+    return [
+      AppNavItem(
+        icon: Icons.home_outlined,
+        activeIcon: Icons.home_rounded,
+        label: l10n.navHome,
+      ),
+      AppNavItem(
+        icon: Icons.search_outlined,
+        activeIcon: Icons.search_rounded,
+        label: l10n.navBrowse,
+      ),
+      AppNavItem(
+        icon: Icons.receipt_long_outlined,
+        activeIcon: Icons.receipt_long_rounded,
+        label: l10n.navOrders,
+      ),
+      AppNavItem(
+        icon: Icons.person_outline,
+        activeIcon: Icons.person_rounded,
+        label: l10n.navProfile,
+      ),
+    ];
+  }
 
   @override
   void initState() {
@@ -163,13 +168,15 @@ class _TraderDashboardState extends State<TraderDashboard> {
       bottomNavigationBar: AppBottomNav(
         currentIndex: _selectedIndex,
         onTap: (index) => setState(() => _selectedIndex = index),
-        items: _navItems,
+        items: _navItems(context),
         selectedColor: AppColors.traderAccent,
       ),
     );
   }
 
   Widget _buildHomeTab() {
+    final l10n = AppLocaleScope.l10nOf(context);
+
     return SafeArea(
       child: CustomScrollView(
         slivers: [
@@ -177,14 +184,19 @@ class _TraderDashboardState extends State<TraderDashboard> {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Trader Hub',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontSize: 26,
-                        ),
+                  Expanded(
+                    child: Text(
+                      l10n.traderHub,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                            fontSize: 26,
+                          ),
+                    ),
                   ),
+                  const LanguageToggle(),
+                  const SizedBox(width: 8),
                   IconButton(
                     onPressed: _showNotifications,
                     style: IconButton.styleFrom(

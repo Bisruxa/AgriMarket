@@ -7,6 +7,7 @@ class CustomButton extends StatelessWidget {
   final bool isOutlined;
   final bool isLoading;
   final Color? backgroundColor;
+  final Color? textColor;
 
   const CustomButton({
     super.key,
@@ -15,11 +16,13 @@ class CustomButton extends StatelessWidget {
     this.isOutlined = false,
     this.isLoading = false,
     this.backgroundColor,
+    this.textColor,
   });
 
   @override
   Widget build(BuildContext context) {
     final bg = backgroundColor ?? AppColors.primary;
+    final labelColor = textColor ?? (isOutlined ? bg : Colors.white);
 
     return SizedBox(
       width: double.infinity,
@@ -28,38 +31,38 @@ class CustomButton extends StatelessWidget {
           ? OutlinedButton(
               onPressed: isLoading ? null : onPressed,
               style: OutlinedButton.styleFrom(
-                foregroundColor: bg,
-                side: BorderSide(color: bg),
+                foregroundColor: labelColor,
+                side: BorderSide(color: textColor ?? bg),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
               ),
-              child: _buildChild(bg, Colors.transparent),
+              child: _buildChild(labelColor, Colors.transparent),
             )
           : ElevatedButton(
               onPressed: isLoading ? null : onPressed,
               style: ElevatedButton.styleFrom(
                 backgroundColor: bg,
-                foregroundColor: Colors.white,
+                foregroundColor: labelColor,
                 disabledBackgroundColor: bg.withValues(alpha: 0.6),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
                 elevation: 0,
               ),
-              child: _buildChild(Colors.white, bg),
+              child: _buildChild(labelColor, bg),
             ),
     );
   }
 
-  Widget _buildChild(Color textColor, Color spinnerBg) {
+  Widget _buildChild(Color labelColor, Color spinnerBg) {
     if (isLoading) {
       return SizedBox(
         width: 22,
         height: 22,
         child: CircularProgressIndicator(
           strokeWidth: 2,
-          valueColor: AlwaysStoppedAnimation<Color>(textColor),
+          valueColor: AlwaysStoppedAnimation<Color>(labelColor),
         ),
       );
     }
@@ -68,7 +71,7 @@ class CustomButton extends StatelessWidget {
       style: TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w600,
-        color: isOutlined ? spinnerBg : textColor,
+        color: labelColor,
       ),
     );
   }
