@@ -9,6 +9,8 @@ import '../../theme/app_theme.dart';
 import '../../utils/logout_helper.dart';
 import '../../utils/notification_labels.dart';
 import '../../widgets/common/app_bottom_nav.dart';
+import '../../widgets/app_locale_scope.dart';
+import '../../l10n/app_localizations.dart';
 import '../../widgets/farmer/farmer_dashboard_header.dart';
 import '../../widgets/farmer/farmer_dashboard_sections.dart';
 import '../../widgets/farmer/farmer_weather_card.dart';
@@ -41,33 +43,36 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
 
   static const _defaultImage = 'assets/images/welcome.png';
 
-  static const _navItems = [
-    AppNavItem(
-      icon: Icons.home_outlined,
-      activeIcon: Icons.home_rounded,
-      label: 'Home',
-    ),
-    AppNavItem(
-      icon: Icons.chat_bubble_outline_rounded,
-      activeIcon: Icons.chat_bubble_rounded,
-      label: 'Chat',
-    ),
-    AppNavItem(
-      icon: Icons.store_outlined,
-      activeIcon: Icons.store_rounded,
-      label: 'Market',
-    ),
-    AppNavItem(
-      icon: Icons.insights_outlined,
-      activeIcon: Icons.insights_rounded,
-      label: 'Insights',
-    ),
-    AppNavItem(
-      icon: Icons.person_outline_rounded,
-      activeIcon: Icons.person_rounded,
-      label: 'Profile',
-    ),
-  ];
+  List<AppNavItem> _navItems(BuildContext context) {
+    final l10n = AppLocaleScope.l10nOf(context);
+    return [
+      AppNavItem(
+        icon: Icons.home_outlined,
+        activeIcon: Icons.home_rounded,
+        label: l10n.navHome,
+      ),
+      AppNavItem(
+        icon: Icons.chat_bubble_outline_rounded,
+        activeIcon: Icons.chat_bubble_rounded,
+        label: l10n.navChat,
+      ),
+      AppNavItem(
+        icon: Icons.store_outlined,
+        activeIcon: Icons.store_rounded,
+        label: l10n.navMarket,
+      ),
+      AppNavItem(
+        icon: Icons.insights_outlined,
+        activeIcon: Icons.insights_rounded,
+        label: l10n.navInsights,
+      ),
+      AppNavItem(
+        icon: Icons.person_outline_rounded,
+        activeIcon: Icons.person_rounded,
+        label: l10n.navProfile,
+      ),
+    ];
+  }
 
   @override
   void initState() {
@@ -240,14 +245,14 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
   int get _soldOutCount =>
       _myProducts.where((p) => !p.isAvailable || p.stock == 0).length;
 
-  List<ActiveListingItem> get _activeListings => _myProducts
+  List<ActiveListingItem> _activeListings(AppLocalizations l10n) => _myProducts
       .where((p) => p.isAvailable && p.stock > 0)
       .take(4)
       .map(
         (p) => ActiveListingItem(
           name: p.name,
           priceLine: 'ETB ${p.price.toStringAsFixed(0)}/${p.unit}',
-          statusLine: '${p.stock} in stock',
+          statusLine: l10n.inStockCount(p.stock),
           imageAsset: p.images.isNotEmpty
               ? p.images.first
               : 'assets/images/Crop1.jpg',
@@ -256,26 +261,31 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
       )
       .toList();
 
-  List<Widget> get _screens => [
-        _buildHomeScreen(),
-        AgriChatScreen(defaultRegion: _cropRegion, showAppBar: false),
-        const MarketplaceScreen(),
-        const FarmerTrendsScreen(),
-        const FarmerProfileScreen(),
-      ];
+  List<Widget> _screens(BuildContext context) {
+    final l10n = AppLocaleScope.l10nOf(context);
+    return [
+      _buildHomeScreen(l10n),
+      AgriChatScreen(defaultRegion: _cropRegion, showAppBar: false),
+      MarketplaceScreen(),
+      FarmerTrendsScreen(),
+      FarmerProfileScreen(),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
+    AppLocaleScope.l10nOf(context);
+
     return Scaffold(
       backgroundColor: AppColors.surface,
       body: IndexedStack(
         index: _selectedIndex,
-        children: _screens,
+        children: _screens(context),
       ),
       bottomNavigationBar: AppBottomNav(
         currentIndex: _selectedIndex,
         onTap: (index) => setState(() => _selectedIndex = index),
-        items: _navItems,
+        items: _navItems(context),
       ),
       floatingActionButton: _selectedIndex == 1
           ? null
@@ -287,7 +297,7 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
     );
   }
 
-  Widget _buildHomeScreen() {
+  Widget _buildHomeScreen(AppLocalizations l10n) {
     if (_isLoadingProfile) {
       return const ColoredBox(
         color: AppColors.surface,
@@ -331,7 +341,7 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
                       isLoading: _weatherLoading,
                     ),
                     const SizedBox(height: 16),
-                    const FarmerVerificationBanner(),
+                    FarmerVerificationBanner(),
                     const SizedBox(height: 16),
                     MarketplaceAnalyticsCard(
                       activeListings: _activeListingsCount,
@@ -346,7 +356,7 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
                         score: _featuredCropScore,
                       ),
                     ActiveListingsSection(
-                      listings: _activeListings,
+                      listings: _activeListings(l10n),
                       onViewAll: () => setState(() => _selectedIndex = 2),
                     ),
                   ],

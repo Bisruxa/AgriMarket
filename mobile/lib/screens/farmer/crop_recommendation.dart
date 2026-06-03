@@ -126,19 +126,28 @@ class _CropRecommendationState extends State<CropRecommendation> {
                           ),
                         )
                       else if (_farms.isEmpty)
-                        Container(
-                          padding: const EdgeInsets.all(14),
-                          decoration: BoxDecoration(
-                            color: Colors.amber.shade50,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.amber.shade200),
-                          ),
-                          child: const Text(
-                            'No farms have been registered. Add a farm under My Farms first.',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: AppColors.textPrimary,
-                            ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.agriculture_outlined,
+                                size: 48,
+                                color: AppColors.textSecondary.withValues(alpha: 0.5),
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                'No farms registered yet',
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.titleLarge,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Add a farm under My Farms first to get recommendations.',
+                                textAlign: TextAlign.center,
+                                style: Theme.of(context).textTheme.bodyMedium,
+                              ),
+                            ],
                           ),
                         )
                       else

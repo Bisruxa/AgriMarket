@@ -8,6 +8,8 @@ import '../widgets/custom_text_field.dart';
 import '../widgets/custom_dropdown.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/location_picker.dart';
+import '../widgets/registration_location_capture.dart';
+import '../widgets/app_locale_scope.dart';
 
 class FarmerSignupScreen extends StatefulWidget {
   const FarmerSignupScreen({super.key});
@@ -32,24 +34,20 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
   String? _selectedExperience;
   bool _isLoading = false;
   String? _errorMessage;
-
-  final List<String> _experienceLevels = [
-    'Beginner (0-2 years)',
-    'Intermediate (3-5 years)',
-    'Advanced (6-10 years)',
-    'Expert (10+ years)',
-  ];
+  double? _latitude;
+  double? _longitude;
 
   Future<void> _register() async {
+    final l10n = AppLocaleScope.l10nOf(context);
     if (!_formKey.currentState!.validate()) return;
 
     if (_passwordController.text != _confirmPasswordController.text) {
-      setState(() => _errorMessage = 'Passwords do not match');
+      setState(() => _errorMessage = l10n.passwordsDoNotMatch);
       return;
     }
 
     if (_selectedRegion == null || _selectedRegion!.isEmpty) {
-      setState(() => _errorMessage = 'Please select your region');
+      setState(() => _errorMessage = l10n.pleaseSelectRegion);
       return;
     }
 
@@ -66,6 +64,8 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
       'phone': _phoneController.text.trim(),
       'region': _selectedRegion,
       'woreda': _selectedWoreda,
+      if (_latitude != null) 'latitude': _latitude,
+      if (_longitude != null) 'longitude': _longitude,
       'farmSize': _farmSizeController.text.trim().isNotEmpty
           ? '${_farmSizeController.text.trim()} hectares'
           : null,
@@ -79,8 +79,8 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
       await AuthSession.saveFromLoginResponse(result.raw!);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Registration successful!'),
+        SnackBar(
+          content: Text(l10n.registrationSuccessful),
           backgroundColor: AppColors.primary,
         ),
       );
@@ -90,15 +90,17 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
 
     setState(() {
       _isLoading = false;
-      _errorMessage = result.message ?? 'Registration failed';
+      _errorMessage = result.message ?? l10n.registrationFailed;
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocaleScope.l10nOf(context);
+
     return AuthShell(
-      title: 'Farmer Registration',
-      subtitle: 'Tell us about yourself and your farm',
+      title: l10n.farmerRegistration,
+      subtitle: l10n.farmerRegistrationSubtitle,
       imagePath: 'assets/images/welcome.png',
       heroIcon: Icons.agriculture_rounded,
       child: SingleChildScrollView(
@@ -123,48 +125,48 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
                 ),
                 const SizedBox(height: 16),
               ],
-              const SectionTitle(
-                title: 'Personal Information',
-                subtitle: 'Your account details',
+              SectionTitle(
+                title: l10n.personalInformation,
+                subtitle: l10n.accountDetails,
                 icon: Icons.person_outline,
               ),
               CustomTextField(
-                label: 'Full Name',
-                hint: 'Enter your full name',
+                label: l10n.fullName,
+                hint: l10n.enterFullName,
                 controller: _nameController,
                 prefixIcon: Icons.person_outline,
               ),
               CustomTextField(
-                label: 'Email Address',
-                hint: 'Enter your email',
+                label: l10n.emailAddress,
+                hint: l10n.enterEmailAddress,
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 prefixIcon: Icons.email_outlined,
               ),
               CustomTextField(
-                label: 'Phone Number',
-                hint: 'Enter your phone number',
+                label: l10n.phoneNumber,
+                hint: l10n.enterPhoneNumber,
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
                 prefixIcon: Icons.phone_outlined,
               ),
               CustomTextField(
-                label: 'Password',
-                hint: 'Create a password',
+                label: l10n.password,
+                hint: l10n.createPassword,
                 controller: _passwordController,
                 obscureText: true,
                 prefixIcon: Icons.lock_outline,
               ),
               CustomTextField(
-                label: 'Confirm Password',
-                hint: 'Confirm your password',
+                label: l10n.confirmPassword,
+                hint: l10n.confirmYourPassword,
                 controller: _confirmPasswordController,
                 obscureText: true,
                 prefixIcon: Icons.lock_outline,
               ),
-              const SectionTitle(
-                title: 'Your Location',
-                subtitle: 'Region and woreda',
+              SectionTitle(
+                title: l10n.yourLocation,
+                subtitle: l10n.regionWoreda,
                 icon: Icons.location_on_outlined,
               ),
               LocationPicker(
@@ -180,43 +182,51 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
                   setState(() => _selectedWoreda = value);
                 },
               ),
-              const SectionTitle(
-                title: 'Farm Information',
-                subtitle: 'Help us personalize recommendations',
+              RegistrationLocationCapture(
+                onLocationChanged: (latitude, longitude) {
+                  setState(() {
+                    _latitude = latitude;
+                    _longitude = longitude;
+                  });
+                },
+              ),
+              SectionTitle(
+                title: l10n.farmInformation,
+                subtitle: l10n.personalizeRecommendations,
                 icon: Icons.grass_rounded,
               ),
               CustomTextField(
-                label: 'Farm Location',
-                hint: 'Specific area or village',
+                label: l10n.farmLocation,
+                hint: l10n.farmLocationHint,
                 controller: _farmLocationController,
                 prefixIcon: Icons.map_outlined,
               ),
               CustomTextField(
-                label: 'Farm Size (hectares)',
-                hint: 'e.g. 5.5',
+                label: l10n.farmSizeHectares,
+                hint: l10n.farmSizeHint,
                 controller: _farmSizeController,
                 keyboardType: TextInputType.number,
                 prefixIcon: Icons.square_foot_outlined,
               ),
               CustomTextField(
-                label: 'Crops You Plant',
-                hint: 'e.g. Teff, Wheat, Maize',
+                label: l10n.cropsYouPlant,
+                hint: l10n.cropsHint,
                 controller: _cropsController,
                 prefixIcon: Icons.eco_outlined,
               ),
               CustomDropdown<String>(
-                label: 'Farming Experience',
+                label: l10n.farmingExperience,
                 value: _selectedExperience,
-                items: _experienceLevels,
-                itemLabel: (item) => item,
+                items: l10n.experienceValues,
+                itemLabel: l10n.experienceLabel,
                 onChanged: (value) {
                   setState(() => _selectedExperience = value);
                 },
-                hint: 'Select your experience level',
+                hint: l10n.selectExperienceLevel,
               ),
               const SizedBox(height: 8),
               CustomButton(
-                text: 'Register as Farmer',
+                text: l10n.registerAsFarmer,
                 isLoading: _isLoading,
                 onPressed: _register,
               ),

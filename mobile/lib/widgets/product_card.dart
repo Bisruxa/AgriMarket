@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/product_model.dart';
 import '../theme/app_theme.dart';
+import '../l10n/app_localizations.dart';
+import '../widgets/app_locale_scope.dart';
 
 class ProductCard extends StatelessWidget {
   final Product product;
@@ -18,67 +20,75 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: AppColors.border),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+    final localeService = AppLocaleScope.serviceOf(context);
+
+    return ListenableBuilder(
+      listenable: localeService,
+      builder: (context, _) {
+        final l10n = localeService.l10n;
+        return Container(
+          margin: const EdgeInsets.only(bottom: 14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: AppColors.border),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onEdit ?? onTap,
-          borderRadius: BorderRadius.circular(18),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 72,
-                  height: 72,
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: const Icon(
-                    Icons.eco_rounded,
-                    size: 36,
-                    color: AppColors.primary,
-                  ),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onEdit ?? onTap,
+              borderRadius: BorderRadius.circular(18),
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: const Icon(
+                        Icons.eco_rounded,
+                        size: 36,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(child: _buildProductInfo(context, l10n)),
+                    if (onEdit != null)
+                      IconButton(
+                        onPressed: onEdit,
+                        icon: const Icon(Icons.edit_outlined),
+                        color: AppColors.primary,
+                        tooltip: l10n.edit,
+                      ),
+                    IconButton(
+                      onPressed: onDelete,
+                      icon: const Icon(Icons.delete_outline_rounded),
+                      color: AppColors.error,
+                      tooltip: l10n.delete,
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 14),
-                Expanded(child: _buildProductInfo(context)),
-                if (onEdit != null)
-                  IconButton(
-                    onPressed: onEdit,
-                    icon: const Icon(Icons.edit_outlined),
-                    color: AppColors.primary,
-                    tooltip: 'Edit',
-                  ),
-                IconButton(
-                  onPressed: onDelete,
-                  icon: const Icon(Icons.delete_outline_rounded),
-                  color: AppColors.error,
-                  tooltip: 'Delete',
-                ),
-              ],
+              ),
             ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 
-  Widget _buildProductInfo(BuildContext context) {
+  Widget _buildProductInfo(BuildContext context, AppLocalizations l10n) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -95,12 +105,12 @@ class ProductCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
-            if (product.isOrganic) _buildOrganicBadge(),
+            if (product.isOrganic) _buildOrganicBadge(l10n),
           ],
         ),
         const SizedBox(height: 4),
         Text(
-          product.description ?? 'No description',
+          product.description ?? l10n.noDescription,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 13),
           maxLines: 2,
           overflow: TextOverflow.ellipsis,
@@ -146,7 +156,7 @@ class ProductCard extends StatelessWidget {
     );
   }
 
-  Widget _buildOrganicBadge() {
+  Widget _buildOrganicBadge(AppLocalizations l10n) {
     return Container(
       margin: const EdgeInsets.only(left: 8),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -154,9 +164,9 @@ class ProductCard extends StatelessWidget {
         color: AppColors.accent.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: const Text(
-        'Organic',
-        style: TextStyle(
+      child: Text(
+        l10n.organic,
+        style: const TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w700,
           color: AppColors.primaryDark,

@@ -4,6 +4,9 @@ import '../../models/product_model.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/product_card.dart';
 import '../../widgets/add_product.dart';
+import '../../l10n/app_localizations.dart';
+import '../../widgets/app_locale_scope.dart';
+import '../../widgets/language_toggle.dart';
 import '../../utils/logout_helper.dart';
 
 class MarketplaceScreen extends StatefulWidget {
@@ -90,6 +93,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
   }
 
   Future<void> addProduct(Product product) async {
+    final l10n = AppLocaleScope.l10nOf(context);
     setState(() => isLoading = true);
     try {
       final response = await _apiService.createProduct(product.toCreateJson());
@@ -99,7 +103,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
         currentPage = 1;
         await fetchProducts();
         if (mounted) Navigator.pop(context);
-        _showSnackBar('Product added successfully', AppColors.primary);
+        _showSnackBar(l10n.productAdded, AppColors.primary);
       } else if (response.statusCode == 401) {
         await _handleUnauthorized();
       } else {
@@ -113,6 +117,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
   }
 
   Future<void> updateProduct(Product product) async {
+    final l10n = AppLocaleScope.l10nOf(context);
     if (product.id.isEmpty) {
       _showSnackBar('Invalid product id', AppColors.error);
       return;
@@ -129,7 +134,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
           response.data['success'] == true) {
         await fetchProducts();
         if (mounted) Navigator.pop(context);
-        _showSnackBar('Product updated successfully', AppColors.primary);
+        _showSnackBar(l10n.productUpdated, AppColors.primary);
       } else if (response.statusCode == 401) {
         await _handleUnauthorized();
       } else {
@@ -153,6 +158,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
   }
 
   Future<void> deleteProduct(String id) async {
+    final l10n = AppLocaleScope.l10nOf(context);
     if (id.isEmpty) {
       _showSnackBar('Invalid product id', AppColors.error);
       return;
@@ -166,7 +172,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
               response.data is! Map ||
               response.data['success'] != false)) {
         await fetchProducts();
-        _showSnackBar('Product deleted', AppColors.primary);
+        _showSnackBar(l10n.productDeleted, AppColors.primary);
       } else if (response.statusCode == 401) {
         await _handleUnauthorized();
       } else {
@@ -195,16 +201,17 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
   }
 
   void _confirmDelete(String id) {
+    final l10n = AppLocaleScope.l10nOf(context);
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: const Text('Delete Product'),
-        content: const Text('Are you sure you want to remove this listing?'),
+        title: Text(l10n.deleteProduct),
+        content: Text(l10n.deleteProductConfirm),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () {
@@ -212,7 +219,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
               deleteProduct(id);
             },
             style: TextButton.styleFrom(foregroundColor: AppColors.error),
-            child: const Text('Delete'),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -221,6 +228,18 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final localeService = AppLocaleScope.serviceOf(context);
+
+    return ListenableBuilder(
+      listenable: localeService,
+      builder: (context, _) {
+        final l10n = localeService.l10n;
+        return _buildScaffold(context, l10n);
+      },
+    );
+  }
+
+  Widget _buildScaffold(BuildContext context, AppLocalizations l10n) {
     return Scaffold(
       backgroundColor: AppColors.surface,
       body: SafeArea(
@@ -236,32 +255,19 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'My Marketplace',
+                          l10n.myMarketplace,
                           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                                 fontSize: 24,
                               ),
                         ),
                         Text(
-                          'Manage your product listings',
+                          l10n.manageListings,
                           style: Theme.of(context).textTheme.bodyMedium,
                         ),
                       ],
                     ),
                   ),
-                  IconButton(
-                    onPressed: () {
-                      currentPage = 1;
-                      fetchProducts();
-                    },
-                    style: IconButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: const BorderSide(color: AppColors.border),
-                      ),
-                    ),
-                    icon: const Icon(Icons.refresh_rounded),
-                  ),
+                  const LanguageToggle(),
                   const SizedBox(width: 4),
                   FloatingActionButton.small(
                     heroTag: 'add_product',
@@ -277,31 +283,42 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: DropdownButtonFormField<String?>(
-                      value: _selectedCategory,
-                      decoration: const InputDecoration(
-                        labelText: 'Category',
-                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      ),
-                      items: [
-                        const DropdownMenuItem(value: null, child: Text('All categories')),
-                        ..._categories.map(
-                          (c) => DropdownMenuItem(value: c, child: Text(c)),
-                        ),
-                      ],
-                      onChanged: (value) {
-                        setState(() => _selectedCategory = value);
-                        currentPage = 1;
-                        fetchProducts();
-                      },
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final categoryField = DropdownButtonFormField<String?>(
+                    isExpanded: true,
+                    value: _selectedCategory,
+                    decoration: InputDecoration(
+                      labelText: l10n.category,
+                      contentPadding:
+                          const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  FilterChip(
-                    label: const Text('Available'),
+                    items: [
+                      DropdownMenuItem(
+                        value: null,
+                        child: Text(
+                          l10n.allCategories,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      ..._categories.map(
+                        (c) => DropdownMenuItem(
+                          value: c,
+                          child: Text(
+                            l10n.categoryLabel(c),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ),
+                    ],
+                    onChanged: (value) {
+                      setState(() => _selectedCategory = value);
+                      currentPage = 1;
+                      fetchProducts();
+                    },
+                  );
+                  final availableChip = FilterChip(
+                    label: Text(l10n.available),
                     selected: _availableOnly == true,
                     onSelected: (selected) {
                       setState(() {
@@ -312,8 +329,30 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                     },
                     selectedColor: AppColors.primary.withValues(alpha: 0.15),
                     checkmarkColor: AppColors.primary,
-                  ),
-                ],
+                  );
+
+                  if (constraints.maxWidth < 360) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        categoryField,
+                        const SizedBox(height: 8),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: availableChip,
+                        ),
+                      ],
+                    );
+                  }
+
+                  return Row(
+                    children: [
+                      Expanded(child: categoryField),
+                      const SizedBox(width: 12),
+                      availableChip,
+                    ],
+                  );
+                },
               ),
             ),
             Expanded(
@@ -323,7 +362,7 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
                   await fetchProducts();
                 },
                 color: AppColors.primary,
-                child: _buildBody(),
+                child: _buildBody(l10n),
               ),
             ),
           ],
@@ -332,15 +371,15 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(AppLocalizations l10n) {
     if (isLoading && products.isEmpty) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(color: AppColors.primary),
-            SizedBox(height: 16),
-            Text('Loading your products...'),
+            const CircularProgressIndicator(color: AppColors.primary),
+            const SizedBox(height: 16),
+            Text(l10n.loadingProducts),
           ],
         ),
       );
@@ -349,9 +388,9 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     if (errorMessage != null && products.isEmpty) {
       return _EmptyState(
         icon: Icons.cloud_off_outlined,
-        title: 'Could not load products',
+        title: l10n.couldNotLoadProducts,
         subtitle: errorMessage!,
-        actionLabel: 'Retry',
+        actionLabel: l10n.retry,
         onAction: () {
           currentPage = 1;
           fetchProducts();
@@ -362,9 +401,9 @@ class _MarketplaceScreenState extends State<MarketplaceScreen> {
     if (products.isEmpty) {
       return _EmptyState(
         icon: Icons.inventory_2_outlined,
-        title: 'No products yet',
-        subtitle: 'Tap + to list your first product on the marketplace',
-        actionLabel: 'Add Product',
+        title: l10n.noProductsYet,
+        subtitle: l10n.tapToAddFirst,
+        actionLabel: l10n.addProduct,
         onAction: () => showDialog(
           context: context,
           builder: (_) => AddProductDialog(onSubmit: addProduct),

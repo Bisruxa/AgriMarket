@@ -4,6 +4,7 @@ import '../../theme/app_theme.dart';
 import '../../widgets/common/auth_shell.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/role_selector.dart';
+import '../../widgets/app_locale_scope.dart';
 
 class SignupScreen extends StatefulWidget {
   const SignupScreen({super.key});
@@ -17,9 +18,11 @@ class _SignupScreenState extends State<SignupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocaleScope.l10nOf(context);
+
     return AuthShell(
-      title: 'Join AgriMarket',
-      subtitle: 'Choose your role to get started',
+      title: l10n.joinAgriMarket,
+      subtitle: l10n.chooseRoleSubtitle,
       imagePath: 'assets/images/welcome.png',
       heroIcon: Icons.eco_rounded,
       child: Padding(
@@ -28,12 +31,12 @@ class _SignupScreenState extends State<SignupScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'How will you use AgriMarket?',
+              l10n.howWillYouUse,
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 6),
             Text(
-              'Select the account type that fits you best.',
+              l10n.selectAccountType,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: 24),
@@ -44,7 +47,7 @@ class _SignupScreenState extends State<SignupScreen> {
               ),
             ),
             CustomButton(
-              text: 'Continue',
+              text: l10n.continueBtn,
               onPressed: () {
                 if (_selectedRole == UserRole.farmer) {
                   Navigator.pushNamed(context, '/farmer-signup');
@@ -58,14 +61,14 @@ class _SignupScreenState extends State<SignupScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Already have an account? ',
+                  l10n.alreadyHaveAccount,
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
                 GestureDetector(
                   onTap: () => Navigator.pushNamed(context, '/login'),
-                  child: const Text(
-                    'Login',
-                    style: TextStyle(
+                  child: Text(
+                    l10n.login,
+                    style: const TextStyle(
                       color: AppColors.primary,
                       fontWeight: FontWeight.w600,
                       fontSize: 15,

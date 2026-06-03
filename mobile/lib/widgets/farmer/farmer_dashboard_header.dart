@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../theme/app_theme.dart';
+import '../app_locale_scope.dart';
+import '../language_toggle.dart';
 
 class FarmerInboxMessage {
   final String id;
@@ -69,7 +71,7 @@ class FarmerDashboardHeader extends StatelessWidget {
                   child: Row(
                     children: [
                       Text(
-                        'Messages',
+                        AppLocaleScope.l10nOf(context).messages,
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       if (_unreadCount > 0) ...[
@@ -98,10 +100,10 @@ class FarmerDashboardHeader extends StatelessWidget {
                 ),
                 Expanded(
                   child: messages.isEmpty
-                      ? const Center(
+                      ? Center(
                           child: Text(
-                            'No messages yet',
-                            style: TextStyle(color: AppColors.textSecondary),
+                            AppLocaleScope.l10nOf(context).noMessagesYet,
+                            style: const TextStyle(color: AppColors.textSecondary),
                           ),
                         )
                       : ListView.separated(
@@ -235,7 +237,7 @@ class FarmerDashboardHeader extends StatelessWidget {
                         onOpenFarms?.call();
                       },
                       icon: const Icon(Icons.agriculture_rounded, color: AppColors.primary),
-                      label: const Text('My Farms'),
+                      label: Text(AppLocaleScope.l10nOf(ctx).myFarms),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         side: const BorderSide(color: AppColors.primary),
@@ -251,9 +253,9 @@ class FarmerDashboardHeader extends StatelessWidget {
                       onLogout?.call();
                     },
                     icon: const Icon(Icons.logout_rounded, color: AppColors.error),
-                    label: const Text(
-                      'Logout',
-                      style: TextStyle(color: AppColors.error),
+                    label: Text(
+                      AppLocaleScope.l10nOf(ctx).logout,
+                      style: const TextStyle(color: AppColors.error),
                     ),
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 14),
@@ -293,10 +295,12 @@ class FarmerDashboardHeader extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'AgriMarket Ethiopia',
-                      style: TextStyle(
+                      AppLocaleScope.l10nOf(context).agriMarketEthiopia,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 20,
                         fontWeight: FontWeight.w700,
@@ -304,6 +308,8 @@ class FarmerDashboardHeader extends StatelessWidget {
                       ),
                     ),
                   ),
+                  const LanguageToggle(light: true),
+                  const SizedBox(width: 4),
                   InkWell(
                     onTap: () => _showMessages(context),
                     borderRadius: BorderRadius.circular(24),
@@ -390,6 +396,8 @@ class FarmerDashboardHeader extends StatelessWidget {
                             children: [
                               Text(
                                 farmerName,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontSize: 18,

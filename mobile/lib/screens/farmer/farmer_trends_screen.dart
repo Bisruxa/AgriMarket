@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 import '../../models/price_model.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
+import '../../l10n/app_localizations.dart';
+import '../../widgets/app_locale_scope.dart';
+import '../../widgets/language_toggle.dart';
 
 class FarmerTrendsScreen extends StatefulWidget {
   const FarmerTrendsScreen({super.key});
@@ -22,7 +25,7 @@ class _FarmerTrendsScreenState extends State<FarmerTrendsScreen> {
   SalesTimingResult? _salesTiming;
   MultiCropProfitabilityResult? _multiCrop;
   bool _loading = true;
-  String? _error;
+  bool _noPriceData = false;
 
   @override
   void initState() {
@@ -33,7 +36,7 @@ class _FarmerTrendsScreenState extends State<FarmerTrendsScreen> {
   Future<void> _load() async {
     setState(() {
       _loading = true;
-      _error = null;
+      _noPriceData = false;
     });
 
     final crops = await _api.getPriceCrops();
@@ -64,9 +67,8 @@ class _FarmerTrendsScreenState extends State<FarmerTrendsScreen> {
       _salesTiming = timing;
       _multiCrop = multi;
       _loading = false;
-      if (trends.isEmpty && (timing == null || !timing.hasData)) {
-        _error = 'No price data yet. Sync prices on the server.';
-      }
+      _noPriceData =
+          trends.isEmpty && (timing == null || !timing.hasData);
     });
   }
 
@@ -89,8 +91,49 @@ class _FarmerTrendsScreenState extends State<FarmerTrendsScreen> {
     });
   }
 
+  Widget _buildDropdown({
+    required String label,
+    required String value,
+    required List<String> options,
+    required ValueChanged<String?> onChanged,
+  }) {
+    return DropdownButtonFormField<String>(
+      isExpanded: true,
+      value: value,
+      decoration: InputDecoration(
+        labelText: label,
+        isDense: true,
+      ),
+      items: options
+          .map(
+            (item) => DropdownMenuItem(
+              value: item,
+              child: Text(
+                item,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          )
+          .toList(),
+      onChanged: onChanged,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final localeService = AppLocaleScope.serviceOf(context);
+
+    return ListenableBuilder(
+      listenable: localeService,
+      builder: (context, _) {
+        final l10n = localeService.l10n;
+        return _buildContent(context, l10n);
+      },
+    );
+  }
+
+  Widget _buildContent(BuildContext context, AppLocalizations l10n) {
     return ColoredBox(
       color: AppColors.surface,
       child: RefreshIndicator(
@@ -102,56 +145,66 @@ class _FarmerTrendsScreenState extends State<FarmerTrendsScreen> {
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
-                child: Text(
-                  'Market Insights',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w700,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        l10n.marketInsights,
+                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w700,
+                            ),
                       ),
+                    ),
+                    const LanguageToggle(),
+                  ],
                 ),
               ),
             ),
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        value: _selectedCrop,
-                        decoration: const InputDecoration(
-                          labelText: 'Crop',
-                          isDense: true,
-                        ),
-                        items: _crops
-                            .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                            .toList(),
-                        onChanged: (v) {
-                          if (v == null) return;
-                          setState(() => _selectedCrop = v);
-                          _reloadTrends();
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: DropdownButtonFormField<String>(
-                        value: _selectedRegion,
-                        decoration: const InputDecoration(
-                          labelText: 'Region',
-                          isDense: true,
-                        ),
-                        items: _regions
-                            .map((r) => DropdownMenuItem(value: r, child: Text(r)))
-                            .toList(),
-                        onChanged: (v) {
-                          if (v == null) return;
-                          setState(() => _selectedRegion = v);
-                          _reloadTrends();
-                        },
-                      ),
-                    ),
-                  ],
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final cropField = _buildDropdown(
+                      label: l10n.crop,
+                      value: _selectedCrop,
+                      options: _crops,
+                      onChanged: (v) {
+                        if (v == null) return;
+                        setState(() => _selectedCrop = v);
+                        _reloadTrends();
+                      },
+                    );
+                    final regionField = _buildDropdown(
+                      label: l10n.region,
+                      value: _selectedRegion,
+                      options: _regions,
+                      onChanged: (v) {
+                        if (v == null) return;
+                        setState(() => _selectedRegion = v);
+                        _reloadTrends();
+                      },
+                    );
+
+                    if (constraints.maxWidth < 360) {
+                      return Column(
+                        children: [
+                          cropField,
+                          const SizedBox(height: 12),
+                          regionField,
+                        ],
+                      );
+                    }
+
+                    return Row(
+                      children: [
+                        Expanded(child: cropField),
+                        const SizedBox(width: 12),
+                        Expanded(child: regionField),
+                      ],
+                    );
+                  },
                 ),
               ),
             ),
@@ -163,25 +216,28 @@ class _FarmerTrendsScreenState extends State<FarmerTrendsScreen> {
                 ),
               )
             else ...[
-              if (_error != null)
+              if (_noPriceData)
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.all(20),
                     child: Text(
-                      _error!,
+                      l10n.noPriceData,
                       style: const TextStyle(color: AppColors.textSecondary),
                     ),
                   ),
                 ),
-              if (_salesTiming?.hasData == true && _salesTiming!.recommendation != null)
-                SliverToBoxAdapter(child: _SalesTimingCard(timing: _salesTiming!)),
+              if (_salesTiming?.hasData == true &&
+                  _salesTiming!.recommendation != null)
+                SliverToBoxAdapter(
+                  child: _SalesTimingCard(timing: _salesTiming!),
+                ),
               if (_multiCrop?.hasData == true)
                 SliverToBoxAdapter(child: _MultiCropCard(result: _multiCrop!)),
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
                   child: Text(
-                    'Price history (${_trends.length} records)',
+                    l10n.priceHistoryCount(_trends.length),
                     style: const TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 16,
@@ -190,10 +246,10 @@ class _FarmerTrendsScreenState extends State<FarmerTrendsScreen> {
                 ),
               ),
               if (_trends.isEmpty)
-                const SliverToBoxAdapter(
+                SliverToBoxAdapter(
                   child: Padding(
-                    padding: EdgeInsets.all(20),
-                    child: Text('No trend data for this crop and region.'),
+                    padding: const EdgeInsets.all(20),
+                    child: Text(l10n.noTrendData),
                   ),
                 )
               else
@@ -202,8 +258,14 @@ class _FarmerTrendsScreenState extends State<FarmerTrendsScreen> {
                     (context, index) {
                       final r = _trends[index];
                       return ListTile(
-                        title: Text('${r.cropName} · ${r.region}'),
-                        subtitle: Text('${r.year}-${r.month.toString().padLeft(2, '0')}'),
+                        title: Text(
+                          '${r.cropName} · ${r.region}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        subtitle: Text(
+                          '${r.year}-${r.month.toString().padLeft(2, '0')}',
+                        ),
                         trailing: Text(
                           'ETB ${r.avgPrice.toStringAsFixed(0)}',
                           style: const TextStyle(
@@ -232,36 +294,52 @@ class _SalesTimingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final rec = timing.recommendation!;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Row(
+    final localeService = AppLocaleScope.serviceOf(context);
+
+    return ListenableBuilder(
+      listenable: localeService,
+      builder: (context, _) {
+        final l10n = localeService.l10n;
+        final rec = timing.recommendation!;
+
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.schedule_rounded, color: AppColors.primary),
-                  SizedBox(width: 8),
-                  Text('Best time to sell', style: TextStyle(fontWeight: FontWeight.w700)),
+                  Row(
+                    children: [
+                      const Icon(Icons.schedule_rounded, color: AppColors.primary),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          l10n.bestTimeToSell,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${l10n.bestMonth}: ${rec['bestSellMonthName'] ?? rec['bestSellMonth']}',
+                  ),
+                  Text(
+                    '${l10n.expectedGain}: ${rec['expectedGainPercent']?.toString() ?? '—'}%',
+                  ),
+                  Text(
+                    '${l10n.latestPrice}: ETB ${rec['latestKnownPrice']?.toString() ?? '—'}',
+                  ),
                 ],
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Best month: ${rec['bestSellMonthName'] ?? rec['bestSellMonth']}',
-              ),
-              Text(
-                'Expected gain: ${rec['expectedGainPercent']?.toString() ?? '—'}%',
-              ),
-              Text(
-                'Latest price: ETB ${rec['latestKnownPrice']?.toString() ?? '—'}',
-              ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -273,41 +351,59 @@ class _MultiCropCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final summary = result.summary;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Row(
+    final localeService = AppLocaleScope.serviceOf(context);
+
+    return ListenableBuilder(
+      listenable: localeService,
+      builder: (context, _) {
+        final l10n = localeService.l10n;
+        final summary = result.summary;
+
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+          child: Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.pie_chart_rounded, color: AppColors.primary),
-                  SizedBox(width: 8),
-                  Text('Farm profitability', style: TextStyle(fontWeight: FontWeight.w700)),
+                  Row(
+                    children: [
+                      const Icon(Icons.pie_chart_rounded, color: AppColors.primary),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          l10n.farmProfitability,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  if (summary != null) ...[
+                    Text('${l10n.farmsAnalyzed}: ${summary['farmsAnalyzed'] ?? '—'}'),
+                    Text('${l10n.cropsAnalyzed}: ${summary['cropsAnalyzed'] ?? '—'}'),
+                    if (summary['topRecommendation'] != null)
+                      Text('${l10n.topPick}: ${summary['topRecommendation']}'),
+                  ],
+                  if (result.items.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    ...result.items.take(3).map(
+                          (item) => Text(
+                            '• ${item['cropName']}: ${l10n.score} ${item['score']?.toString() ?? '—'}',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                  ],
                 ],
               ),
-              const SizedBox(height: 8),
-              if (summary != null) ...[
-                Text('Farms analyzed: ${summary['farmsAnalyzed'] ?? '—'}'),
-                Text('Crops analyzed: ${summary['cropsAnalyzed'] ?? '—'}'),
-                if (summary['topRecommendation'] != null)
-                  Text('Top pick: ${summary['topRecommendation']}'),
-              ],
-              if (result.items.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                ...result.items.take(3).map(
-                      (item) => Text(
-                        '• ${item['cropName']}: score ${item['score']?.toString() ?? '—'}',
-                      ),
-                    ),
-              ],
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
