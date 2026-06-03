@@ -2,7 +2,8 @@ const { GoogleGenAI, createPartFromFunctionResponse } = require('@google/genai')
 const { FUNCTION_DECLARATIONS, executeFunction } = require('./function-executor.service');
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const TEXT_MODEL_NAME = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+const TEXT_MODEL_NAME = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+const FALLBACK_MODEL = 'gemini-2.5-flash-lite';
 
 let ai;
 function getClient() {
@@ -143,7 +144,7 @@ async function sendMessage({ message, conversationHistory = [], language = 'en',
     } catch (modelErr) {
       const errText = (modelErr.message || '').toLowerCase();
       if (errText.includes('not found') || errText.includes('not supported')) {
-        modelName = 'gemini-2.0-flash';
+        modelName = FALLBACK_MODEL;
         chat = client.chats.create({
           model: modelName,
           config: {
@@ -190,7 +191,7 @@ async function sendMessage({ message, conversationHistory = [], language = 'en',
     const client2 = getClient();
     try {
       const fallback = await client2.models.generateContent({
-        model: TEXT_MODEL_NAME,
+        model: FALLBACK_MODEL,
         contents: `The user asked: '${message}'. Respond helpfully as an Ethiopian agricultural assistant. Be concise and warm.`,
         config: {
           systemInstruction: 'You are an expert Ethiopian agricultural assistant. Answer helpfully and simply.',
