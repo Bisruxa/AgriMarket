@@ -47,8 +47,18 @@
     "watermelon",
     "wheat"
   ],
-  "validation_accuracy": 0.7212741751990899,
-  "validation_weighted_f1": 0.7050121051123424,
+  "validation_accuracy": 0.7208191126279864,
+  "validation_weighted_f1": 0.704450460187901,
+  "best_iterations": 336,
+  "hyperparameters": {
+    "n_estimators": 1000,
+    "max_depth": 8,
+    "learning_rate": 0.05,
+    "subsample": 0.9,
+    "colsample_bytree": 0.9,
+    "min_child_weight": 5,
+    "early_stopping_rounds": 30
+  },
   "soil_color_categories": [
     "black",
     "brown",
@@ -59,13 +69,13 @@
     "other",
     "red",
     "red brown",
-    "reddish gray",
     "very dark brown",
     "yellowish brown"
   ],
   "feature_notes": [
-    "Numeric soil and climate features are passed through unchanged.",
-    "soil_color is one-hot encoded inside the saved pipeline.",
+    "Numeric soil and climate features are median-imputed, then passed through.",
+    "soil_color is mode-imputed and one-hot encoded inside the saved pipeline.",
+    "Trained with early stopping on validation mlogloss, L2 regularization.",
     "The model returns top-3 crops through the API service."
   ]
 }
