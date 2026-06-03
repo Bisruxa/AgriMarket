@@ -103,6 +103,13 @@ class ApiClient {
     });
   }
 
+  async patch<T>(endpoint: string, body?: unknown): Promise<ApiResponse<T>> {
+    return this.request<T>(endpoint, {
+      method: 'PATCH',
+      body: body !== undefined ? JSON.stringify(body) : undefined,
+    });
+  }
+
   async delete<T>(endpoint: string): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, { method: 'DELETE' });
   }
@@ -146,16 +153,33 @@ export const farmsApi = {
 
 export type AppNotification = {
   id: string;
+  key?: string;
   type: string;
   href: string;
   createdAt: string;
   count?: number;
   note?: string | null;
+  isRead?: boolean;
 };
 
 export const notificationsApi = {
   getAll: () =>
     api.get<{ notifications: AppNotification[]; unreadCount: number }>('/notifications'),
+
+  markRead: (key: string) =>
+    api.patch<{ notifications: AppNotification[]; unreadCount: number }>(
+      `/notifications/${encodeURIComponent(key)}/read`
+    ),
+
+  markAllRead: () =>
+    api.patch<{ notifications: AppNotification[]; unreadCount: number }>(
+      '/notifications/read-all'
+    ),
+
+  dismiss: (key: string) =>
+    api.delete<{ notifications: AppNotification[]; unreadCount: number }>(
+      `/notifications/${encodeURIComponent(key)}`
+    ),
 };
 
 export const agriaiApi = {

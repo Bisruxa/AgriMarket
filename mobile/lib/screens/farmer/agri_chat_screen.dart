@@ -1,6 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import '../../services/api_service.dart';
+import '../../services/voice_chat_service.dart';
 import '../../theme/app_theme.dart';
 import 'crop_recommendation.dart';
 
@@ -30,19 +33,139 @@ class _AgriChatScreenState extends State<AgriChatScreen> {
   String? _currentChatId;
   bool _isLoadingChats = true;
   bool _isSending = false;
+  final VoiceChatService _voice = VoiceChatService();
+  bool _voiceMode = false;
+  String _partialVoiceText = '';
+  String? _voiceHint;
 
   @override
   void initState() {
     super.initState();
     _loadChats();
+    _voice.initialize();
   }
 
   @override
   void dispose() {
+    _voice.dispose();
     _inputController.dispose();
     _scrollController.dispose();
     _focusNode.dispose();
     super.dispose();
+  }
+
+  Future<void> _toggleVoiceMode() async {
+    if (!_voiceMode) {
+      if (!kIsWeb) {
+        final mic = await Permission.microphone.request();
+        if (!mic.isGranted) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Microphone permission is required for voice mode')),
+            );
+          }
+          return;
+        }
+      }
+    } else {
+      await _voice.stopListening();
+      await _voice.stopSpeaking();
+    }
+    setState(() {
+      _voiceMode = !_voiceMode;
+      _voiceHint = _voiceMode ? 'Tap the mic to speak' : null;
+      _partialVoiceText = '';
+    });
+  }
+
+  Future<void> _toggleVoiceListen() async {
+    if (_voice.isListening) {
+      await _voice.stopListening();
+      setState(() => _voiceHint = 'Tap mic to speak');
+      return;
+    }
+
+    setState(() {
+      _voiceHint = 'Listening…';
+      _partialVoiceText = '';
+    });
+
+    try {
+      await _voice.startListening(
+        onPartial: (partial) {
+          if (mounted) setState(() => _partialVoiceText = partial);
+        },
+        onFinal: (text) async {
+          if (!mounted) return;
+          setState(() {
+            _partialVoiceText = '';
+            _voiceHint = 'Thinking…';
+          });
+          await _sendVoiceMessage(text);
+        },
+      );
+    } catch (e) {
+      if (mounted) {
+        setState(() => _voiceHint = e.toString());
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      }
+    }
+  }
+
+  Future<void> _sendVoiceMessage(String text) async {
+    if (text.trim().isEmpty || _isSending) return;
+
+    if (_currentChatId == null) {
+      await _createNewChat();
+    }
+    if (_currentChatId == null) return;
+
+    setState(() {
+      _messages.add({
+        'id': 'voice-${DateTime.now().millisecondsSinceEpoch}',
+        'role': 'user',
+        'content': text.trim(),
+        'createdAt': DateTime.now().toIso8601String(),
+      });
+      _isSending = true;
+      _voiceHint = 'AgriAI is responding…';
+    });
+    _scrollToBottom();
+
+    try {
+      final result = await _apiService.sendMessage(_currentChatId!, text.trim());
+      if (!mounted) return;
+      if (result['success'] == true && result['data'] != null) {
+        final data = result['data'] as Map<String, dynamic>;
+        final assistantMsg = data['assistantMessage'] as Map<String, dynamic>?;
+        if (assistantMsg != null) {
+          final content = assistantMsg['content']?.toString() ?? '';
+          setState(() => _messages.add(assistantMsg));
+          _scrollToBottom();
+          if (_voiceMode && content.isNotEmpty) {
+            await _voice.speak(content);
+          }
+        }
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          _messages.add({
+            'id': 'error-voice',
+            'role': 'assistant',
+            'content': 'Sorry, something went wrong. Please try again.',
+            'createdAt': DateTime.now().toIso8601String(),
+          });
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSending = false;
+          _voiceHint = _voiceMode ? 'Tap the mic to speak' : null;
+        });
+      }
+    }
   }
 
   Future<void> _loadChats() async {
@@ -285,6 +408,7 @@ class _AgriChatScreenState extends State<AgriChatScreen> {
   Widget build(BuildContext context) {
     final body = Column(
       children: [
+        _buildVoiceBar(),
         if (_currentChatId != null) _buildChatHeader(),
         Expanded(
           child: _currentChatId == null ? _buildChatList() : _buildMessages(),
@@ -303,6 +427,12 @@ class _AgriChatScreenState extends State<AgriChatScreen> {
         title: const Text('Agri Chat'),
         actions: [
           IconButton(
+            icon: Icon(_voiceMode ? Icons.mic_rounded : Icons.mic_none_rounded),
+            color: _voiceMode ? AppColors.primary : null,
+            onPressed: _toggleVoiceMode,
+            tooltip: 'Live voice mode',
+          ),
+          IconButton(
             icon: const Icon(Icons.tune_rounded),
             onPressed: _openToolsMenu,
             tooltip: 'Tools',
@@ -315,6 +445,81 @@ class _AgriChatScreenState extends State<AgriChatScreen> {
         ],
       ),
       body: body,
+    );
+  }
+
+  Widget _buildVoiceBar() {
+    if (!_voiceMode && _voiceHint == null && _partialVoiceText.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+        child: Align(
+          alignment: Alignment.centerRight,
+          child: TextButton.icon(
+            onPressed: _toggleVoiceMode,
+            icon: const Icon(Icons.mic_rounded, size: 18),
+            label: const Text('Live voice'),
+          ),
+        ),
+      );
+    }
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: _voice.isListening
+            ? AppColors.error.withValues(alpha: 0.08)
+            : AppColors.primary.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: _voice.isListening ? AppColors.error : AppColors.primary,
+        ),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  _voice.isListening
+                      ? 'Listening…'
+                      : (_voice.isSpeaking ? 'Speaking…' : 'Live voice mode'),
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                    color: AppColors.primary,
+                  ),
+                ),
+                if (_partialVoiceText.isNotEmpty)
+                  Text(
+                    _partialVoiceText,
+                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  )
+                else if (_voiceHint != null)
+                  Text(
+                    _voiceHint!,
+                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                  ),
+              ],
+            ),
+          ),
+          IconButton(
+            onPressed: _toggleVoiceListen,
+            icon: Icon(
+              _voice.isListening ? Icons.stop_circle_rounded : Icons.mic_rounded,
+              color: _voice.isListening ? AppColors.error : AppColors.primary,
+              size: 32,
+            ),
+          ),
+          IconButton(
+            onPressed: _toggleVoiceMode,
+            icon: const Icon(Icons.close_rounded, size: 20),
+            tooltip: 'Exit voice mode',
+          ),
+        ],
+      ),
     );
   }
 
@@ -569,11 +774,20 @@ class _AgriChatScreenState extends State<AgriChatScreen> {
         top: false,
         child: Row(
           children: [
-            IconButton(
-              icon: const Icon(Icons.add_circle_outline_rounded),
-              color: AppColors.primary,
-              onPressed: _openToolsMenu,
-            ),
+            if (_voiceMode)
+              IconButton(
+                onPressed: _isSending ? null : _toggleVoiceListen,
+                icon: Icon(
+                  _voice.isListening ? Icons.stop_circle : Icons.mic_rounded,
+                  color: _voice.isListening ? AppColors.error : AppColors.primary,
+                ),
+              )
+            else
+              IconButton(
+                icon: const Icon(Icons.add_circle_outline_rounded),
+                color: AppColors.primary,
+                onPressed: _openToolsMenu,
+              ),
             Expanded(
               child: TextField(
                 controller: _inputController,

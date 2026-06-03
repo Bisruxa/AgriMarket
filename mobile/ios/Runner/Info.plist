@@ -45,7 +45,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>AgriMarket uses your location during registration to record your coordinates.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>AgriMarket uses the microphone for live voice chat with the farming assistant.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>AgriMarket converts your speech to text for the farming assistant.</string>
 </dict>
 </plist>

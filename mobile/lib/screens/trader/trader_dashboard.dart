@@ -27,6 +27,7 @@ class _TraderDashboardState extends State<TraderDashboard> {
   List<Product> _previewProducts = [];
   bool _isLoadingPreview = true;
   List<AppNotification> _notifications = [];
+  int _unreadCount = 0;
 
   static const _defaultImage = 'assets/images/welcome.png';
 
@@ -67,7 +68,10 @@ class _TraderDashboardState extends State<TraderDashboard> {
   Future<void> _loadNotifications() async {
     final result = await _apiService.getNotifications();
     if (mounted && result.success) {
-      setState(() => _notifications = result.notifications);
+      setState(() {
+        _notifications = result.notifications;
+        _unreadCount = result.unreadCount;
+      });
     }
   }
 
@@ -203,8 +207,8 @@ class _TraderDashboardState extends State<TraderDashboard> {
                       ),
                     ),
                     icon: Badge(
-                      isLabelVisible: _notifications.isNotEmpty,
-                      label: Text('${_notifications.length}'),
+                      isLabelVisible: _unreadCount > 0,
+                      label: Text('$_unreadCount'),
                       child: const Icon(Icons.notifications_outlined),
                     ),
                   ),
@@ -233,7 +237,7 @@ class _TraderDashboardState extends State<TraderDashboard> {
                       Expanded(
                         child: _StatCard(
                           label: 'Alerts',
-                          value: '${_notifications.length}',
+                          value: '$_unreadCount',
                           icon: Icons.notifications_active_outlined,
                           color: AppColors.traderAccent,
                         ),

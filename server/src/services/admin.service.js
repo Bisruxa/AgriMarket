@@ -1,4 +1,5 @@
 const { prisma } = require('../config/db');
+const notificationService = require('./notifications.service');
 
 const createError = (message, statusCode) => {
   const error = new Error(message);
@@ -96,7 +97,7 @@ const approveTrader = async (userId, note) => {
     throw createError('Trader is already approved', 400);
   }
 
-  return prisma.user.update({
+  const updated = await prisma.user.update({
     where: { id: userId },
     data: {
       approvalStatus: 'APPROVED',
@@ -113,6 +114,20 @@ const approveTrader = async (userId, note) => {
       isVerified: true
     }
   });
+
+  try {
+    await notificationService.removeNotification(userId, 'trader-pending');
+    await notificationService.removeNotification(userId, 'trader-rejected');
+    await notificationService.upsertNotification(userId, {
+      key: 'trader-welcome',
+      type: 'success',
+      href: '/trader/purchases',
+    });
+  } catch (e) {
+    console.warn('approveTrader notification:', e.message);
+  }
+
+  return updated;
 };
 
 const rejectTrader = async (userId, note) => {
@@ -132,7 +147,7 @@ const rejectTrader = async (userId, note) => {
     throw createError('User is not a trader', 400);
   }
 
-  return prisma.user.update({
+  const updated = await prisma.user.update({
     where: { id: userId },
     data: {
       approvalStatus: 'REJECTED',
@@ -147,6 +162,21 @@ const rejectTrader = async (userId, note) => {
       approvalNote: true
     }
   });
+
+  try {
+    await notificationService.removeNotification(userId, 'trader-pending');
+    await notificationService.removeNotification(userId, 'trader-welcome');
+    await notificationService.upsertNotification(userId, {
+      key: 'trader-rejected',
+      type: 'error',
+      href: '/trader/dashboard',
+      note,
+    });
+  } catch (e) {
+    console.warn('rejectTrader notification:', e.message);
+  }
+
+  return updated;
 };
 
 const getStatistics = async () => {

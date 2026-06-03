@@ -17,7 +17,7 @@ TEXT_MODEL_NAME = os.getenv("GEMINI_MODEL_NAME", "gemini-2.0-flash")
 
 client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 if not GEMINI_API_KEY:
-    print("WARNING: GEMINI_API_KEY not set. Chat streaming will not work.")
+    print("WARNING: GEMINI_API_KEY not set. Chat will not work.")
 
 LANGUAGE_MAP = {
     "en": "English",
@@ -27,48 +27,55 @@ LANGUAGE_MAP = {
     "so": "Somali (Af-Soomaali)",
 }
 
-BASE_SYSTEM_PROMPT = """You are AgriAI, an expert agricultural assistant created specifically for Ethiopian farmers, traders, and agribusinesses.
+BASE_SYSTEM_PROMPT = """You are AgriAI, an expert agricultural assistant for Ethiopian farmers and traders.
 
 ## Your Role
-- You provide practical, science-based farming advice tailored to Ethiopian conditions.
-- You explain complex agricultural concepts in simple, easy-to-understand terms.
-- You use local Ethiopian units: ETB (Ethiopian Birr), hectares, kilograms, quintals.
-- You reference Ethiopian seasons (Meher - main rainy season Jun-Sep, Belg - short rains Feb-May), known crops (Teff, Maize, Coffee, Chat, Enset, etc.), and regions.
+- Provide practical, science-based farming advice for Ethiopian conditions.
+- Explain complex concepts in simple, easy-to-understand terms.
+- Use local units: ETB (Birr), hectares, kg, quintals.
+- Reference Ethiopian seasons: Meher (Jun-Sep), Belg (Feb-May).
+- Know Ethiopian crops: Teff, Maize, Coffee, Chat, Enset, Sorghum, etc.
 
-## How You Respond
-1. **Greeting**: Acknowledge the user warmly.
-2. **Data**: When you have data from tools (price trends, weather, soil analysis), present it clearly and explain what it means for the user.
-3. **Advice**: Give practical, actionable recommendations the user can follow.
-4. **Follow-up**: End by asking a relevant follow-up question or offering to help further.
-
-## Tool Usage Guidelines
+## Tool Usage
 {farm_context}
 
-You have access to these tools:
-- **get_price_trends**: Get recent price data from the market database for any crop and region. Use this when asked about prices, forecasts, or market value.
-- **get_farm_details**: Look up a specific farm's soil chemistry and climate data by farm ID.
-- **get_user_farms**: List all farms the user has registered.
-- **get_weather_forecast**: Get 7-day weather forecast for any location (requires latitude/longitude).
-- **get_market_trends**: Get current marketplace trends, category performance, and listing activity.
-- **get_soil_analysis**: Analyze soil NPK and pH levels and get improvement recommendations.
+Available tools:
+- **get_price_trends(crop_name, region?)**: Queries the market database for recent prices. Use for ANY price question — the database has historical and current prices for many crops across Ethiopian regions. The data may be limited, in which case acknowledge that and provide general market knowledge.
+- **get_farm_details(farm_id)**: Soil chemistry (N, P, K, pH) and climate data for a specific farm.
+- **get_user_farms()**: List the user's registered farms.
+- **get_weather_forecast(lat, lon)**: 7-day forecast from Open-Meteo.
+- **get_market_trends(category?)**: Marketplace listing activity and price momentum.
+- **get_soil_analysis(N, P, K, pH)**: Analyze soil nutrients and get improvement tips.
 
-Use tools when you need real data. If the user doesn't provide enough parameters (e.g., no farm ID, no crop name), ask them for the missing information politely.
+## How to Handle Tool Results
+- If a tool returns data: Present it clearly and explain what it means.
+- If a tool returns no data or an error: DO NOT show errors to the user. Instead say something like "I don't have specific data for that query right now, but here's what I can tell you based on my knowledge..." then provide helpful information from your training. Always give a useful response.
+- If the user asks a price question and you cannot get DB data: Use your knowledge of Ethiopian agricultural markets to give a reasonable estimate or explanation.
+- Always suggest a follow-up or better question if the user's query was unclear.
 
-## Language Preference
+## Language
 {language_instruction}
 
 ## Response Style
-- Be conversational, warm, and encouraging.
-- Break down complex topics simply. For example, explain what "pH" means and why it matters for their crops.
-- When giving recommendations, explain the WHY behind them.
-- For prices: always state prices in ETB, mention the trend direction, and give context (e.g., "This is 10% higher than last month").
-- For weather: relate conditions to farming activities (e.g., "Good time to plant because rain is expected").
-- If you don't know something, say so honestly rather than making up information.
+- Warm, conversational, encouraging. Think of yourself as a knowledgeable friend.
+- For prices: State in ETB. Mention trend. Give context (e.g., "about 15% higher than last season").
+- For weather: Relate to farming (e.g., "Good planting time — rain expected").
+- For crop advice: Reference the user's region and farm data when available.
+- If you don't have specific data: Still be helpful using general knowledge.
+- Keep responses detailed but easy to understand for a farmer.
 """
+
 
 def _build_system_prompt(language: str = "en", user_context: Optional[Dict] = None) -> str:
     lang_name = LANGUAGE_MAP.get(language, "English")
-    lang_instruction = f"The user prefers to communicate in {lang_name}. You MUST respond in {lang_name}."
+    if language == "am":
+        lang_instruction = f"The user prefers Amharic (አማርኛ). ALWAYS respond in Amharic using Ethiopic script (ፊደል). Use simple Amharic that farmers can understand."
+    elif language == "om":
+        lang_instruction = f"The user prefers Oromo (Afaan Oromoo). ALWAYS respond in Afaan Oromoo."
+    elif language == "ti":
+        lang_instruction = f"The user prefers Tigrinya (ትግርኛ). ALWAYS respond in Tigrinya."
+    else:
+        lang_instruction = f"The user prefers {lang_name}. Respond in {lang_name}."
 
     farm_context = ""
     if user_context:
@@ -125,6 +132,18 @@ def _build_tools() -> List[types.Tool]:
     for decl in get_tool_definitions():
         tools.append(types.Tool(function_declarations=[decl]))
     return tools
+
+
+def _execute_tool_and_send_response(chat, fn_name, fn_args):
+    """Execute a tool and send the result back to the chat session.
+    Returns the response from Gemini after processing the function result."""
+    fn_result = execute_function(fn_name, fn_args)
+    return chat.send_message(
+        types.Part.from_function_response(
+            name=fn_name,
+            response={"result": fn_result.get("result", fn_result)},
+        )
+    )
 
 
 def send_message_stream(
@@ -188,6 +207,7 @@ def send_message_stream(
                 raise
 
         function_calls = []
+        function_responses = []
 
         for chunk in response:
             for part in (chunk.candidates or [{}])[0].content.parts:
@@ -195,38 +215,44 @@ def send_message_stream(
                     fn = part.function_call
                     fn_name = fn.name
                     fn_args = dict(fn.args) if fn.args else {}
-                    fn_result = execute_function(fn_name, fn_args)
 
+                    fn_result = execute_function(fn_name, fn_args)
                     function_calls.append({
                         "name": fn_name,
                         "args": fn_args,
                         "result": fn_result,
                     })
+                    function_responses.append((fn_name, fn_result))
 
                     yield f"event: function_call\ndata: {fn_name}\n\n"
-
-                    client.models.generate_content(
-                        model=model_name,
-                        contents=[types.Content(
-                            role="user",
-                            parts=[types.Part(
-                                function_response=types.FunctionResponse(
-                                    name=fn_name,
-                                    response={"result": fn_result.get("result", fn_result)},
-                                )
-                            )]
-                        )],
-                        config=types.GenerateContentConfig(
-                            system_instruction=system_prompt,
-                            tools=_build_tools(),
-                        ),
-                    )
 
                 if part.text:
                     escaped = part.text.replace("\n", "\\n")
                     yield f"event: text\ndata: {escaped}\n\n"
 
-        if function_calls:
+        # If functions were called, send responses to Gemini and stream the text back
+        if function_responses:
+            for fn_name, fn_result in function_responses:
+                resp = client.models.generate_content(
+                    model=model_name,
+                    contents=[types.Content(
+                        role="user",
+                        parts=[types.Part.from_function_response(
+                            name=fn_name,
+                            response={"result": fn_result.get("result", fn_result)},
+                        )]
+                    )],
+                    config=types.GenerateContentConfig(
+                        system_instruction=system_prompt,
+                        tools=_build_tools(),
+                    ),
+                )
+                for candidate in (resp.candidates or []):
+                    for part in (candidate.content.parts or []):
+                        if part.text:
+                            escaped = part.text.replace("\n", "\\n")
+                            yield f"event: text\ndata: {escaped}\n\n"
+
             yield f"event: done\ndata: {len(function_calls)} function(s) called\n\n"
         else:
             yield "event: done\ndata: \n\n"
@@ -235,7 +261,8 @@ def send_message_stream(
         import traceback
         err_msg = getattr(e, 'message', str(e))
         print(f"[Gemini Stream Error] {err_msg}\n{traceback.format_exc()}")
-        yield f"event: error\ndata: AI error: {err_msg}\n\n"
+        yield f"event: text\ndata: I encountered an issue while processing your request. Let me try to help another way.\n\n"
+        yield "event: done\ndata: \n\n"
 
 
 def send_message(
@@ -247,7 +274,7 @@ def send_message(
 ) -> Dict[str, Any]:
     if not client:
         return {
-            "text": "AI service is not configured. Please set up the GEMINI_API_KEY.",
+            "text": "AI service is currently unavailable. Please check your API configuration.",
             "functionCalls": [],
         }
 
@@ -295,30 +322,32 @@ def send_message(
         response = chat.send_message(message)
         function_calls = []
 
-        for candidate in (response.candidates or []):
-            for part in (candidate.content.parts or []):
-                if part.function_call:
-                    fn = part.function_call
-                    fn_name = fn.name
-                    fn_args = dict(fn.args) if fn.args else {}
-                    fn_result = execute_function(fn_name, fn_args)
-
-                    function_calls.append({
-                        "name": fn_name,
-                        "args": fn_args,
-                        "result": fn_result,
-                    })
-
-                    response = chat.send_message(
-                        types.Content(
-                            parts=[types.Part(
-                                function_response=types.FunctionResponse(
-                                    name=fn_name,
-                                    response={"result": fn_result.get("result", fn_result)},
-                                )
-                            )]
+        # Handle potential multiple rounds of function calling
+        max_rounds = 5
+        for _ in range(max_rounds):
+            current_round_calls = []
+            for candidate in (response.candidates or []):
+                for part in (candidate.content.parts or []):
+                    if part.function_call:
+                        fn = part.function_call
+                        fn_name = fn.name
+                        fn_args = dict(fn.args) if fn.args else {}
+                        fn_result = execute_function(fn_name, fn_args)
+                        current_round_calls.append({
+                            "name": fn_name,
+                            "args": fn_args,
+                            "result": fn_result,
+                        })
+                        response = chat.send_message(
+                            types.Part.from_function_response(
+                                name=fn_name,
+                                response={"result": fn_result.get("result", fn_result)},
+                            )
                         )
-                    )
+
+            if not current_round_calls:
+                break
+            function_calls.extend(current_round_calls)
 
         text = ""
         for candidate in (response.candidates or []):
@@ -327,7 +356,7 @@ def send_message(
                     text += part.text
 
         if not text:
-            text = "I'm processing your request. Let me know if you need more specific information."
+            text = "I've looked into your question. What else can I help you with?"
 
         return {"text": text, "functionCalls": function_calls}
 
@@ -336,7 +365,23 @@ def send_message(
         err_msg = getattr(e, 'message', str(e))
         details = traceback.format_exc()
         print(f"[Gemini Error] {err_msg}\n{details}")
+
+        # Try one last fallback — direct generate_content without tools
+        try:
+            fallback = client.models.generate_content(
+                model=TEXT_MODEL_NAME,
+                contents=f"The user asked: '{message}'. Respond helpfully as an Ethiopian agricultural assistant. Be concise and warm.",
+                config=types.GenerateContentConfig(
+                    system_instruction="You are an expert Ethiopian agricultural assistant. Answer helpfully and simply.",
+                ),
+            )
+            fallback_text = fallback.text or ""
+            if fallback_text:
+                return {"text": fallback_text, "functionCalls": []}
+        except Exception:
+            pass
+
         return {
-            "text": f"AI service error: {err_msg}. Please try again later or check your Gemini API quota.",
+            "text": "I'm sorry, I'm having trouble processing your request right now. Could you please try rephrasing your question or ask something else?",
             "functionCalls": [],
         }
