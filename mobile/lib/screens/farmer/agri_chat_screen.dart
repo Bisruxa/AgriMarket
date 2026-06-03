@@ -39,8 +39,7 @@ class _AgriChatScreenState extends State<AgriChatScreen> {
   bool _liveMode = false;
   String _liveStatusText = '';
   String _liveTranscript = '';
-  String _pendingUserText = '';
-  String _pendingModelText = '';
+
 
   @override
   void initState() {
@@ -117,20 +116,38 @@ class _AgriChatScreenState extends State<AgriChatScreen> {
       });
     };
 
+    const liveUserId = 'live-partial-user';
+    const liveModelId = 'live-partial-model';
+
     _liveVoice.onTranscript = (role, text) {
       if (!mounted) return;
       setState(() {
         _liveTranscript = role == 'user' ? 'You: $text' : 'AI: $text';
-        if (role == 'user') {
-          _pendingUserText = text;
+        final id = role == 'user' ? liveUserId : liveModelId;
+        final msgRole = role == 'user' ? 'user' : 'assistant';
+        final existing = _messages.indexWhere((m) => m['id'] == id);
+        if (existing >= 0) {
+          _messages[existing] = {
+            ..._messages[existing],
+            'content': text,
+          };
         } else {
-          _pendingModelText = text;
+          _messages.add({
+            'id': id,
+            'role': msgRole,
+            'content': text,
+            'createdAt': DateTime.now().toIso8601String(),
+          });
         }
       });
+      _scrollToBottom();
     };
 
     _liveVoice.onTurnComplete = (userText, modelText) async {
       if (!mounted || (userText.isEmpty && modelText.isEmpty)) return;
+
+      _messages.removeWhere((m) => m['id'] == liveUserId || m['id'] == liveModelId);
+
       final now = DateTime.now();
       final userMsg = userText.isNotEmpty
           ? {'id': 'live-${now.millisecondsSinceEpoch}-user', 'role': 'user', 'content': userText, 'createdAt': now.toIso8601String()}
@@ -138,8 +155,6 @@ class _AgriChatScreenState extends State<AgriChatScreen> {
       final modelMsg = modelText.isNotEmpty
           ? {'id': 'live-${now.millisecondsSinceEpoch}-model', 'role': 'assistant', 'content': modelText, 'createdAt': now.toIso8601String()}
           : null;
-
-      if (!mounted) return;
 
       var chatId = _currentChatId;
       if (chatId == null) {
@@ -157,23 +172,21 @@ class _AgriChatScreenState extends State<AgriChatScreen> {
       if (chatId == null) return;
 
       if (userMsg != null) {
-        await _apiService.appendChatMessage(chatId!, role: 'user', content: userText);
+        await _apiService.appendChatMessage(chatId, role: 'user', content: userText);
       }
       if (modelMsg != null) {
-        await _apiService.appendChatMessage(chatId!, role: 'assistant', content: modelText);
+        await _apiService.appendChatMessage(chatId, role: 'assistant', content: modelText);
       }
 
       if (!mounted) return;
       setState(() {
         if (userMsg != null) _messages.add(userMsg);
         if (modelMsg != null) _messages.add(modelMsg);
-        _pendingUserText = '';
-        _pendingModelText = '';
         _liveTranscript = '';
       });
       _scrollToBottom();
 
-      if (_messages.length == 1 && userText.isNotEmpty) {
+      if (_messages.where((m) => m['id'] != liveUserId && m['id'] != liveModelId).length <= 1 && userText.isNotEmpty) {
         final title = userText.length > 50 ? '${userText.substring(0, 50)}…' : userText;
         await _apiService.createChat(title: title);
       }
