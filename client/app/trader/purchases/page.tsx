@@ -29,26 +29,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-interface Product {
-  id: string;
-  name: string;
-  description: string;
-  price: number;
-  unit: string;
-  category: string;
-  stock: number;
-  location: string;
-  isOrganic: boolean;
-  harvestDate: string;
-  farmer: {
-    id: string;
-    name: string;
-    email: string;
-    region: string;
-    woreda: string;
-  };
-}
+import { Product } from '@/types/product';
+import { formatFarmerLocation } from '@/types/traderProduct';
 
 const ProductsTable = () => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -263,10 +245,10 @@ const ProductsTable = () => {
                       </span>
                     </TableCell>
                     <TableCell className="py-4 text-sm px-5 text-gray-600">
-                      {product.location}
+                      {formatFarmerLocation(product)}
                     </TableCell>
                     <TableCell className="py-4 text-sm px-5 text-gray-600">
-                      {formatDate(product.harvestDate)}
+                      {product.harvestDate ? formatDate(product.harvestDate) : '—'}
                     </TableCell>
                     <TableCell className="py-4 text-sm px-5">
                       <Button

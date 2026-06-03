@@ -28,7 +28,7 @@ export default function FarmFactsCarousel() {
 
   return (
     <div
-      className={`flex h-32 sm:h-36 flex-col rounded-lg border border-[#5B8C51]/30 bg-white p-3 sm:p-4 shadow-sm transition-shadow hover:shadow-md ${language === 'am' ? 'amharic' : ''}`}
+      className={`flex h-32 sm:h-48 flex-col rounded-lg border border-[#5B8C51]/30 bg-white p-3 sm:p-4 shadow-sm transition-shadow hover:shadow-md ${language === 'am' ? 'amharic' : ''}`}
     >
       <span className="mb-2 w-fit rounded-full bg-[#5B8C51]/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#2A5A2A]">
         {badge}

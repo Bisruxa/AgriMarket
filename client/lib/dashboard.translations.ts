@@ -22,15 +22,22 @@ export type DashboardTranslations = {
   };
   watchList: {
     title: string;
-    season: string;
-    crop: string;
-    price: string;
-    demand: string;
-    yield: string;
-    scroll: string;
-    demandHigh: string;
-    demandMedium: string;
-    demandLow: string;
+    subtitle: string;
+    subtitleWithFarms: string;
+    livePulse: string;
+    loading: string;
+    noFarmTitle: string;
+    noFarmBody: string;
+    addFarmCta: string;
+    farmReadyTitle: string;
+    farmReadyBody: string;
+    cropRecommendationsCta: string;
+    regionalSnapshot: string;
+    noPriceYet: string;
+    perKg: string;
+    trendUp: string;
+    trendDown: string;
+    exploreTools: string;
   };
   weather: {
     location: string;
@@ -92,6 +99,44 @@ export type DashboardTranslations = {
     priceRange: string;
     expectedChange: string;
     disclaimer: string;
+  };
+  trends: {
+    title: string;
+    subtitle: string;
+    selectCrop: string;
+    selectRegion: string;
+    searchPlaceholder: string;
+    show: string;
+    loading: string;
+    noData: string;
+    loadError: string;
+    currentPrice: string;
+    monthChange: string;
+    twelveMonthAvg: string;
+    records: string;
+    sellTimingTitle: string;
+    bestMonth: string;
+    expectedGain: string;
+    latestPrice: string;
+    noTiming: string;
+    analyzing: string;
+    multiCropTitle: string;
+    topCrop: string;
+    diversified: string;
+    profitableNow: string;
+    loadingPlan: string;
+    gainVsRecent: string;
+    noPlanData: string;
+    priceHistory: string;
+    monthlyPrices: string;
+    priceTableTitle: string;
+    historicalData: string;
+    cropPrices: string;
+    priceData: string;
+    sources: string;
+    tablePeriod: string;
+    tableTrend: string;
+    tablePrice: string;
   };
   market: {
     title: string;
@@ -155,6 +200,7 @@ export type DashboardTranslations = {
     title: string;
     dashboardCardTitle: string;
     dashboardCardSubtitle: string;
+    dashboardCardSubtitleWithCount: string;
     viewFarms: string;
     addFarm: string;
     empty: string;
@@ -277,16 +323,23 @@ export const dashboardEn: DashboardTranslations = {
     },
   },
   watchList: {
-    title: "Top Profitable Crops",
-    season: "This Season",
-    crop: "Crop",
-    price: "Price (Birr)",
-    demand: "Demand",
-    yield: "Yield/ha",
-    scroll: "Scroll",
-    demandHigh: "High",
-    demandMedium: "Medium",
-    demandLow: "Low",
+    title: "Market Insights",
+    subtitle: "Live crop trends and quick tools for your farm",
+    subtitleWithFarms: "Personalized insights based on your registered farms",
+    livePulse: "Live pulse",
+    loading: "Loading",
+    noFarmTitle: "Your market pulse is warming up",
+    noFarmBody: "Register a farm to unlock personalized crop prices, demand signals, and profitability scores tailored to your land.",
+    addFarmCta: "Register your first farm",
+    farmReadyTitle: "Farm registered — next step",
+    farmReadyBody: "Get AI crop suggestions for your soil and region, or browse regional prices below while you set up listings.",
+    cropRecommendationsCta: "Get crop recommendations",
+    regionalSnapshot: "Regional market snapshot",
+    noPriceYet: "Price data soon",
+    perKg: "Birr/kg",
+    trendUp: "rising",
+    trendDown: "falling",
+    exploreTools: "Explore tools",
   },
   weather: {
     location: "Addis Ababa, Ethiopia",
@@ -360,6 +413,44 @@ export const dashboardEn: DashboardTranslations = {
     expectedChange: "Expected Change",
     disclaimer:
       "The actual market price may vary based on weather, transport costs, and demand. Use this forecast as a planning reference.",
+  },
+  trends: {
+    title: "Market Trends",
+    subtitle: "Track historical crop prices and find the best time to sell",
+    selectCrop: "Crop",
+    selectRegion: "Region",
+    searchPlaceholder: "Search crop name",
+    show: "Show",
+    loading: "Loading",
+    noData: "No price data found for this crop and region.",
+    loadError: "Failed to load price data",
+    currentPrice: "Current price",
+    monthChange: "vs last month",
+    twelveMonthAvg: "12-month average",
+    records: "records",
+    sellTimingTitle: "Best sell window",
+    bestMonth: "Best month",
+    expectedGain: "Expected gain",
+    latestPrice: "Latest price",
+    noTiming: "No timing guidance available yet.",
+    analyzing: "Analyzing...",
+    multiCropTitle: "Multi-crop profitability",
+    topCrop: "Top recommendation",
+    diversified: "Diversification index",
+    profitableNow: "Profitable now",
+    loadingPlan: "Loading",
+    gainVsRecent: "vs recent average",
+    noPlanData: "No multi-crop planning data yet.",
+    priceHistory: "Price history (ETB/kg)",
+    monthlyPrices: "Monthly prices (ETB/kg)",
+    priceTableTitle: "Recent price records",
+    historicalData: "Historical data",
+    cropPrices: "Crop prices",
+    priceData: "Price data",
+    sources: "Sources: local mandi, Ethiopian Commodity Exchange, CSA",
+    tablePeriod: "Period",
+    tableTrend: "YoY trend",
+    tablePrice: "Price",
   },
   market: {
     title: "My Agricultural Products",
@@ -452,6 +543,7 @@ export const dashboardEn: DashboardTranslations = {
     title: "Manage Your Farms",
     dashboardCardTitle: "My Farms",
     dashboardCardSubtitle: "Register your farm land and manage locations.",
+    dashboardCardSubtitleWithCount: "{{count}} farm(s) registered — tap to manage.",
     viewFarms: "View Farms",
     addFarm: "Add Farm",
     empty: 'No farms yet. Click "Add Farm" to register your land.',
@@ -589,16 +681,23 @@ export const dashboardAm: DashboardTranslations = {
     },
   },
   watchList: {
-    title: "ከፍተኛ ትርፍ የሚያመጡ ሰብሎች",
-    season: "የዚህ ወቅት",
-    crop: "ሰብል",
-    price: "ዋጋ (ብር)",
-    demand: "ፍላጎት",
-    yield: "ምርት/ሄክታር",
-    scroll: "ሸብልል",
-    demandHigh: "ከፍተኛ",
-    demandMedium: "መካከለኛ",
-    demandLow: "ዝቅተኛ",
+    title: "የገበያ ግንዛቤ",
+    subtitle: "ቀጥተኛ የሰብል አዝማሚያዎች እና ለእርሻዎ ፈጣን መሳሪያዎች",
+    subtitleWithFarms: "በተመዘገቡ እርሻዎች ላይ የተመሰረተ ግልጽ ግንዛቤ",
+    livePulse: "ቀጥተኛ ምልክት",
+    loading: "በመጫን ላይ",
+    noFarmTitle: "የገበያ ምልክትዎ እየተዘጋጀ ነው",
+    noFarmBody: "ለመሬትዎ የተስማሙ የሰብል ዋጋዎች፣ የፍላጎት ምልክቶች እና የትርፍ ውጤት ለማግኘት እርሻ ይመዝግቡ።",
+    addFarmCta: "የመጀመሪያ እርሻዎን ይመዝግቡ",
+    farmReadyTitle: "እርሻ ተመዝግቧል — ቀጣይ እርምጃ",
+    farmReadyBody: "ለአፈርዎ እና ክልልዎ በሰው ሰራሽ ብልህነት የሰብል ምክር ያግኙ፣ ወይም ዝርዝሮችን እስከሚያጠናቅቁ ድረስ ከታች የክልል ዋጋዎችን ይመልከቱ።",
+    cropRecommendationsCta: "የሰብል ምክር ያግኙ",
+    regionalSnapshot: "የክልል የገበያ ማጠቃለያ",
+    noPriceYet: "የዋጋ መረጃ በቅርብ",
+    perKg: "ብር/ኪ.ግ",
+    trendUp: "እየጨመረ",
+    trendDown: "እየቀነሰ",
+    exploreTools: "መሳሪያዎችን ይመልከቱ",
   },
   weather: {
     location: "አዲስ አበባ፣ ኢትዮጵያ",
@@ -672,6 +771,44 @@ export const dashboardAm: DashboardTranslations = {
     expectedChange: "የሚጠበቀ ለውጥ",
     disclaimer:
       "እውነተኛ የገበያ ዋጋ በአየር ሁኔታ፣ በመጓጓዣ ወጪ እና በፍላጎት ሊለዋወጥ ይችላል። ይህን ትንበያ እንደ የታቅደ ማጣቀሻ ይጠቀሙበት።",
+  },
+  trends: {
+    title: "የገበያ አዝማሚያ",
+    subtitle: "የሰብል ታሪካዊ ዋጋዎችን ይከታተሉ እና ለመሸጥ ተመራጭ ጊዜ ያግኙ",
+    selectCrop: "ሰብል",
+    selectRegion: "ክልል",
+    searchPlaceholder: "የሰብል ስም ፈልግ",
+    show: "አሳይ",
+    loading: "በመጫን ላይ",
+    noData: "ለዚህ ሰብል እና ክልል የዋጋ መረጃ አልተገኘም።",
+    loadError: "የዋጋ መረጃ መጫን አልተሳካም",
+    currentPrice: "የአሁኑ ዋጋ",
+    monthChange: "ከባለፈው ወር ጋር",
+    twelveMonthAvg: "12-ወር አማካይ",
+    records: "መዝገቦች",
+    sellTimingTitle: "ለመሸጥ ተመራጭ ጊዜ",
+    bestMonth: "ተመራጭ ወር",
+    expectedGain: "የተጠቃሚ ጥቅም",
+    latestPrice: "የአሁኑ ዋጋ",
+    noTiming: "የመሸጫ ምክር መረጃ አልተገኘም።",
+    analyzing: "በመተንተን ላይ...",
+    multiCropTitle: "የብዙ ሰብል ትርፍ",
+    topCrop: "ዋና ምክር",
+    diversified: "የልዩነት መጠን",
+    profitableNow: "አሁን ትርፋማ",
+    loadingPlan: "በመጫን ላይ",
+    gainVsRecent: "ከቅርብ አማካይ ጋር",
+    noPlanData: "የብዙ ሰብል እቅድ መረጃ አልተገኘም።",
+    priceHistory: "የዋጋ ታሪክ (ብር/ኪ.ግ)",
+    monthlyPrices: "ወርሃዊ ዋጋዎች (ብር/ኪ.ግ)",
+    priceTableTitle: "የቅርብ ጊዜ የዋጋ መዝገቦች",
+    historicalData: "ታሪካዊ መረጃ",
+    cropPrices: "የሰብል ዋጋዎች",
+    priceData: "የዋጋ መረጃ",
+    sources: "ምንጮች፡ መሸጫ ነጥብ ገበያዎች፣ Ethiopian Commodity Exchange፣ CSA",
+    tablePeriod: "ጊዜ",
+    tableTrend: "ዓመታዊ ለውጥ",
+    tablePrice: "ዋጋ",
   },
   market: {
     title: "የግብርና ምርቶቼ",
@@ -763,6 +900,7 @@ export const dashboardAm: DashboardTranslations = {
     title: "እርሻዎችዎን ያስተዳድሩ",
     dashboardCardTitle: "የእኔ እርሻዎች",
     dashboardCardSubtitle: "የእርሻ መሬትዎን ይመዝግቡ እና ቦታዎችን ያስተዳድሩ።",
+    dashboardCardSubtitleWithCount: "{{count}} እርሻ(ዎች) ተመዝግበዋል — ለማስተዳደር ይጫኑ።",
     viewFarms: "እርሻዎችን ይመልከቱ",
     addFarm: "እርሻ ጨምር",
     empty: 'እስካሁን እርሻ የለም። መሬትዎን ለመመዝገብ «እርሻ ጨምር» ይጫኑ።',

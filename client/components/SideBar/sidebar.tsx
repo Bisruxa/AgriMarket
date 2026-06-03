@@ -63,16 +63,18 @@ const SidebarContent = ({ arr, role }: SidebarProps) => {
           <NavigationLink Links={arr} />
         </div>
 
-        <div className="mt-6">
-          <h1 className="mb-2 text-xs font-semibold uppercase tracking-wide text-black/30">
-            {t.sidebar.support}
-          </h1>
-          {role === "Admin" ? (
-            <ChatNavItem href="/chat" label="Chat" active={chatActive} />
-          ) : (
-            <ChatNavItem href="/chat" label={t.sidebar.chats} active={chatActive} />
-          )}
-        </div>
+        {(role === "farmer" || role === "Admin") && (
+          <div className="mt-6">
+            <h1 className="mb-2 text-xs font-semibold uppercase tracking-wide text-black/30">
+              {t.sidebar.support}
+            </h1>
+            <ChatNavItem
+              href="/chat"
+              label={role === "Admin" ? "Chat" : t.sidebar.chats}
+              active={chatActive}
+            />
+          </div>
+        )}
       </div>
 
       <div className="mt-auto shrink-0 border-t border-gray-200 pt-3">
