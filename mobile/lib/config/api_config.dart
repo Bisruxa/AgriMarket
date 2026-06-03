@@ -1,10 +1,17 @@
+import 'package:flutter/foundation.dart' show kDebugMode, kIsWeb;
+
 class ApiConfig {
   ApiConfig._();
 
-  /// Override at build time: `--dart-define=API_BASE_URL=http://localhost:5000/api`
+  /// Override at build/run time:
+  /// `flutter run --dart-define=API_BASE_URL=http://192.168.1.5:5000/api`
+  ///
+  /// Defaults to Render in release. In debug on web (Chrome), uses local API so
+  /// registration emails use your machine's SMTP settings.
   static String get baseUrl {
     const fromEnv = String.fromEnvironment('API_BASE_URL');
     if (fromEnv.isNotEmpty) return fromEnv;
+    if (kDebugMode && kIsWeb) return 'http://localhost:5000/api';
     return 'https://agrimarket-gc00.onrender.com/api';
   }
 

@@ -8,7 +8,6 @@ import '../../utils/notification_labels.dart';
 import '../../widgets/common/app_bottom_nav.dart';
 import '../../widgets/app_locale_scope.dart';
 import '../../widgets/language_toggle.dart';
-import '../../widgets/profile_details_card.dart';
 import '../../widgets/welcome_card.dart';
 import '../../widgets/farmer_info_popup.dart';
 import 'trader_products_screen.dart';
@@ -161,7 +160,7 @@ class _TraderDashboardState extends State<TraderDashboard> {
       bottomNavigationBar: AppBottomNav(
         currentIndex: _safeSelectedIndex,
         onTap: (index) => setState(() => _selectedIndex = index),
-        items: _navItems(context),
+        items: _navItems,
         selectedColor: AppColors.traderAccent,
       ),
     );
