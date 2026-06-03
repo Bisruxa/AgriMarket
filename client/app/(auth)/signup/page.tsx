@@ -20,6 +20,7 @@ export default function SignUpPage() {
     role,
     setRole,
     step,
+    setStep,
     errors,
     isLoading,
     formData,
@@ -167,6 +168,8 @@ export default function SignUpPage() {
                   id={field.id}
                   name={field.id}
                   type="tel"
+                  inputMode="numeric"
+                  maxLength={9}
                   value={formData[field.id as keyof typeof formData]}
                   onChange={handleInputChange}
                   placeholder="912345678"
@@ -174,6 +177,7 @@ export default function SignUpPage() {
                     errors.some(e => e.toLowerCase().includes('phone')) ? 'border-red-500' : ''
                   }`}
                 />
+                <p className="text-xs text-gray-500">9 digits, starting with 7 or 9</p>
               </div>
             
             </div>
@@ -210,6 +214,8 @@ export default function SignUpPage() {
 
   const handleRoleChange = (newRole: 'FARMER' | 'TRADER') => {
     setRole(newRole);
+    setStep(1);
+    setSelectedRegion('');
   };
 
   return (

@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
-import '../services/auth_session.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common/auth_shell.dart';
 import '../widgets/common/section_title.dart';
 import '../widgets/custom_text_field.dart';
-import '../widgets/custom_dropdown.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/location_picker.dart';
 import '../widgets/registration_location_capture.dart';
 import '../widgets/app_locale_scope.dart';
+import '../utils/ethiopian_phone.dart';
 
 class FarmerSignupScreen extends StatefulWidget {
   const FarmerSignupScreen({super.key});
@@ -25,17 +24,11 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final _farmLocationController = TextEditingController();
-  final _farmSizeController = TextEditingController();
-  final _cropsController = TextEditingController();
 
   String? _selectedRegion;
   String? _selectedWoreda;
-  String? _selectedExperience;
   bool _isLoading = false;
   String? _errorMessage;
-  double? _latitude;
-  double? _longitude;
 
   Future<void> _register() async {
     final l10n = AppLocaleScope.l10nOf(context);
@@ -47,7 +40,13 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
     }
 
     if (_selectedRegion == null || _selectedRegion!.isEmpty) {
-      setState(() => _errorMessage = l10n.pleaseSelectRegion);
+      setState(() => _errorMessage = 'Please select your region');
+      return;
+    }
+
+    final formattedPhone = EthiopianPhone.formatForStorage(_phoneController.text);
+    if (formattedPhone == null) {
+      setState(() => _errorMessage = EthiopianPhone.message);
       return;
     }
 
@@ -61,26 +60,20 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
       'email': _emailController.text.trim(),
       'password': _passwordController.text,
       'role': 'FARMER',
-      'phone': _phoneController.text.trim(),
+      'phone': formattedPhone,
       'region': _selectedRegion,
       'woreda': _selectedWoreda,
-      if (_latitude != null) 'latitude': _latitude,
-      if (_longitude != null) 'longitude': _longitude,
-      'farmSize': _farmSizeController.text.trim().isNotEmpty
-          ? '${_farmSizeController.text.trim()} hectares'
-          : null,
-      'crops': _cropsController.text.trim(),
-      'experience': _selectedExperience,
     });
 
     if (!mounted) return;
 
-    if (result.success && result.raw != null) {
-      await AuthSession.saveFromLoginResponse(result.raw!);
-      if (!mounted) return;
+    if (result.success) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(l10n.registrationSuccessful),
+          content: Text(
+            result.message ??
+                'Registration successful! Check your email to verify your account.',
+          ),
           backgroundColor: AppColors.primary,
         ),
       );
@@ -99,8 +92,8 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
     final l10n = AppLocaleScope.l10nOf(context);
 
     return AuthShell(
-      title: l10n.farmerRegistration,
-      subtitle: l10n.farmerRegistrationSubtitle,
+      title: 'Farmer Registration',
+      subtitle: 'Create your account — you can add farms later from the dashboard',
       imagePath: 'assets/images/welcome.png',
       heroIcon: Icons.agriculture_rounded,
       child: SingleChildScrollView(
@@ -144,11 +137,12 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
                 prefixIcon: Icons.email_outlined,
               ),
               CustomTextField(
-                label: l10n.phoneNumber,
-                hint: l10n.enterPhoneNumber,
+                label: 'Phone Number',
+                hint: '912345678',
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
                 prefixIcon: Icons.phone_outlined,
+                validator: (v) => EthiopianPhone.validate(v),
               ),
               CustomTextField(
                 label: l10n.password,
@@ -182,48 +176,6 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
                   setState(() => _selectedWoreda = value);
                 },
               ),
-              RegistrationLocationCapture(
-                onLocationChanged: (latitude, longitude) {
-                  setState(() {
-                    _latitude = latitude;
-                    _longitude = longitude;
-                  });
-                },
-              ),
-              SectionTitle(
-                title: l10n.farmInformation,
-                subtitle: l10n.personalizeRecommendations,
-                icon: Icons.grass_rounded,
-              ),
-              CustomTextField(
-                label: l10n.farmLocation,
-                hint: l10n.farmLocationHint,
-                controller: _farmLocationController,
-                prefixIcon: Icons.map_outlined,
-              ),
-              CustomTextField(
-                label: l10n.farmSizeHectares,
-                hint: l10n.farmSizeHint,
-                controller: _farmSizeController,
-                keyboardType: TextInputType.number,
-                prefixIcon: Icons.square_foot_outlined,
-              ),
-              CustomTextField(
-                label: l10n.cropsYouPlant,
-                hint: l10n.cropsHint,
-                controller: _cropsController,
-                prefixIcon: Icons.eco_outlined,
-              ),
-              CustomDropdown<String>(
-                label: l10n.farmingExperience,
-                value: _selectedExperience,
-                items: l10n.experienceValues,
-                itemLabel: l10n.experienceLabel,
-                onChanged: (value) {
-                  setState(() => _selectedExperience = value);
-                },
-                hint: l10n.selectExperienceLevel,
-              ),
               const SizedBox(height: 8),
               CustomButton(
                 text: l10n.registerAsFarmer,
@@ -244,9 +196,6 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
     _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
-    _farmLocationController.dispose();
-    _farmSizeController.dispose();
-    _cropsController.dispose();
     super.dispose();
   }
 }

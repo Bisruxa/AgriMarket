@@ -1,6 +1,8 @@
 // lib/widgets/auth/login_form.dart
 import 'package:flutter/material.dart';
+import '../../services/api_service.dart';
 import '../custom_text_field.dart';
+
 class LoginForm extends StatefulWidget {
   final GlobalKey<FormState> formKey;
   final TextEditingController emailController;
@@ -23,6 +25,7 @@ class LoginForm extends StatefulWidget {
 
 class _LoginFormState extends State<LoginForm> {
   bool _obscurePassword = true;
+  final _api = ApiService();
 
   @override
   Widget build(BuildContext context) {
@@ -32,7 +35,6 @@ class _LoginFormState extends State<LoginForm> {
         padding: const EdgeInsets.all(22.0),
         child: Column(
           children: [
-            // Email Field with border
             CustomTextField(
               label: '',
               hint: 'Enter your email',
@@ -43,7 +45,6 @@ class _LoginFormState extends State<LoginForm> {
             ),
             Column(
               children: [
-                // Password input field
                 CustomTextField(
                   label: '',
                   hint: 'Enter your password',
@@ -63,34 +64,31 @@ class _LoginFormState extends State<LoginForm> {
                   ),
                   validator: _validatePassword,
                 ),
-                 Row(
+                Row(
                   mainAxisAlignment: MainAxisAlignment.end,
-                   children: [
-                     GestureDetector(
-                          onTap: _showForgotPassword,
-                          child: Text(
-                            'Forgot Password?',
-                            style: TextStyle(
-                              color: const Color(0xFF2A5A2A),
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
+                  children: [
+                    GestureDetector(
+                      onTap: _showForgotPassword,
+                      child: const Text(
+                        'Forgot Password?',
+                        style: TextStyle(
+                          color: Color(0xFF2A5A2A),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
                         ),
-                   ],
-                 ),
+                      ),
+                    ),
+                  ],
+                ),
               ],
             ),
-            
             const SizedBox(height: 24),
-                  // Login Button
             _buildLoginButton(),
           ],
         ),
       ),
     );
   }
-
 
   Widget _buildLoginButton() {
     return SizedBox(
@@ -139,12 +137,87 @@ class _LoginFormState extends State<LoginForm> {
     return null;
   }
 
-  void _showForgotPassword() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Password reset link sent to your email!'),
-        behavior: SnackBarBehavior.floating,
-      ),
+  Future<void> _showForgotPassword() async {
+    final emailController = TextEditingController(
+      text: widget.emailController.text.trim(),
     );
+    final formKey = GlobalKey<FormState>();
+    var sending = false;
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Forgot password'),
+              content: Form(
+                key: formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Enter your account email. We will send you a link to reset your password.',
+                      style: TextStyle(fontSize: 14, color: Colors.black54),
+                    ),
+                    const SizedBox(height: 16),
+                    CustomTextField(
+                      label: 'Email',
+                      hint: 'you@example.com',
+                      controller: emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      prefixIcon: Icons.email_outlined,
+                      validator: _validateEmail,
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: sending ? null : () => Navigator.pop(ctx),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: sending
+                      ? null
+                      : () async {
+                          if (!formKey.currentState!.validate()) return;
+                          setDialogState(() => sending = true);
+                          final result = await _api.forgotPassword(
+                            emailController.text.trim(),
+                          );
+                          if (!context.mounted) return;
+                          Navigator.pop(ctx);
+                          ScaffoldMessenger.of(this.context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                result.success
+                                    ? (result.message ??
+                                        'If an account exists, a reset link was sent to your email.')
+                                    : (result.message ?? 'Failed to send reset email'),
+                              ),
+                              behavior: SnackBarBehavior.floating,
+                              backgroundColor: result.success
+                                  ? const Color(0xFF2A5A2A)
+                                  : Colors.red,
+                            ),
+                          );
+                        },
+                  child: sending
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Send link'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    emailController.dispose();
   }
 }

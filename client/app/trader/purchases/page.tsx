@@ -110,7 +110,7 @@ const ProductsTable = () => {
             Available Agricultural Products
           </h1>
           <p className="text-sm text-gray-600">
-            Browse and purchase products from farmers
+            Browse products from farmers
           </p>
         </div>
 
@@ -188,20 +188,19 @@ const ProductsTable = () => {
                 <TableHead className="px-5 py-4">Unit</TableHead>
                 <TableHead className="px-5 py-4">Location</TableHead>
                 <TableHead className="px-5 py-4">Harvest Date</TableHead>
-                <TableHead className="px-5 py-4">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isLoading && products.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8">
+                  <TableCell colSpan={8} className="text-center py-8">
                     <Loader2 className="h-8 w-8 animate-spin text-[#2A5A2A] mx-auto" />
                     <p className="mt-2 text-gray-600">Loading products...</p>
                   </TableCell>
                 </TableRow>
               ) : products.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="text-center py-8 text-gray-500">
+                  <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                     <Package className="h-12 w-12 mx-auto mb-3 text-gray-400" />
                     No products found. Try adjusting your filters.
                   </TableCell>
@@ -249,18 +248,6 @@ const ProductsTable = () => {
                     </TableCell>
                     <TableCell className="py-4 text-sm px-5 text-gray-600">
                       {product.harvestDate ? formatDate(product.harvestDate) : '—'}
-                    </TableCell>
-                    <TableCell className="py-4 text-sm px-5">
-                      <Button
-                        size="sm"
-                        className="bg-[#2A5A2A] hover:bg-[#1E431E] text-white"
-                        onClick={() => {
-                          // Add to cart or purchase logic
-                          console.log('Purchase product:', product.id);
-                        }}
-                      >
-                        Purchase
-                      </Button>
                     </TableCell>
                   </TableRow>
                 ))

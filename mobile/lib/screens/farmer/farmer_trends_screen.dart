@@ -6,6 +6,9 @@ import '../../services/api_service.dart';
 import '../../l10n/app_localizations.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/crop_price_utils.dart';
+import '../../widgets/farmer/farmer_ai_action_buttons.dart';
+import 'crop_recommendation.dart';
+import 'price_forecast_screen.dart';
 import '../../widgets/app_locale_scope.dart';
 import '../../widgets/language_toggle.dart';
 
@@ -180,6 +183,29 @@ class _FarmerTrendsScreenState extends State<FarmerTrendsScreen> {
                     ),
                     const LanguageToggle(),
                   ],
+                ),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                child: FarmerAiActionButtons(
+                  onCropRecommend: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const CropRecommendation()),
+                    );
+                  },
+                  onPriceForecast: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => PriceForecastScreen(
+                          defaultRegion: _selectedRegion,
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
             ),

@@ -6,6 +6,7 @@ import '../../services/api_service.dart';
 import '../../services/voice_chat_service.dart';
 import '../../theme/app_theme.dart';
 import 'crop_recommendation.dart';
+import 'price_forecast_screen.dart';
 
 /// Persisted Gemini chat via Express `/chat/*`.
 class AgriChatScreen extends StatefulWidget {
@@ -334,74 +335,20 @@ class _AgriChatScreenState extends State<AgriChatScreen> {
               title: const Text('Price forecast'),
               onTap: () {
                 Navigator.pop(ctx);
-                _showPriceForecastDialog();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => PriceForecastScreen(
+                      defaultRegion: widget.defaultRegion,
+                    ),
+                  ),
+                );
               },
             ),
           ],
         ),
       ),
     );
-  }
-
-  Future<void> _showPriceForecastDialog() async {
-    final cropController = TextEditingController(text: 'Teff');
-    final regionController = TextEditingController(
-      text: widget.defaultRegion ?? 'Oromia',
-    );
-    if (!mounted) return;
-
-    await showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('Price forecast'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: cropController,
-              decoration: const InputDecoration(labelText: 'Crop name'),
-            ),
-            TextField(
-              controller: regionController,
-              decoration: const InputDecoration(labelText: 'Region'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
-          FilledButton(
-            onPressed: () async {
-              Navigator.pop(ctx);
-              try {
-                final data = await _apiService.predictPrice({
-                  'crop_name': cropController.text.trim(),
-                  'region': regionController.text.trim(),
-                  'year': DateTime.now().year,
-                  'month': DateTime.now().month,
-                });
-                final price = data['predicted_price'];
-                if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'Forecast: ETB ${price?.toString() ?? '—'} / unit',
-                    ),
-                  ),
-                );
-              } catch (e) {
-                if (!mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(e.toString())),
-                );
-              }
-            },
-            child: const Text('Forecast'),
-          ),
-        ],
-      ),
-    );
-    cropController.dispose();
-    regionController.dispose();
   }
 
   @override

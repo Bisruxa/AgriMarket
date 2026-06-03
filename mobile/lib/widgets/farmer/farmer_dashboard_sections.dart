@@ -1,66 +1,143 @@
 import 'package:flutter/material.dart';
 
 import '../../constants/app_assets.dart';
+import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
 import '../app_locale_scope.dart';
 
 class FarmerVerificationBanner extends StatelessWidget {
-  const FarmerVerificationBanner({super.key});
+  final bool isVerified;
+  final String? email;
+
+  const FarmerVerificationBanner({
+    super.key,
+    required this.isVerified,
+    this.email,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocaleScope.l10nOf(context);
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 2,
-            child: Text(
-              l10n.accountVerificationStatus,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: Colors.white.withValues(alpha: 0.95),
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
+    if (isVerified) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppColors.primary,
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Account Verification Status',
+                style: TextStyle(
+                  color: Colors.white.withValues(alpha: 0.95),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 8),
-          Flexible(
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Flexible(
-                  child: Text(
-                    l10n.verifiedAccount,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.end,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
+            const Text(
+              'Verified',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(width: 6),
+            Icon(
+              Icons.verified_rounded,
+              color: Colors.lightGreenAccent.shade400,
+              size: 20,
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.orange.shade50,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Colors.orange.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.mark_email_unread_outlined, color: Colors.orange.shade800),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Verify your email',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: Colors.orange.shade900,
+                    fontSize: 14,
                   ),
                 ),
-                const SizedBox(width: 6),
-                Icon(
-                  Icons.verified_rounded,
-                  color: Colors.lightGreenAccent.shade400,
-                  size: 20,
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
+          const SizedBox(height: 8),
+          Text(
+            'Check your inbox for the verification link. You need a verified email to sign in on other devices.',
+            style: TextStyle(fontSize: 12, color: Colors.orange.shade900.withValues(alpha: 0.85)),
+          ),
+          if (email != null && email!.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            _ResendVerificationButton(email: email!),
+          ],
         ],
       ),
+    );
+  }
+}
+
+class _ResendVerificationButton extends StatefulWidget {
+  final String email;
+
+  const _ResendVerificationButton({required this.email});
+
+  @override
+  State<_ResendVerificationButton> createState() => _ResendVerificationButtonState();
+}
+
+class _ResendVerificationButtonState extends State<_ResendVerificationButton> {
+  bool _loading = false;
+
+  Future<void> _resend() async {
+    setState(() => _loading = true);
+    final result = await ApiService().resendVerification(widget.email);
+    if (!mounted) return;
+    setState(() => _loading = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          result.success
+              ? (result.message ?? 'Verification email sent.')
+              : (result.message ?? 'Could not resend email'),
+        ),
+        backgroundColor: result.success ? AppColors.primary : AppColors.error,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextButton.icon(
+      onPressed: _loading ? null : _resend,
+      icon: _loading
+          ? const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : const Icon(Icons.refresh_rounded, size: 18),
+      label: const Text('Resend verification email'),
+      style: TextButton.styleFrom(foregroundColor: AppColors.primary),
     );
   }
 }

@@ -4,14 +4,15 @@ import '../../models/product_model.dart';
 import '../../models/profile_model.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
-import '../../utils/logout_helper.dart';
 import '../../utils/notification_labels.dart';
 import '../../widgets/common/app_bottom_nav.dart';
 import '../../widgets/app_locale_scope.dart';
 import '../../widgets/language_toggle.dart';
 import '../../widgets/profile_details_card.dart';
 import '../../widgets/welcome_card.dart';
+import '../../widgets/farmer_info_popup.dart';
 import 'trader_products_screen.dart';
+import 'trader_profile.dart';
 class TraderDashboard extends StatefulWidget {
   const TraderDashboard({super.key});
 
@@ -23,7 +24,6 @@ class _TraderDashboardState extends State<TraderDashboard> {
   int _selectedIndex = 0;
   final ApiService _apiService = ApiService();
   UserProfile? _profile;
-  bool _isLoadingProfile = true;
   List<Product> _previewProducts = [];
   bool _isLoadingPreview = true;
   List<AppNotification> _notifications = [];
@@ -31,31 +31,23 @@ class _TraderDashboardState extends State<TraderDashboard> {
 
   static const _defaultImage = 'assets/images/welcome.png';
 
-  List<AppNavItem> _navItems(BuildContext context) {
-    final l10n = AppLocaleScope.l10nOf(context);
-    return [
-      AppNavItem(
-        icon: Icons.home_outlined,
-        activeIcon: Icons.home_rounded,
-        label: l10n.navHome,
-      ),
-      AppNavItem(
-        icon: Icons.search_outlined,
-        activeIcon: Icons.search_rounded,
-        label: l10n.navBrowse,
-      ),
-      AppNavItem(
-        icon: Icons.receipt_long_outlined,
-        activeIcon: Icons.receipt_long_rounded,
-        label: l10n.navOrders,
-      ),
-      AppNavItem(
-        icon: Icons.person_outline,
-        activeIcon: Icons.person_rounded,
-        label: l10n.navProfile,
-      ),
-    ];
-  }
+  static const _navItems = [
+    AppNavItem(
+      icon: Icons.home_outlined,
+      activeIcon: Icons.home_rounded,
+      label: 'Home',
+    ),
+    AppNavItem(
+      icon: Icons.search_outlined,
+      activeIcon: Icons.search_rounded,
+      label: 'Market Place',
+    ),
+    AppNavItem(
+      icon: Icons.person_outline,
+      activeIcon: Icons.person_rounded,
+      label: 'Profile',
+    ),
+  ];
 
   @override
   void initState() {
@@ -143,9 +135,15 @@ class _TraderDashboardState extends State<TraderDashboard> {
     if (mounted) {
       setState(() {
         _profile = profile;
-        _isLoadingProfile = false;
       });
     }
+  }
+
+  int get _safeSelectedIndex {
+    final max = _navItems.length - 1;
+    if (_selectedIndex < 0) return 0;
+    if (_selectedIndex > max) return max;
+    return _selectedIndex;
   }
 
   @override
@@ -153,20 +151,15 @@ class _TraderDashboardState extends State<TraderDashboard> {
     return Scaffold(
       backgroundColor: AppColors.surface,
       body: IndexedStack(
-        index: _selectedIndex,
+        index: _safeSelectedIndex,
         children: [
           _buildHomeTab(),
           const SafeArea(child: TraderProductsScreen()),
-          _buildPlaceholderTab(
-            icon: Icons.receipt_long_rounded,
-            title: 'Your Orders',
-            subtitle: 'Track purchases and deliveries from farmers',
-          ),
-          _buildProfileTab(),
+          const TraderProfileScreen(),
         ],
       ),
       bottomNavigationBar: AppBottomNav(
-        currentIndex: _selectedIndex,
+        currentIndex: _safeSelectedIndex,
         onTap: (index) => setState(() => _selectedIndex = index),
         items: _navItems(context),
         selectedColor: AppColors.traderAccent,
@@ -229,7 +222,7 @@ class _TraderDashboardState extends State<TraderDashboard> {
                         : 'Your business',
                     profileImageUrl: _profile?.avatarUrl ?? _defaultImage,
                     gradient: AppColors.traderGradient,
-                    onViewProfile: () => setState(() => _selectedIndex = 3),
+                    onViewProfile: () => setState(() => _selectedIndex = 2),
                   ),
                   const SizedBox(height: 20),
                   Row(
@@ -282,7 +275,16 @@ class _TraderDashboardState extends State<TraderDashboard> {
                     ..._previewProducts.map(
                       (p) => Padding(
                         padding: const EdgeInsets.only(bottom: 12),
-                        child: TraderProductRow(product: p),
+                        child: TraderProductRow(
+                          product: p,
+                          showFarmerHint: true,
+                          onTap: () {
+                            showDialog<void>(
+                              context: context,
+                              builder: (_) => FarmerInfoPopup(product: p),
+                            );
+                          },
+                        ),
                       ),
                     ),
                   const SizedBox(height: 8),                  SizedBox(
@@ -310,128 +312,6 @@ class _TraderDashboardState extends State<TraderDashboard> {
     );
   }
 
-  Widget _buildProfileTab() {
-    if (_isLoadingProfile) {
-      return const SafeArea(
-        child: Center(
-          child: CircularProgressIndicator(color: AppColors.traderAccent),
-        ),
-      );
-    }
-
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            const SizedBox(height: 16),
-            CircleAvatar(
-              radius: 44,
-              backgroundColor: AppColors.traderAccent.withValues(alpha: 0.1),
-              backgroundImage: _profile?.avatarUrl != null
-                  ? NetworkImage(_profile!.avatarUrl!)
-                  : null,
-              child: _profile?.avatarUrl == null
-                  ? const Icon(
-                      Icons.person_rounded,
-                      size: 44,
-                      color: AppColors.traderAccent,
-                    )
-                  : null,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              _profile?.name ?? 'Trader',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 20),
-            ),
-            if (_profile?.displaySubtitle.isNotEmpty == true)
-              Text(
-                _profile!.displaySubtitle,
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-            const SizedBox(height: 24),
-            if (_profile != null) ProfileDetailsCard(profile: _profile!),
-            const SizedBox(height: 32),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () => logoutAndRedirect(context),
-                icon: const Icon(Icons.logout_rounded),
-                label: const Text('Logout'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.error,
-                  side: const BorderSide(color: AppColors.error),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPlaceholderTab({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-  }) {
-    return SafeArea(
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: AppColors.traderAccent.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, size: 48, color: AppColors.traderAccent),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                title,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontSize: 22,
-                    ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                subtitle,
-                style: Theme.of(context).textTheme.bodyMedium,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Container(
-                margin: const EdgeInsets.only(top: 12),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.orange.shade50,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.orange.shade200),
-                ),
-                child: Text(
-                  'Coming soon',
-                  style: TextStyle(
-                    color: Colors.orange.shade800,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 class _StatCard extends StatelessWidget {

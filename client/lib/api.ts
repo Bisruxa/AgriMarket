@@ -2,11 +2,13 @@ export const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000
 // smtg
 import { Product } from '@/types/product';
 import { Farm, CreateFarmData, UpdateFarmData } from '@/types/farm';
+import { User } from '@/types/auth-page';
 
 export type ApiResponse<T> = {
   success: boolean;
   data?: T;
   message?: string;
+  code?: string;
   user?: {
     id: string;
     name: string;
@@ -71,6 +73,7 @@ class ApiClient {
         return {
           success: false,
           message: data.message || 'Something went wrong',
+          code: data.code,
           errors: data.errors,
         };
       }
@@ -134,9 +137,38 @@ export const authApi = {
   login: (data: { email: string; password: string }) =>
     api.post('/auth/login', data),
 
+  forgotPassword: (data: { email: string }) =>
+    api.post('/auth/forgot-password', data),
+
+  resetPassword: (data: { token: string; newPassword: string }) =>
+    api.post('/auth/reset-password', data),
+
+  verifyEmail: (token: string) =>
+    api.post<{ alreadyVerified?: boolean }>('/auth/verify-email', {
+      token: token.trim(),
+    }),
+
+  resendVerification: (data: { email: string }) =>
+    api.post('/auth/resend-verification', data),
+
   getMe: () => api.get('/auth/me'),
 
   logout: () => api.post('/auth/logout', {}),
+};
+
+export const userApi = {
+  updateProfile: (data: {
+    name?: string;
+    phone?: string;
+    region?: string;
+    woreda?: string;
+    farmSize?: string | number;
+    crops?: string;
+    experience?: string;
+  }) => api.put<User>('/user/profile', data),
+
+  updatePassword: (data: { currentPassword: string; newPassword: string }) =>
+    api.put('/user/password', data),
 };
 
 export const farmsApi = {

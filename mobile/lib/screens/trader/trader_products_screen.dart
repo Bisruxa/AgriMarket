@@ -245,6 +245,7 @@ class _TraderProductsScreenState extends State<TraderProductsScreen> {
             child: TraderProductRow(
               product: items[index],
               onTap: () => _showFarmerInfoDialog(items[index]),
+              showFarmerHint: true,
             ),
           );
         },
@@ -256,11 +257,13 @@ class _TraderProductsScreenState extends State<TraderProductsScreen> {
 class TraderProductRow extends StatelessWidget {
   final Product product;
   final VoidCallback? onTap;
+  final bool showFarmerHint;
 
   const TraderProductRow({
     super.key,
     required this.product,
     this.onTap,
+    this.showFarmerHint = false,
   });
 
   @override
@@ -303,8 +306,42 @@ class TraderProductRow extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
+                    if (product.farmer != null) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.person_outline_rounded,
+                            size: 14,
+                            color: AppColors.traderAccent.withValues(alpha: 0.9),
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              product.farmer!.name,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.traderAccent.withValues(alpha: 0.95),
+                              ),
+                            ),
+                          ),
+                          if (product.farmer!.isVerified)
+                            Icon(
+                              Icons.verified_rounded,
+                              size: 14,
+                              color: Colors.green.shade700,
+                            ),
+                        ],
+                      ),
+                    ],
+                    const SizedBox(height: 2),
                     Text(
-                      product.location,
+                      product.farmer?.locationLabel.isNotEmpty == true
+                          ? product.farmer!.locationLabel
+                          : product.location,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -358,6 +395,16 @@ class TraderProductRow extends StatelessWidget {
                         ),
                       ),
                     ),
+                  if (showFarmerHint && onTap != null) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      'Tap for farmer details',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: AppColors.textSecondary.withValues(alpha: 0.9),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ],

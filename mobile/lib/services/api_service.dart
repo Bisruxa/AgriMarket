@@ -61,7 +61,11 @@ class ApiService {
   Future<bool> _shouldAttachToken(String path) async {
     if (path.contains(ApiConfig.login) ||
         path.contains(ApiConfig.register) ||
-        path.contains(ApiConfig.checkEmail)) {
+        path.contains(ApiConfig.checkEmail) ||
+        path.contains(ApiConfig.forgotPassword) ||
+        path.contains(ApiConfig.resetPassword) ||
+        path.contains(ApiConfig.verifyEmail) ||
+        path.contains(ApiConfig.resendVerification)) {
       return false;
     }
     final token = await TokenStorage.getToken();
@@ -126,6 +130,7 @@ class ApiService {
       return AuthResult(
         success: true,
         statusCode: response.statusCode,
+        message: data['message']?.toString(),
         raw: data,
       );
     }
@@ -145,6 +150,86 @@ class ApiService {
       // Clear local session even if logout fails.
     } finally {
       await TokenStorage.clear();
+    }
+  }
+
+  Future<AuthResult> forgotPassword(String email) async {
+    try {
+      final response = await post(ApiConfig.forgotPassword, {'email': email.trim()});
+      return _parseAuthResponse(response);
+    } on DioException catch (e) {
+      return AuthResult(
+        success: false,
+        message: _messageFromDio(e) ?? 'Failed to send reset email',
+        statusCode: e.response?.statusCode,
+      );
+    } catch (_) {
+      return const AuthResult(
+        success: false,
+        message: 'Network error. Please try again.',
+      );
+    }
+  }
+
+  Future<AuthResult> verifyEmail(String token) async {
+    try {
+      final response = await post(ApiConfig.verifyEmail, {'token': token});
+      return _parseAuthResponse(response);
+    } on DioException catch (e) {
+      return AuthResult(
+        success: false,
+        message: _messageFromDio(e) ?? 'Email verification failed',
+        statusCode: e.response?.statusCode,
+      );
+    } catch (_) {
+      return const AuthResult(
+        success: false,
+        message: 'Network error. Please try again.',
+      );
+    }
+  }
+
+  Future<AuthResult> resendVerification(String email) async {
+    try {
+      final response = await post(ApiConfig.resendVerification, {
+        'email': email.trim(),
+      });
+      return _parseAuthResponse(response);
+    } on DioException catch (e) {
+      return AuthResult(
+        success: false,
+        message: _messageFromDio(e) ?? 'Failed to resend verification email',
+        statusCode: e.response?.statusCode,
+      );
+    } catch (_) {
+      return const AuthResult(
+        success: false,
+        message: 'Network error. Please try again.',
+      );
+    }
+  }
+
+  Future<AuthResult> resetPassword({
+    required String token,
+    required String newPassword,
+  }) async {
+    try {
+      final response = await post(ApiConfig.resetPassword, {
+        'token': token,
+        'newPassword': newPassword,
+      });
+      return _parseAuthResponse(response);
+    } on DioException catch (e) {
+      return AuthResult(
+        success: false,
+        message: _messageFromDio(e) ?? 'Failed to reset password',
+        statusCode: e.response?.statusCode,
+      );
+    } catch (_) {
+      return const AuthResult(
+        success: false,
+        message: 'Network error. Please try again.',
+      );
     }
   }
 

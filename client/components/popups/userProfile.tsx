@@ -3,6 +3,14 @@ import { createPortal } from 'react-dom';
 import { UserRound, X, Lock, Eye, EyeOff, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from '@/app/context/UserContext';
+import { userApi } from '@/lib/api';
+import {
+  formatEthiopianPhoneForStorage,
+  isValidEthiopianPhone,
+  ETHIOPIAN_PHONE_MESSAGE,
+  normalizeEthiopianPhone,
+} from '@/lib/phone';
+import { User } from '@/types/auth-page';
 import { InputFieldProps,SidebarButtonProps,PasswordForm,ShowPasswordState,ErrorsState,MessageState,UserProfilePopupProps } from '@/types/userProfile';
 
 
@@ -48,7 +56,11 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({ isOpen, onClose }) 
   const { user, login } = useAuth();
   const [activeTab, setActiveTab] = useState<'profile' | 'password'>('profile');
   const [name, setName] = useState<string>(user?.name || '');
-  const [email, setEmail] = useState<string>(user?.email || '');
+  const [phone, setPhone] = useState<string>(
+    user?.phone ? normalizeEthiopianPhone(user.phone) : '',
+  );
+  const [region, setRegion] = useState<string>(user?.region || '');
+  const [woreda, setWoreda] = useState<string>(user?.woreda || '');
   const [passwordForm, setPasswordForm] = useState<PasswordForm>({ current: '', new: '', confirm: '' });
   const [showPassword, setShowPassword] = useState<ShowPasswordState>({ current: false, new: false, confirm: false });
   const [errors, setErrors] = useState<ErrorsState>({});
@@ -59,7 +71,9 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({ isOpen, onClose }) 
   useEffect(() => {
     if (user) {
       setName(user.name || '');
-      setEmail(user.email || '');
+      setPhone(user.phone ? normalizeEthiopianPhone(user.phone) : '');
+      setRegion(user.region || '');
+      setWoreda(user.woreda || '');
     }
   }, [user]);
 
@@ -83,8 +97,41 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({ isOpen, onClose }) 
   }, [isOpen, onClose]);
 
   const handleSaveProfile = async () => {
+    if (!name.trim()) {
+      setErrors({ submit: 'Name is required' });
+      return;
+    }
+    if (phone.trim() && !isValidEthiopianPhone(phone)) {
+      setErrors({ submit: ETHIOPIAN_PHONE_MESSAGE });
+      return;
+    }
+
     setIsLoading(true);
     setMessage({ text: '', type: '' });
+    setErrors({});
+
+    try {
+      const response = await userApi.updateProfile({
+        name: name.trim(),
+        phone: phone.trim()
+          ? formatEthiopianPhoneForStorage(phone) ?? phone.trim()
+          : '',
+        region: region.trim(),
+        woreda: woreda.trim(),
+      });
+
+      if (response.success && response.data) {
+        login({ ...user!, ...(response.data as User) });
+        setMessage({ text: 'Profile updated successfully', type: 'success' });
+        setTimeout(() => setMessage({ text: '', type: '' }), 3000);
+      } else {
+        setErrors({ submit: response.message || 'Failed to update profile' });
+      }
+    } catch {
+      setErrors({ submit: 'An error occurred' });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleChangePassword = async () => {
@@ -103,25 +150,21 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({ isOpen, onClose }) 
     
     setIsLoading(true);
     setMessage({ text: '', type: '' });
+    setErrors({});
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/change-password`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-        body: JSON.stringify({ currentPassword: passwordForm.current, newPassword: passwordForm.new }),
+      const response = await userApi.updatePassword({
+        currentPassword: passwordForm.current,
+        newPassword: passwordForm.new,
       });
-      const data = await response.json();
-      if (data.success) {
+      if (response.success) {
         setMessage({ text: 'Password changed successfully', type: 'success' });
         setPasswordForm({ current: '', new: '', confirm: '' });
         setErrors({});
         setTimeout(() => setMessage({ text: '', type: '' }), 3000);
       } else {
-        setErrors({ submit: data.message || 'Failed to change password' });
+        setErrors({ submit: response.message || 'Failed to change password' });
       }
-    } catch (error) {
+    } catch {
       setErrors({ submit: 'An error occurred' });
     } finally {
       setIsLoading(false);
@@ -186,13 +229,29 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({ isOpen, onClose }) 
                   label="Name" 
                   value={name} 
                   onChange={(e) => setName(e.target.value)} 
-                  
                 />
                 <InputField 
                   label="Email" 
                   type="email" 
-                  value={email} 
-                  onChange={(e) => setEmail(e.target.value)} 
+                  value={user?.email || ''} 
+                  onChange={() => {}} 
+                />
+                <InputField 
+                  label="Phone" 
+                  type="tel" 
+                  value={phone} 
+                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 9))} 
+                />
+                <p className="text-xs text-gray-500 -mt-2">9 digits, starting with 7 or 9 (e.g. 912345678)</p>
+                <InputField 
+                  label="Region" 
+                  value={region} 
+                  onChange={(e) => setRegion(e.target.value)} 
+                />
+                <InputField 
+                  label="Woreda" 
+                  value={woreda} 
+                  onChange={(e) => setWoreda(e.target.value)} 
                 />
               </div>
             ) : (

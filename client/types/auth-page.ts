@@ -6,6 +6,7 @@ export interface AuthPageProps {
   title: string;
   subtitle?: string;
   errors?: string[];
+  successMessages?: string[];
   step?: number;
   totalSteps?: number;
   isSignUp?: boolean;

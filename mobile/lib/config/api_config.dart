@@ -12,6 +12,10 @@ class ApiConfig {
   static const login = '/auth/login';
   static const register = '/auth/register';
   static const checkEmail = '/auth/check-email';
+  static const forgotPassword = '/auth/forgot-password';
+  static const resetPassword = '/auth/reset-password';
+  static const verifyEmail = '/auth/verify-email';
+  static const resendVerification = '/auth/resend-verification';
   static const logout = '/auth/logout';
   static const me = '/auth/me';
 

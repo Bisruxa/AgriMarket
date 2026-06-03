@@ -6,6 +6,49 @@ const createError = (message, statusCode) => {
   return error;
 };
 
+/** Fields traders may see about the farmer who listed a product. */
+const FARMER_PUBLIC_SELECT = {
+  id: true,
+  name: true,
+  phone: true,
+  region: true,
+  woreda: true,
+  farmSize: true,
+  crops: true,
+  experience: true,
+  isVerified: true,
+  avatar: true,
+  _count: {
+    select: {
+      farms: { where: { isActive: true } },
+    },
+  },
+};
+
+function serializeFarmer(farmer) {
+  if (!farmer) return null;
+  const { _count, ...rest } = farmer;
+  return {
+    id: rest.id,
+    name: rest.name,
+    phone: rest.phone,
+    region: rest.region,
+    woreda: rest.woreda,
+    farmSize: rest.farmSize,
+    crops: rest.crops,
+    experience: rest.experience,
+    isVerified: rest.isVerified,
+    avatar: rest.avatar,
+    farmCount: _count?.farms ?? 0,
+  };
+}
+
+function withFarmer(product) {
+  if (!product) return product;
+  const { farmer, ...rest } = product;
+  return { ...rest, farmer: serializeFarmer(farmer) };
+}
+
 const getProducts = async (query) => {
   const {
     category,
@@ -87,17 +130,7 @@ const getProducts = async (query) => {
     prisma.product.findMany({
       where,
       include: {
-        farmer: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            phone: true,
-            region: true,
-            woreda: true,
-            isVerified: true
-          }
-        }
+        farmer: { select: FARMER_PUBLIC_SELECT },
       },
       skip,
       take: parseInt(limit),
@@ -106,7 +139,7 @@ const getProducts = async (query) => {
   ]);
 
   return {
-    products,
+    products: products.map(withFarmer),
     total,
     pagination: {
       page: parseInt(page),
@@ -120,24 +153,15 @@ const getProductById = async (productId) => {
   const product = await prisma.product.findUnique({
     where: { id: productId },
     include: {
-      farmer: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          phone: true,
-          city: true,
-          state: true
-        }
-      }
-    }
+      farmer: { select: FARMER_PUBLIC_SELECT },
+    },
   });
 
   if (!product) {
     throw createError('Product not found', 404);
   }
 
-  return product;
+  return withFarmer(product);
 };
 
 const createProduct = async (userId, payload) => {

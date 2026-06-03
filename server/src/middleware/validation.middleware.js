@@ -1,4 +1,9 @@
 const { body, validationResult } = require('express-validator');
+const {
+  isValidEthiopianPhone,
+  formatEthiopianPhoneForStorage,
+  ETHIOPIAN_PHONE_MESSAGE,
+} = require('../utils/phone.util');
 
 // Handle validation errors
 exports.validate = (req, res, next) => {
@@ -39,7 +44,18 @@ exports.registerValidation = [
     .optional()
     .toUpperCase()
     .isIn(['TRADER', 'FARMER', 'ADMIN'])
-    .withMessage('Role must be TRADER, FARMER, or ADMIN')
+    .withMessage('Role must be TRADER, FARMER, or ADMIN'),
+  body('phone')
+    .trim()
+    .notEmpty()
+    .withMessage('Phone number is required')
+    .custom((value) => {
+      if (!isValidEthiopianPhone(value)) {
+        throw new Error(ETHIOPIAN_PHONE_MESSAGE);
+      }
+      return true;
+    })
+    .customSanitizer((value) => formatEthiopianPhoneForStorage(value)),
 ];
 
 // Login validation rules
@@ -54,6 +70,47 @@ exports.loginValidation = [
   body('password')
     .notEmpty()
     .withMessage('Password is required')
+];
+
+exports.forgotPasswordValidation = [
+  body('email')
+    .trim()
+    .notEmpty()
+    .withMessage('Email is required')
+    .isEmail()
+    .withMessage('Please provide a valid email')
+    .normalizeEmail(),
+];
+
+exports.resetPasswordValidation = [
+  body('token')
+    .trim()
+    .notEmpty()
+    .withMessage('Reset token is required'),
+  body('newPassword')
+    .notEmpty()
+    .withMessage('New password is required')
+    .isLength({ min: 6 })
+    .withMessage('Password must be at least 6 characters'),
+];
+
+exports.verifyEmailValidation = [
+  body('token')
+    .trim()
+    .notEmpty()
+    .withMessage('Verification token is required')
+    .isLength({ min: 32, max: 128 })
+    .withMessage('Invalid verification token'),
+];
+
+exports.resendVerificationValidation = [
+  body('email')
+    .trim()
+    .notEmpty()
+    .withMessage('Email is required')
+    .isEmail()
+    .withMessage('Please provide a valid email')
+    .normalizeEmail(),
 ];
 
 // Product validation rules

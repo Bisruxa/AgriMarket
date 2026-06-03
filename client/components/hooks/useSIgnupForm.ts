@@ -4,6 +4,7 @@ import { FormData } from '@/types/FormTypes';
 import { useFormValidation } from './useFormValidation';
 import { formStepsConfig } from '@/lib/formStepsConfig';
 import { authApi, API_URL } from '@/lib/api';
+import { formatEthiopianPhoneForStorage } from '@/lib/phone';
 import { useRouter } from 'next/navigation';
 import { RegistrationData } from '@/types/auth-page';
 import { useDebounce } from './useDebounce';
@@ -124,7 +125,7 @@ export const useSignupForm = () => {
         name: formData.fullName,
         email: formData.email,
         password: formData.password,
-        phone:formData.phone,
+        phone: formatEthiopianPhoneForStorage(formData.phone) ?? formData.phone,
         role: role,
       };
 
@@ -136,20 +137,6 @@ export const useSignupForm = () => {
         registrationData.woreda = formData.woreda;
       }
 
-      if (role === 'FARMER') {
-        if (formData.farmSize?.trim()) {
-          registrationData.farmSize = formData.farmSize;
-        }
-        
-        if (formData.crops?.trim()) {
-          registrationData.crops = formData.crops;
-        }
-        
-        if (formData.experience?.trim()) {
-          registrationData.experience = formData.experience;
-        }
-      }
-  
       const response = await authApi.register(registrationData);
 
       if (!response.success) {
@@ -166,14 +153,17 @@ export const useSignupForm = () => {
         return;
       }
 
-      if (response.user && response.token) {
-        login(response.user, response.token);
-      } else if (response.user) {
-        login(response.user);
+      const registeredEmail = formData.email?.trim() || '';
+      const verifyQuery = registeredEmail
+        ? `?verify=sent&email=${encodeURIComponent(registeredEmail)}`
+        : '?verify=sent';
+
+      if (role === 'TRADER' && response.user?.approvalStatus === 'PENDING') {
+        router.push(`/signin${verifyQuery}&pending=trader`);
+        return;
       }
 
-      const redirectPath = role === 'FARMER' ? '/farmer/dashboard' : '/trader/dashboard';
-      router.push(redirectPath);
+      router.push(`/signin${verifyQuery}`);
       
     } catch (error) {
       const apiError = error as ApiError;

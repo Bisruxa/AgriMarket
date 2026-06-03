@@ -3,6 +3,8 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Trash2 } from "lucide-react";
 import { useLanguage } from "@/app/context/LanguageContext";
+import { useAuth } from "@/app/context/UserContext";
+import { getDashboardHref } from "@/lib/dashboard";
 
 interface ChatHistoryItem {
   id: string;
@@ -27,6 +29,7 @@ export function ChatHistory({
   className,
 }: ChatHistoryProps) {
   const router = useRouter();
+  const { user } = useAuth();
   const { language } = useLanguage();
   const isAm = language === "am";
 
@@ -36,7 +39,7 @@ export function ChatHistory({
     >
       <button
         type="button"
-        onClick={() => router.back()}
+        onClick={() => router.push(getDashboardHref(user?.role))}
         className="mb-6 flex w-fit items-center gap-2 rounded-lg bg-[#e2f3e9] px-3 py-2 text-[#1c4a2e] transition-all hover:bg-[#d4efdf] group"
         aria-label="Go back"
       >

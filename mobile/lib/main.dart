@@ -3,6 +3,7 @@ import 'package:agrimatketapp/screens/farmer/farmer_dashboard.dart';
 import 'package:agrimatketapp/screens/farmer/agri_chat_screen.dart';
 import 'package:agrimatketapp/screens/farmer/farms_screen.dart';
 import 'package:agrimatketapp/screens/farmer/crop_recommendation.dart';
+import 'package:agrimatketapp/screens/farmer/price_forecast_screen.dart';
 import 'package:agrimatketapp/screens/farmer/farmer_profile.dart';
 import 'package:agrimatketapp/screens/trader/trader_dashboard.dart';
 import 'package:flutter/foundation.dart';
@@ -54,6 +55,7 @@ class MyApp extends StatelessWidget {
               '/farmer-chat': (context) => const AgriChatScreen(),
               '/farmer-farms': (context) => const FarmsScreen(),
               '/farmer-crops': (context) => const CropRecommendation(),
+              '/farmer-price-forecast': (context) => const PriceForecastScreen(),
               '/farmer-profile': (context) => const FarmerProfileScreen(),
               '/trader-dashboard': (context) => const TraderDashboard(),
             },

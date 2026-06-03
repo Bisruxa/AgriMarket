@@ -6,6 +6,7 @@ import '../widgets/common/section_title.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/location_picker.dart';
+import '../utils/ethiopian_phone.dart';
 import '../widgets/registration_location_capture.dart';
 import '../widgets/app_locale_scope.dart';
 
@@ -42,7 +43,13 @@ class _TraderSignupScreenState extends State<TraderSignupScreen> {
     }
 
     if (_selectedRegion == null || _selectedRegion!.isEmpty) {
-      setState(() => _errorMessage = l10n.pleaseSelectRegion);
+      setState(() => _errorMessage = 'Please select your region');
+      return;
+    }
+
+    final formattedPhone = EthiopianPhone.formatForStorage(_phoneController.text);
+    if (formattedPhone == null) {
+      setState(() => _errorMessage = EthiopianPhone.message);
       return;
     }
 
@@ -56,7 +63,7 @@ class _TraderSignupScreenState extends State<TraderSignupScreen> {
       'email': _emailController.text.trim(),
       'password': _passwordController.text,
       'role': 'TRADER',
-      'phone': _phoneController.text.trim(),
+      'phone': formattedPhone,
       'region': _selectedRegion,
       'woreda': _selectedWoreda,
       if (_latitude != null) 'latitude': _latitude,
@@ -68,7 +75,10 @@ class _TraderSignupScreenState extends State<TraderSignupScreen> {
     if (result.success) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(l10n.traderRegistrationSubmitted),
+          content: Text(
+            result.message ??
+                'Registration submitted! Verify your email, then wait for admin approval.',
+          ),
           backgroundColor: AppColors.traderAccent,
         ),
       );
@@ -132,11 +142,12 @@ class _TraderSignupScreenState extends State<TraderSignupScreen> {
                 prefixIcon: Icons.email_outlined,
               ),
               CustomTextField(
-                label: l10n.phoneNumber,
-                hint: l10n.enterPhoneNumber,
+                label: 'Phone Number',
+                hint: '912345678',
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
                 prefixIcon: Icons.phone_outlined,
+                validator: (v) => EthiopianPhone.validate(v),
               ),
               CustomTextField(
                 label: l10n.tinNumber,
