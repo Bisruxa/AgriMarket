@@ -78,7 +78,9 @@ export const useSignupForm = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const nextValue =
+      name === 'phone' ? value.replace(/\D/g, '').slice(0, 9) : value;
+    setFormData(prev => ({ ...prev, [name]: nextValue }));
     if (errors.length) setErrors([]);
     
     // Reset email status when email changes

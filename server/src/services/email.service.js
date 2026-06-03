@@ -8,11 +8,50 @@ const normalizeSmtpPassword = (pass) => {
   return pass.replace(/^["']|["']$/g, '').replace(/\s+/g, '');
 };
 
+const LOCALHOST_ORIGIN =
+  /^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/i;
+
+function parseClientUrlCandidate(value) {
+  const trimmed = (value || '').trim();
+  if (!trimmed || /^(null|undefined)$/i.test(trimmed)) return null;
+
+  try {
+    const withProtocol = /^https?:\/\//i.test(trimmed)
+      ? trimmed
+      : `https://${trimmed}`;
+    const parsed = new URL(withProtocol);
+    const host = parsed.hostname?.toLowerCase();
+    if (!host || host === 'null' || host === 'undefined') return null;
+    return parsed.origin;
+  } catch {
+    return null;
+  }
+}
+
 const getClientUrl = () => {
-  const raw = process.env.CLIENT_URL || 'http://localhost:3000';
-  // .env may list several URLs comma-separated — use the first for email links
-  const first = raw.split(',')[0].trim();
-  return first.replace(/\/$/, '');
+  const fallback = 'http://localhost:3000';
+  const raw = process.env.CLIENT_URL || process.env.FRONTEND_URL || '';
+
+  const candidates = raw
+    .split(',')
+    .map((part) => parseClientUrlCandidate(part))
+    .filter(Boolean);
+
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  if (isProduction && candidates.length > 0) {
+    const publicHttps = candidates.find(
+      (url) => url.startsWith('https://') && !LOCALHOST_ORIGIN.test(url),
+    );
+    if (publicHttps) return publicHttps;
+
+    const anyPublic = candidates.find((url) => !LOCALHOST_ORIGIN.test(url));
+    if (anyPublic) return anyPublic;
+  }
+
+  if (candidates.length > 0) return candidates[0];
+
+  return parseClientUrlCandidate(raw) || fallback;
 };
 
 const getFromAddress = () => {
@@ -74,7 +113,7 @@ const sendMailSafe = async (options) => {
 };
 
 const sendPasswordResetEmail = async ({ to, name, resetToken }) => {
-  const resetUrl = `${getClientUrl()}/reset-password?token=${resetToken}`;
+  const resetUrl = `${getClientUrl()}/reset-password?token=${encodeURIComponent(resetToken)}`;
   const subject = 'AgriMarket — Reset your password';
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto;">
@@ -105,7 +144,7 @@ const sendPasswordResetEmail = async ({ to, name, resetToken }) => {
 };
 
 const sendVerificationEmail = async ({ to, name, verifyToken }) => {
-  const verifyUrl = `${getClientUrl()}/verify-email?token=${verifyToken}`;
+  const verifyUrl = `${getClientUrl()}/verify-email?token=${encodeURIComponent(verifyToken)}`;
   const subject = 'AgriMarket — Verify your email';
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto;">

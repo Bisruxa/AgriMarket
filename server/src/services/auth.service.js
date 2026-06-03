@@ -100,8 +100,10 @@ const registerUser = async (payload) => {
     },
   });
 
+  let emailSent = false;
   try {
-    await issueEmailVerification(user);
+    const emailResult = await issueEmailVerification(user);
+    emailSent = emailResult?.delivered === true;
   } catch (e) {
     console.error('registerUser verification email failed:', e.message);
   }
@@ -118,7 +120,7 @@ const registerUser = async (payload) => {
     }
   }
 
-  return user;
+  return { user, emailSent };
 };
 
 const loginUser = async (email, password) => {

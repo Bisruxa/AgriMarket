@@ -57,7 +57,7 @@ const BenefitsSection = () => {
               alt="Why Choose AgriMarket"
               fill
               className="object-cover"
-              
+              sizes="(max-width: 768px) 100vw, 50vw"
             />
           </div>
           <div className="space-y-1">

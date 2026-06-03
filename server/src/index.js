@@ -10,6 +10,23 @@ dotenv.config();
 // Connect to database
 connectDB();
 
+const { getClientUrl } = require('./services/email.service');
+const emailLinkBase = getClientUrl();
+if (/^null|undefined/i.test(emailLinkBase) || emailLinkBase.includes('://null')) {
+  console.error(
+    '[config] CLIENT_URL is invalid — verification emails will have broken links. Set CLIENT_URL to your live web app URL (e.g. https://your-app.vercel.app).',
+  );
+} else if (
+  process.env.NODE_ENV === 'production' &&
+  /^https?:\/\/(localhost|127\.0\.0\.1)/i.test(emailLinkBase)
+) {
+  console.warn(
+    `[config] Email links use ${emailLinkBase} — set CLIENT_URL to your public site URL on Render/production.`,
+  );
+} else {
+  console.log(`[config] Email links base URL: ${emailLinkBase}`);
+}
+
 const app = express();
 
 // CORS configuration

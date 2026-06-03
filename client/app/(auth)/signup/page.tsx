@@ -10,6 +10,8 @@ import { MapPin, Globe, Info } from 'lucide-react';
 import { useState } from 'react';
 import { useTranslations } from '@/components/hooks/useTranlations';
 import { useEthiopianGeoOptions } from '@/components/hooks/useEthiopianGeoOptions';
+import { EthiopianPhoneInput } from '@/components/auth/EthiopianPhoneInput';
+import { PasswordStrengthIndicator } from '@/components/auth/PasswordStrengthIndicator';
 
 
 export default function SignUpPage() {
@@ -160,29 +162,45 @@ export default function SignUpPage() {
                 {t.signup.fields.phone}
                 {field.required && <span className="text-red-700">*</span>}
               </Label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                  <span className="text-gray-500 text-sm">+251</span>
-                </div>
-                <Input
-                  id={field.id}
-                  name={field.id}
-                  type="tel"
-                  inputMode="numeric"
-                  maxLength={9}
-                  value={formData[field.id as keyof typeof formData]}
-                  onChange={handleInputChange}
-                  placeholder="912345678"
-                  className={`text-sm pl-12 ${
-                    errors.some(e => e.toLowerCase().includes('phone')) ? 'border-red-500' : ''
-                  }`}
-                />
-                <p className="text-xs text-gray-500">9 digits, starting with 7 or 9</p>
-              </div>
-            
+              <EthiopianPhoneInput
+                id={field.id}
+                name={field.id}
+                value={formData.phone}
+                onChange={(digits) =>
+                  handleInputChange({
+                    target: { name: 'phone', value: digits },
+                  } as React.ChangeEvent<HTMLInputElement>)
+                }
+                hasError={errors.some((e) => e.toLowerCase().includes('phone'))}
+              />
             </div>
           );
         }
+
+          if (field.id === 'password') {
+            return (
+              <div key={field.id} className="space-y-1.5 sm:space-y-2">
+                <Label htmlFor={field.id} className="text-xs sm:text-sm">
+                  {t.signup.fields.password}
+                  {field.required && <span className="text-red-700">*</span>}
+                </Label>
+                <Input
+                  id={field.id}
+                  name={field.id}
+                  type="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                  placeholder={t.signup.placeholders.password}
+                  className={`text-sm ${
+                    errors.some((e) => e.toLowerCase().includes('password'))
+                      ? 'border-red-500'
+                      : ''
+                  }`}
+                />
+                <PasswordStrengthIndicator password={formData.password} />
+              </div>
+            );
+          }
 
           type FieldKey = keyof typeof t.signup.fields;
           type PlaceholderKey = keyof typeof t.signup.placeholders;

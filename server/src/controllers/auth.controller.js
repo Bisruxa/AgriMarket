@@ -6,19 +6,26 @@ const authService = require('../services/auth.service');
 // @access  Public
 exports.register = async (req, res, next) => {
   try {
-    const user = await authService.registerUser(req.body);
+    const { user, emailSent } = await authService.registerUser(req.body);
 
     let message =
       'Registration successful. Please check your email to verify your account before signing in.';
 
-    if (user.role === 'TRADER' && user.approvalStatus === 'PENDING') {
+    if (!emailSent) {
       message =
-        'Registration submitted. Verify your email first, then wait for admin approval before you can sign in.';
+        'Account created, but we could not send the verification email. Use "Resend verification" on the sign-in screen.';
+    }
+
+    if (user.role === 'TRADER' && user.approvalStatus === 'PENDING') {
+      message = emailSent
+        ? 'Registration submitted. Verify your email first, then wait for admin approval before you can sign in.'
+        : 'Registration submitted. We could not send the verification email — use Resend verification on sign-in, then wait for admin approval.';
     }
 
     return res.status(201).json({
       success: true,
       message,
+      emailSent,
       requiresEmailVerification: true,
       user: {
         id: user.id,
