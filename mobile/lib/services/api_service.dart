@@ -236,7 +236,7 @@ class ApiService {
   Future<bool> isAuthenticated() async {
     final token = await TokenStorage.getToken();
     if (token == null || token.isEmpty) return false;
-    return getProfile() != null;
+    return await getProfile() != null;
   }
 
   // ── Profile ─────────────────────────────────────────────────────────────
@@ -666,6 +666,21 @@ class ApiService {
         forecast: CropPriceForecast.fromJson(data),
       );
     } catch (e) {
+      if (e is DioException) {
+        final status = e.response?.statusCode;
+        if (status == 502 || status == 503 || status == 504) {
+          return const AgriAIPriceResult(
+            success: false,
+            message:
+                'Forecast service is temporarily unavailable. Please try again shortly.',
+          );
+        }
+        return AgriAIPriceResult(
+          success: false,
+          message: _messageFromBody(e.response?.data) ??
+              'Unable to fetch forecast. Please check your input and retry.',
+        );
+      }
       return AgriAIPriceResult(
         success: false,
         message: e.toString().replaceFirst('Exception: ', ''),

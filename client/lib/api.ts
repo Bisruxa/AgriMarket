@@ -170,6 +170,9 @@ export const userApi = {
 
   updatePassword: (data: { currentPassword: string; newPassword: string }) =>
     api.put('/user/password', data),
+
+  getFarmerProfile: (farmerId: string) =>
+    api.get<FarmerPublicProfile>(`/user/farmers/${farmerId}/profile`),
 };
 
 export const farmsApi = {
@@ -286,6 +289,107 @@ export interface MultiCropProfitabilityResult {
   message?: string;
 }
 
+export interface MarketTrendPoint {
+  weekStart: string;
+  category: string;
+  avgListingPrice: number | null;
+  newListings: number;
+}
+
+export interface MarketTrendsResult {
+  generatedAt: string;
+  filters: { weeks: number; region: string | null; category: string | null };
+  snapshotByCategory: Array<{
+    category: string;
+    listingCount: number;
+    avgPrice: number | null;
+    minPrice: number | null;
+    maxPrice: number | null;
+    totalStockUnits: number;
+  }>;
+  weeklyNewListings: MarketTrendPoint[];
+  categoryMomentum: Array<{
+    category: string;
+    direction: 'up' | 'down' | 'flat' | 'insufficient_data';
+    changePercent: number | null;
+    recentWeightedAvgPrice: number | null;
+    priorWeightedAvgPrice: number | null;
+    weeksCompared: number;
+  }>;
+}
+
+export interface BuyingOpportunityItem {
+  cropName: string;
+  category: string;
+  region: string;
+  avgListingPrice: number;
+  listingCount: number;
+  totalStock: number;
+  aiForecast: {
+    predictedPrice: number;
+    trend: string | null;
+    trendPercentage: number | null;
+    confidenceInterval: [number, number] | null;
+    forecastMonth: number;
+    forecastYear: number;
+  } | null;
+  spreadPercent: number | null;
+  score: number;
+  recommendation: 'STRONG_BUY' | 'CONSIDER_BUY' | 'HOLD' | 'AVOID' | 'INSUFFICIENT_DATA';
+}
+
+export interface BuyingOpportunitiesResult {
+  generatedAt: string;
+  filters: { region: string | null; crop: string | null; limit: number };
+  opportunities: BuyingOpportunityItem[];
+  notes?: string[];
+  message?: string;
+}
+
+export interface FarmerPublicProfile {
+  farmer: {
+    id: string;
+    name: string;
+    avatar: string | null;
+    phone: string | null;
+    region: string | null;
+    woreda: string | null;
+    farmSize: string | null;
+    crops: string | null;
+    experience: string | null;
+    isVerified: boolean;
+    joinedAt: string;
+  };
+  stats: {
+    farmCount: number;
+    activeProductCount: number;
+    averageListingPrice: number | null;
+    totalAvailableStock: number;
+  };
+  farms: Array<{
+    id: string;
+    name: string;
+    size: string | null;
+    sizeUnit: string | null;
+    region: string | null;
+    woreda: string | null;
+    soilType: string | null;
+    crops: string[];
+    updatedAt: string;
+  }>;
+  activeProducts: Array<{
+    id: string;
+    name: string;
+    category: string;
+    unit: string;
+    price: number;
+    stock: number;
+    isOrganic: boolean;
+    location: string;
+    createdAt: string;
+  }>;
+}
+
 export const pricesApi = {
   getTrends: (params?: { cropName?: string; region?: string; limit?: number }) => {
     const query = new URLSearchParams();
@@ -307,6 +411,23 @@ export const pricesApi = {
     api.get<MultiCropProfitabilityResult>(
       farmId ? `/prices/multi-crop-profitability?farmId=${farmId}` : '/prices/multi-crop-profitability'
     ),
+};
+
+export const marketApi = {
+  getTrends: (params?: { weeks?: number; region?: string; category?: string }) => {
+    const query = new URLSearchParams();
+    if (params?.weeks) query.set('weeks', String(params.weeks));
+    if (params?.region) query.set('region', params.region);
+    if (params?.category) query.set('category', params.category);
+    return api.get<MarketTrendsResult>(`/market/trends?${query.toString()}`);
+  },
+  getBuyingOpportunities: (params?: { region?: string; crop?: string; limit?: number }) => {
+    const query = new URLSearchParams();
+    if (params?.region) query.set('region', params.region);
+    if (params?.crop) query.set('crop', params.crop);
+    if (params?.limit) query.set('limit', String(params.limit));
+    return api.get<BuyingOpportunitiesResult>(`/market/opportunities?${query.toString()}`);
+  },
 };
 
 export const chatApi = {
