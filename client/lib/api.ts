@@ -14,6 +14,7 @@ export type ApiResponse<T> = {
     name: string;
     email: string;
     role: string;
+    approvalStatus?: string;
   };
   token?:string;
   errors?: { field: string; message: string }[];
