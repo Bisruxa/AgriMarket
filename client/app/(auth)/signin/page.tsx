@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,7 +14,7 @@ import { useAuth } from '@/app/context/UserContext';
 import { getDashboardHref } from '@/lib/dashboard';
 import { safeRedirectPath } from '@/lib/route-access';
 
-export default function SignInPage() {
+function SignInContent() {
   const t = useTranslations() as Translations;
   const { login } = useAuth();
   const searchParams = useSearchParams();
@@ -204,5 +204,13 @@ export default function SignInPage() {
         </p>
       </div>
     </AuthPage>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={null}>
+      <SignInContent />
+    </Suspense>
   );
 }
