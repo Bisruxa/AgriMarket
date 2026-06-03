@@ -2,6 +2,7 @@
 
 import { FormData, ValidationRule } from '@/types/FormTypes';
 import { validateEthiopianPhone } from '@/lib/phone';
+import { validatePasswordStrength } from '@/lib/password-strength';
 
 export const useFormValidation = (formData: FormData) => {
   // Helper validation functions
@@ -75,7 +76,7 @@ export const useFormValidation = (formData: FormData) => {
         { 
           field: 'password' as keyof FormData, 
           message: 'Password is required', 
-          validate: (val: string) => val.length >= 6 || 'Password must be at least 6 characters' 
+          validate: (val: string) => validatePasswordStrength(val),
         },
         { 
           field: 'confirmPassword' as keyof FormData, 

@@ -30,7 +30,7 @@ const InputField: React.FC<InputFieldProps> = ({ label, type = 'text', value, on
           onClick={onTogglePassword}
           className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400"
         >
-          {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+          {showPassword ? <Eye size={14} /> : <EyeOff size={14} />}
         </button>
       )}
     </div>

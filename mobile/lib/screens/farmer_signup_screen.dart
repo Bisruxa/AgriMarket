@@ -5,10 +5,12 @@ import '../widgets/common/auth_shell.dart';
 import '../widgets/common/section_title.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/custom_button.dart';
+import '../widgets/ethiopian_phone_field.dart';
+import '../widgets/password_field_with_strength.dart';
 import '../widgets/location_picker.dart';
-import '../widgets/registration_location_capture.dart';
 import '../widgets/app_locale_scope.dart';
 import '../utils/ethiopian_phone.dart';
+import '../utils/password_strength.dart';
 
 class FarmerSignupScreen extends StatefulWidget {
   const FarmerSignupScreen({super.key});
@@ -44,9 +46,15 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
       return;
     }
 
-    final formattedPhone = EthiopianPhone.formatForStorage(_phoneController.text);
+    final formattedPhone = EthiopianPhone.formatSignupForStorage(_phoneController.text);
     if (formattedPhone == null) {
-      setState(() => _errorMessage = EthiopianPhone.message);
+      setState(() => _errorMessage = EthiopianPhone.signupMessage);
+      return;
+    }
+
+    if (!PasswordStrengthEvaluator.isStrong(_passwordController.text)) {
+      setState(() => _errorMessage =
+          'Choose a strong password with letters, numbers, and a special character.');
       return;
     }
 
@@ -136,20 +144,18 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
                 keyboardType: TextInputType.emailAddress,
                 prefixIcon: Icons.email_outlined,
               ),
-              CustomTextField(
-                label: 'Phone Number',
-                hint: '912345678',
-                controller: _phoneController,
-                keyboardType: TextInputType.phone,
-                prefixIcon: Icons.phone_outlined,
-                validator: (v) => EthiopianPhone.validate(v),
-              ),
-              CustomTextField(
+              EthiopianPhoneField(controller: _phoneController),
+              PasswordFieldWithStrength(
                 label: l10n.password,
                 hint: l10n.createPassword,
                 controller: _passwordController,
-                obscureText: true,
-                prefixIcon: Icons.lock_outline,
+                validator: (v) {
+                  if (v == null || v.isEmpty) return 'Password is required';
+                  if (!PasswordStrengthEvaluator.isStrong(v)) {
+                    return 'Use letters, numbers, and a special character';
+                  }
+                  return null;
+                },
               ),
               CustomTextField(
                 label: l10n.confirmPassword,
