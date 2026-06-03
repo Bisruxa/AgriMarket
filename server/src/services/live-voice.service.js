@@ -25,6 +25,8 @@ class LiveVoiceSession {
     this.callbacks = callbacks;
     this.session = null;
     this._closed = false;
+    this._inputAccumulator = '';
+    this._outputAccumulator = '';
   }
 
   async start() {
@@ -79,12 +81,14 @@ class LiveVoiceSession {
   }
 
   _handleMessage(msg) {
-    if (msg.serverContent?.inputTranscription) {
-      this.callbacks.onTranscript?.('user', msg.serverContent.inputTranscription.text);
+    if (msg.serverContent?.inputTranscription?.text) {
+      this._inputAccumulator += msg.serverContent.inputTranscription.text;
+      this.callbacks.onTranscript?.('user', this._inputAccumulator);
     }
 
-    if (msg.serverContent?.outputTranscription) {
-      this.callbacks.onTranscript?.('model', msg.serverContent.outputTranscription.text);
+    if (msg.serverContent?.outputTranscription?.text) {
+      this._outputAccumulator += msg.serverContent.outputTranscription.text;
+      this.callbacks.onTranscript?.('model', this._outputAccumulator);
     }
 
     const toolCalls = msg.serverContent?.toolCall;
@@ -101,7 +105,11 @@ class LiveVoiceSession {
     }
 
     if (msg.serverContent?.turnComplete) {
-      this.callbacks.onTurnComplete?.();
+      const userText = this._inputAccumulator;
+      const modelText = this._outputAccumulator;
+      this._inputAccumulator = '';
+      this._outputAccumulator = '';
+      this.callbacks.onTurnComplete?.(userText, modelText);
     }
   }
 
