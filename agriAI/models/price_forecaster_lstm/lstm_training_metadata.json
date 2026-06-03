@@ -104,13 +104,13 @@
   },
   "seq_len": 12,
   "metrics": {
-    "mae": 7.6415,
-    "rmse": 13.588,
-    "mape": 5.8201
+    "mae": 8.2437,
+    "rmse": 14.4722,
+    "mape": 6.5274
   },
   "train_end_date": "2023-12-31",
   "training": {
-    "epochs": 80,
+    "epochs": 10000,
     "learning_rate": 0.001,
     "batch_size": 256
   },
