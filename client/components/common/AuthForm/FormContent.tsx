@@ -9,6 +9,7 @@ interface FormContentProps {
   title: string;
   subtitle?: string;
   errors: string[];
+  successMessages?: string[];
   showRoleTabs?: boolean;
   role?: 'FARMER' | 'TRADER';
   onRoleChange?: (role: 'FARMER' | 'TRADER') => void;
@@ -21,6 +22,7 @@ export function FormContent({
   title,
   subtitle,
   errors,
+  successMessages = [],
   showRoleTabs,
   role,
   onRoleChange,
@@ -70,7 +72,18 @@ export function FormContent({
         {subtitle && <p className="text-2xl mt-1 font-bold text-[#404A3D] mb-4">{subtitle}</p>}
       </div>
 
-      {/* Error Display - Compact design */}
+      {successMessages.length > 0 && (
+        <div className="mb-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+          <ul className="text-sm text-green-800">
+            {successMessages.map((msg, index) => (
+              <li key={index} className="flex items-start py-0.5">
+                <span>{msg}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {errors.length > 0 && (
         <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded-lg">
           <ul className="text-xs text-red-700">

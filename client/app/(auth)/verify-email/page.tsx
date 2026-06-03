@@ -1,17 +1,27 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import AuthPage from '@/components/common/AuthForm/AuthForm';
 import { authApi } from '@/lib/api';
 
+function sanitizeToken(raw: string | null): string {
+  if (!raw) return '';
+  try {
+    return decodeURIComponent(raw.trim());
+  } catch {
+    return raw.trim();
+  }
+}
+
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
-  const token = searchParams.get('token') || '';
+  const token = sanitizeToken(searchParams.get('token'));
   const [message, setMessage] = useState('');
   const [isError, setIsError] = useState(false);
   const [loading, setLoading] = useState(!!token);
+  const ranRef = useRef(false);
 
   useEffect(() => {
     if (!token) {
@@ -21,19 +31,36 @@ function VerifyEmailContent() {
       return;
     }
 
+    const storageKey = `agrimarket-verify-${token.slice(0, 16)}`;
+    const cached = typeof window !== 'undefined' ? sessionStorage.getItem(storageKey) : null;
+    if (cached) {
+      setMessage(cached);
+      setIsError(false);
+      setLoading(false);
+      return;
+    }
+
+    if (ranRef.current) return;
+    ranRef.current = true;
+
     let cancelled = false;
 
     const run = async () => {
       const response = await authApi.verifyEmail(token);
       if (cancelled) return;
       setLoading(false);
+
       if (response.success) {
-        setMessage(response.message || 'Email verified successfully.');
+        const text =
+          response.message ||
+          'Email verified successfully. You can now sign in.';
+        setMessage(text);
         setIsError(false);
-        window.history.replaceState(null, '', '/signin?verified=1');
+        sessionStorage.setItem(storageKey, text);
       } else {
         setMessage(response.message || 'Verification failed.');
         setIsError(true);
+        ranRef.current = false;
       }
     };
 
@@ -47,7 +74,8 @@ function VerifyEmailContent() {
     <AuthPage
       title="Verify email"
       subtitle={loading ? 'Confirming your email...' : 'Email verification'}
-      errors={message ? [message] : []}
+      errors={isError && message ? [message] : []}
+      successMessages={!isError && message ? [message] : []}
       step={1}
       totalSteps={1}
       isSignUp={false}
@@ -58,15 +86,19 @@ function VerifyEmailContent() {
           <p className="text-sm text-gray-600">Please wait...</p>
         ) : (
           <>
-            <p className={`text-sm ${isError ? 'text-red-600' : 'text-green-700'}`}>
-              {message}
-            </p>
+            {!isError && (
             <Link
-              href="/signin"
+              href="/signin?verified=1"
               className="inline-block text-sm text-[#166831] hover:text-green-500 transition-colors"
             >
               Go to sign in
             </Link>
+            )}
+            {isError && (
+              <p className="text-xs text-gray-500">
+                Use the <strong>latest</strong> email if you requested verification more than once.
+              </p>
+            )}
           </>
         )}
       </div>

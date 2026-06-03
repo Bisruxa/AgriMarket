@@ -1,5 +1,10 @@
 const { prisma } = require('../config/db');
 const { hashPassword, comparePassword } = require('../models/User.model');
+const {
+  formatEthiopianPhoneForStorage,
+  isValidEthiopianPhone,
+  ETHIOPIAN_PHONE_MESSAGE,
+} = require('../utils/phone.util');
 
 const createError = (message, statusCode) => {
   const error = new Error(message);
@@ -74,11 +79,19 @@ const updateUserProfile = async (userId, payload) => {
     experience
   } = payload;
 
+  let normalizedPhone;
+  if (phone !== undefined && phone !== null && String(phone).trim() !== '') {
+    if (!isValidEthiopianPhone(phone)) {
+      throw createError(ETHIOPIAN_PHONE_MESSAGE, 400);
+    }
+    normalizedPhone = formatEthiopianPhoneForStorage(phone);
+  }
+
   return prisma.user.update({
     where: { id: userId },
     data: {
       ...(name && { name }),
-      ...(phone && { phone }),
+      ...(normalizedPhone && { phone: normalizedPhone }),
       ...(avatar && { avatar }),
       ...(street && { street }),
       ...(city && { city }),

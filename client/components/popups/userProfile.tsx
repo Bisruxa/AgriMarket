@@ -4,6 +4,12 @@ import { UserRound, X, Lock, Eye, EyeOff, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from '@/app/context/UserContext';
 import { userApi } from '@/lib/api';
+import {
+  formatEthiopianPhoneForStorage,
+  isValidEthiopianPhone,
+  ETHIOPIAN_PHONE_MESSAGE,
+  normalizeEthiopianPhone,
+} from '@/lib/phone';
 import { User } from '@/types/auth-page';
 import { InputFieldProps,SidebarButtonProps,PasswordForm,ShowPasswordState,ErrorsState,MessageState,UserProfilePopupProps } from '@/types/userProfile';
 
@@ -50,7 +56,9 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({ isOpen, onClose }) 
   const { user, login } = useAuth();
   const [activeTab, setActiveTab] = useState<'profile' | 'password'>('profile');
   const [name, setName] = useState<string>(user?.name || '');
-  const [phone, setPhone] = useState<string>(user?.phone || '');
+  const [phone, setPhone] = useState<string>(
+    user?.phone ? normalizeEthiopianPhone(user.phone) : '',
+  );
   const [region, setRegion] = useState<string>(user?.region || '');
   const [woreda, setWoreda] = useState<string>(user?.woreda || '');
   const [passwordForm, setPasswordForm] = useState<PasswordForm>({ current: '', new: '', confirm: '' });
@@ -63,7 +71,7 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({ isOpen, onClose }) 
   useEffect(() => {
     if (user) {
       setName(user.name || '');
-      setPhone(user.phone || '');
+      setPhone(user.phone ? normalizeEthiopianPhone(user.phone) : '');
       setRegion(user.region || '');
       setWoreda(user.woreda || '');
     }
@@ -93,6 +101,10 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({ isOpen, onClose }) 
       setErrors({ submit: 'Name is required' });
       return;
     }
+    if (phone.trim() && !isValidEthiopianPhone(phone)) {
+      setErrors({ submit: ETHIOPIAN_PHONE_MESSAGE });
+      return;
+    }
 
     setIsLoading(true);
     setMessage({ text: '', type: '' });
@@ -101,7 +113,9 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({ isOpen, onClose }) 
     try {
       const response = await userApi.updateProfile({
         name: name.trim(),
-        phone: phone.trim(),
+        phone: phone.trim()
+          ? formatEthiopianPhoneForStorage(phone) ?? phone.trim()
+          : '',
         region: region.trim(),
         woreda: woreda.trim(),
       });
@@ -226,8 +240,9 @@ const UserProfilePopup: React.FC<UserProfilePopupProps> = ({ isOpen, onClose }) 
                   label="Phone" 
                   type="tel" 
                   value={phone} 
-                  onChange={(e) => setPhone(e.target.value)} 
+                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 9))} 
                 />
+                <p className="text-xs text-gray-500 -mt-2">9 digits, starting with 7 or 9 (e.g. 912345678)</p>
                 <InputField 
                   label="Region" 
                   value={region} 

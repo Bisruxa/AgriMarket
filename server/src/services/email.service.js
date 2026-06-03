@@ -2,15 +2,43 @@ const nodemailer = require('nodemailer');
 
 let transporter = null;
 
+/** Strip quotes and spaces from Gmail app passwords (16 chars, no spaces). */
+const normalizeSmtpPassword = (pass) => {
+  if (!pass) return '';
+  return pass.replace(/^["']|["']$/g, '').replace(/\s+/g, '');
+};
+
+const getClientUrl = () => {
+  const raw = process.env.CLIENT_URL || 'http://localhost:3000';
+  // .env may list several URLs comma-separated — use the first for email links
+  const first = raw.split(',')[0].trim();
+  return first.replace(/\/$/, '');
+};
+
+const getFromAddress = () => {
+  const user = process.env.SMTP_USER;
+  const configured = process.env.EMAIL_FROM;
+
+  // Gmail only allows sending as the authenticated account (or configured aliases)
+  if (user && configured && !configured.includes(user)) {
+    return `AgriMarket <${user}>`;
+  }
+
+  return configured || (user ? `AgriMarket <${user}>` : 'AgriMarket <noreply@agrimarket.com>');
+};
+
 const getTransporter = () => {
   if (transporter) return transporter;
 
   const host = process.env.SMTP_HOST;
   const port = parseInt(process.env.SMTP_PORT || '587', 10);
   const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
+  const pass = normalizeSmtpPassword(process.env.SMTP_PASS);
 
   if (!host || !user || !pass) {
+    console.warn(
+      '[email] SMTP not configured (need SMTP_HOST, SMTP_USER, SMTP_PASS). Links will print to console only.',
+    );
     return null;
   }
 
@@ -24,15 +52,27 @@ const getTransporter = () => {
   return transporter;
 };
 
-const getFromAddress = () =>
-  process.env.EMAIL_FROM || `AgriMarket <${process.env.SMTP_USER || 'noreply@agrimarket.com'}>`;
+const sendMailSafe = async (options) => {
+  const mailer = getTransporter();
 
-const getClientUrl = () =>
-  (process.env.CLIENT_URL || 'http://localhost:3000').replace(/\/$/, '');
+  if (!mailer) {
+    return { delivered: false, logged: true };
+  }
 
-/**
- * Send password reset email. In dev without SMTP, logs the link to the console.
- */
+  try {
+    await mailer.sendMail({
+      from: getFromAddress(),
+      ...options,
+    });
+    console.log(`[email] Sent "${options.subject}" to ${options.to}`);
+    return { delivered: true, logged: false };
+  } catch (err) {
+    console.error('[email] Failed to send mail:', err.message);
+    if (err.response) console.error('[email] SMTP response:', err.response);
+    throw err;
+  }
+};
+
 const sendPasswordResetEmail = async ({ to, name, resetToken }) => {
   const resetUrl = `${getClientUrl()}/reset-password?token=${resetToken}`;
   const subject = 'AgriMarket — Reset your password';
@@ -52,30 +92,18 @@ const sendPasswordResetEmail = async ({ to, name, resetToken }) => {
   `;
   const text = `Reset your AgriMarket password: ${resetUrl}\n\nThis link expires in 1 hour.`;
 
-  const mailer = getTransporter();
-
-  if (!mailer) {
-    console.log('\n--- Password reset (SMTP not configured) ---');
+  try {
+    const result = await sendMailSafe({ to, subject, text, html });
+    return { ...result, resetUrl };
+  } catch {
+    console.log('\n--- Password reset (SMTP failed) ---');
     console.log(`To: ${to}`);
     console.log(`Reset URL: ${resetUrl}`);
-    console.log('--------------------------------------------\n');
+    console.log('--------------------------------------\n');
     return { delivered: false, logged: true, resetUrl };
   }
-
-  await mailer.sendMail({
-    from: getFromAddress(),
-    to,
-    subject,
-    text,
-    html,
-  });
-
-  return { delivered: true, logged: false };
 };
 
-/**
- * Send email verification link. In dev without SMTP, logs the link to the console.
- */
 const sendVerificationEmail = async ({ to, name, verifyToken }) => {
   const verifyUrl = `${getClientUrl()}/verify-email?token=${verifyToken}`;
   const subject = 'AgriMarket — Verify your email';
@@ -95,29 +123,21 @@ const sendVerificationEmail = async ({ to, name, verifyToken }) => {
   `;
   const text = `Verify your AgriMarket email: ${verifyUrl}\n\nThis link expires in 24 hours.`;
 
-  const mailer = getTransporter();
-
-  if (!mailer) {
-    console.log('\n--- Email verification (SMTP not configured) ---');
+  try {
+    const result = await sendMailSafe({ to, subject, text, html });
+    return { ...result, verifyUrl };
+  } catch {
+    console.log('\n--- Email verification (SMTP failed) ---');
     console.log(`To: ${to}`);
     console.log(`Verify URL: ${verifyUrl}`);
-    console.log('------------------------------------------------\n');
+    console.log('----------------------------------------\n');
     return { delivered: false, logged: true, verifyUrl };
   }
-
-  await mailer.sendMail({
-    from: getFromAddress(),
-    to,
-    subject,
-    text,
-    html,
-  });
-
-  return { delivered: true, logged: false };
 };
 
 module.exports = {
   sendPasswordResetEmail,
   sendVerificationEmail,
   getClientUrl,
+  normalizeSmtpPassword,
 };

@@ -147,7 +147,8 @@ exports.resetPassword = async (req, res, next) => {
 // @access  Public
 exports.verifyEmail = async (req, res, next) => {
   try {
-    const token = req.body.token || req.query.token;
+    const raw = req.body?.token ?? req.query?.token;
+    const token = Array.isArray(raw) ? raw[0] : raw;
     const result = await authService.verifyEmail(token);
 
     let message = 'Email verified successfully. You can now sign in.';

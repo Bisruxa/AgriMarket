@@ -4,6 +4,7 @@ import "./globals.css";
 import {LanguageProvider} from './context/LanguageContext';
 import {AuthProvider} from './context/UserContext'
 import Providers from "./context/providers";
+import { AuthRouteGuard } from '@/components/auth/AuthRouteGuard';
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -38,10 +39,12 @@ export default function RootLayout({
       >
         <Providers>
         <AuthProvider>
+        <AuthRouteGuard>
         <LanguageProvider>
     {children}
 
         </LanguageProvider>
+        </AuthRouteGuard>
     </AuthProvider>
     </Providers>
       </body>

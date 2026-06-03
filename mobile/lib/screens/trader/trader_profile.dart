@@ -7,6 +7,7 @@ import '../../utils/logout_helper.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/profile_details_card.dart';
+import '../../utils/ethiopian_phone.dart';
 
 class TraderProfileScreen extends StatefulWidget {
   const TraderProfileScreen({super.key});
@@ -65,7 +66,7 @@ class _TraderProfileScreenState extends State<TraderProfileScreen>
     });
     if (profile != null) {
       _nameController.text = profile.name;
-      _phoneController.text = profile.phone ?? '';
+      _phoneController.text = EthiopianPhone.displayLocal(profile.phone);
       _regionController.text = profile.region ?? '';
       _woredaController.text = profile.woreda ?? '';
     }
@@ -77,7 +78,8 @@ class _TraderProfileScreenState extends State<TraderProfileScreen>
     setState(() => _isSavingProfile = true);
     final result = await _api.updateProfile({
       'name': _nameController.text.trim(),
-      'phone': _phoneController.text.trim(),
+      'phone': EthiopianPhone.formatForStorage(_phoneController.text) ??
+          _phoneController.text.trim(),
       'region': _regionController.text.trim(),
       'woreda': _woredaController.text.trim(),
     });
@@ -279,10 +281,11 @@ class _TraderProfileScreenState extends State<TraderProfileScreen>
                 ),
                 CustomTextField(
                   label: 'Phone number',
-                  hint: 'e.g. 0912345678',
+                  hint: '912345678',
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
                   prefixIcon: Icons.phone_outlined,
+                  validator: (v) => EthiopianPhone.validate(v, required: false),
                 ),
                 CustomTextField(
                   label: 'Region',

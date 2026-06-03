@@ -10,6 +10,7 @@ import '../../theme/app_theme.dart';
 import '../../utils/logout_helper.dart';
 import '../../utils/notification_labels.dart';
 import '../../widgets/common/app_bottom_nav.dart';
+import '../../widgets/farmer/farmer_ai_action_buttons.dart';
 import '../../widgets/farmer/farmer_dashboard_header.dart';
 import '../../widgets/farmer/farmer_dashboard_sections.dart';
 import '../../widgets/farmer/farmer_farms_banner.dart';
@@ -18,6 +19,8 @@ import '../../widgets/farmer/farmer_weather_card.dart';
 import '../../constants/app_assets.dart';
 import '../../utils/crop_price_utils.dart';
 import 'agri_chat_screen.dart';
+import 'crop_recommendation.dart';
+import 'price_forecast_screen.dart';
 import 'farmer_profile.dart';
 import 'farmer_trends_screen.dart';
 import 'add_farm_screen.dart';
@@ -276,12 +279,28 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
 
   String get _farmerName => _profile?.name ?? 'Farmer';
 
+  String get _cropRegion => _profile?.region?.trim() ?? 'Oromia';
+
+  void _openCropRecommendation() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const CropRecommendation()),
+    );
+  }
+
+  void _openPriceForecast() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PriceForecastScreen(defaultRegion: _cropRegion),
+      ),
+    );
+  }
+
   String get _firstName {
     final parts = _farmerName.trim().split(RegExp(r'\s+'));
     return parts.isNotEmpty ? parts.first : 'Farmer';
   }
-
-  String get _cropRegion => _profile?.region?.trim() ?? 'Oromia';
 
   int get _activeListingsCount =>
       _myProducts.where((p) => p.isAvailable && p.stock > 0).length;
@@ -391,6 +410,12 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
                       errorMessage: _insightsError,
                       onViewDetails: () => setState(() => _selectedIndex = 3),
                     ),
+                    const SizedBox(height: 12),
+                    FarmerAiActionButtons(
+                      onCropRecommend: _openCropRecommendation,
+                      onPriceForecast: _openPriceForecast,
+                    ),
+                    const SizedBox(height: 16),
                     FarmerFarmsBanner(
                       farmCount: _farmCount,
                       onViewFarms: () {

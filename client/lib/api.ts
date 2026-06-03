@@ -144,7 +144,9 @@ export const authApi = {
     api.post('/auth/reset-password', data),
 
   verifyEmail: (token: string) =>
-    api.post('/auth/verify-email', { token }),
+    api.post<{ alreadyVerified?: boolean }>('/auth/verify-email', {
+      token: token.trim(),
+    }),
 
   resendVerification: (data: { email: string }) =>
     api.post('/auth/resend-verification', data),

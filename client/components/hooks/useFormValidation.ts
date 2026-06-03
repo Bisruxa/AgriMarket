@@ -1,6 +1,7 @@
 'use client';
 
 import { FormData, ValidationRule } from '@/types/FormTypes';
+import { validateEthiopianPhone } from '@/lib/phone';
 
 export const useFormValidation = (formData: FormData) => {
   // Helper validation functions
@@ -51,7 +52,7 @@ export const useFormValidation = (formData: FormData) => {
   const validationRules = {
     step1: {
       checkAllEmpty: () => {
-        const requiredFields: (keyof FormData)[] = ['fullName', 'email', 'password', 'confirmPassword'];
+        const requiredFields: (keyof FormData)[] = ['fullName', 'email', 'phone', 'password', 'confirmPassword'];
         const allEmpty = requiredFields.every(field => !formData[field]?.toString().trim());
         return allEmpty ? ['All fields are required'] : [];
       },
@@ -65,6 +66,11 @@ export const useFormValidation = (formData: FormData) => {
           field: 'email' as keyof FormData, 
           message: 'Email is required', 
           validate: (val: string) => /\S+@\S+\.\S+/.test(val) || 'Please enter a valid email' 
+        },
+        {
+          field: 'phone' as keyof FormData,
+          message: 'Phone number is required',
+          validate: (val: string) => validateEthiopianPhone(val),
         },
         { 
           field: 'password' as keyof FormData, 

@@ -5,6 +5,9 @@ import '../../models/price_model.dart';
 import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/crop_price_utils.dart';
+import '../../widgets/farmer/farmer_ai_action_buttons.dart';
+import 'crop_recommendation.dart';
+import 'price_forecast_screen.dart';
 
 class FarmerTrendsScreen extends StatefulWidget {
   const FarmerTrendsScreen({super.key});
@@ -130,6 +133,29 @@ class _FarmerTrendsScreenState extends State<FarmerTrendsScreen> {
                         fontSize: 26,
                         fontWeight: FontWeight.w700,
                       ),
+                ),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                child: FarmerAiActionButtons(
+                  onCropRecommend: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const CropRecommendation()),
+                    );
+                  },
+                  onPriceForecast: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => PriceForecastScreen(
+                          defaultRegion: _selectedRegion,
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
             ),

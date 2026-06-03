@@ -1,24 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-
-const PUBLIC_PATHS = new Set(['/', '/signin', '/signup', '/forgot-password']);
-
-function isPublicPath(pathname: string) {
-  if (PUBLIC_PATHS.has(pathname)) return true;
-  return (
-    pathname.startsWith('/signin/') ||
-    pathname.startsWith('/signup/') ||
-    pathname.startsWith('/forgot-password/')
-  );
-}
-
-function getRouteRoles(pathname: string): string[] | null {
-  if (pathname.startsWith('/farmer')) return ['FARMER'];
-  if (pathname.startsWith('/trader')) return ['TRADER'];
-  if (pathname.startsWith('/admin')) return ['ADMIN'];
-  if (pathname.startsWith('/chat')) return ['FARMER', 'ADMIN'];
-  return null;
-}
+import { getRequiredRoles, isPublicPath } from '@/lib/route-access';
 
 function parseUserRole(request: NextRequest): string | null {
   const raw = request.cookies.get('user')?.value;
@@ -38,26 +20,17 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const requiredRoles = getRouteRoles(pathname);
+  const requiredRoles = getRequiredRoles(pathname);
   if (!requiredRoles) {
     return NextResponse.next();
   }
 
   const token = request.cookies.get('token')?.value;
-  if (!token || token === 'none') {
-    const signinUrl = new URL('/signin', request.url);
-    signinUrl.searchParams.set('from', pathname);
-    return NextResponse.redirect(signinUrl);
-  }
-
   const role = parseUserRole(request);
-  if (!role) {
-    const signinUrl = new URL('/signin', request.url);
-    signinUrl.searchParams.set('from', pathname);
-    return NextResponse.redirect(signinUrl);
-  }
 
-  if (!requiredRoles.includes(role)) {
+  // Session may live in localStorage until the client hydrates — only enforce
+  // role when auth cookies are already present (e.g. after client sync).
+  if (token && token !== 'none' && role && !requiredRoles.includes(role)) {
     return NextResponse.rewrite(new URL('/not-found', request.url));
   }
 

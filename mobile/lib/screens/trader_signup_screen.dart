@@ -6,6 +6,7 @@ import '../widgets/common/section_title.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/location_picker.dart';
+import '../utils/ethiopian_phone.dart';
 
 class TraderSignupScreen extends StatefulWidget {
   const TraderSignupScreen({super.key});
@@ -41,6 +42,12 @@ class _TraderSignupScreenState extends State<TraderSignupScreen> {
       return;
     }
 
+    final formattedPhone = EthiopianPhone.formatForStorage(_phoneController.text);
+    if (formattedPhone == null) {
+      setState(() => _errorMessage = EthiopianPhone.message);
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -51,7 +58,7 @@ class _TraderSignupScreenState extends State<TraderSignupScreen> {
       'email': _emailController.text.trim(),
       'password': _passwordController.text,
       'role': 'TRADER',
-      'phone': _phoneController.text.trim(),
+      'phone': formattedPhone,
       'region': _selectedRegion,
       'woreda': _selectedWoreda,
     });
@@ -127,10 +134,11 @@ class _TraderSignupScreenState extends State<TraderSignupScreen> {
               ),
               CustomTextField(
                 label: 'Phone Number',
-                hint: 'Enter your phone number',
+                hint: '912345678',
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
                 prefixIcon: Icons.phone_outlined,
+                validator: (v) => EthiopianPhone.validate(v),
               ),
               CustomTextField(
                 label: 'TIN Number',

@@ -16,6 +16,7 @@ export default function AuthPage({
   title,
   subtitle,
   errors = [],
+  successMessages = [],
   step = 1,
   isSignUp = false,
   role = 'FARMER',  
@@ -45,6 +46,7 @@ export default function AuthPage({
               title={title}
               subtitle={subtitle}
               errors={errors}
+              successMessages={successMessages}
               showRoleTabs={showRoleTabs}
               role={role}
               onRoleChange={onRoleChange}
@@ -63,6 +65,7 @@ export default function AuthPage({
               title={title}
               subtitle={subtitle}
               errors={errors}
+              successMessages={successMessages}
               showRoleTabs={showRoleTabs}
               role={role}
               onRoleChange={onRoleChange}

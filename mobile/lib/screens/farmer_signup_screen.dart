@@ -4,9 +4,9 @@ import '../theme/app_theme.dart';
 import '../widgets/common/auth_shell.dart';
 import '../widgets/common/section_title.dart';
 import '../widgets/custom_text_field.dart';
-import '../widgets/custom_dropdown.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/location_picker.dart';
+import '../utils/ethiopian_phone.dart';
 
 class FarmerSignupScreen extends StatefulWidget {
   const FarmerSignupScreen({super.key});
@@ -22,22 +22,11 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  final _farmLocationController = TextEditingController();
-  final _farmSizeController = TextEditingController();
-  final _cropsController = TextEditingController();
 
   String? _selectedRegion;
   String? _selectedWoreda;
-  String? _selectedExperience;
   bool _isLoading = false;
   String? _errorMessage;
-
-  final List<String> _experienceLevels = [
-    'Beginner (0-2 years)',
-    'Intermediate (3-5 years)',
-    'Advanced (6-10 years)',
-    'Expert (10+ years)',
-  ];
 
   Future<void> _register() async {
     if (!_formKey.currentState!.validate()) return;
@@ -52,6 +41,12 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
       return;
     }
 
+    final formattedPhone = EthiopianPhone.formatForStorage(_phoneController.text);
+    if (formattedPhone == null) {
+      setState(() => _errorMessage = EthiopianPhone.message);
+      return;
+    }
+
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -62,20 +57,14 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
       'email': _emailController.text.trim(),
       'password': _passwordController.text,
       'role': 'FARMER',
-      'phone': _phoneController.text.trim(),
+      'phone': formattedPhone,
       'region': _selectedRegion,
       'woreda': _selectedWoreda,
-      'farmSize': _farmSizeController.text.trim().isNotEmpty
-          ? '${_farmSizeController.text.trim()} hectares'
-          : null,
-      'crops': _cropsController.text.trim(),
-      'experience': _selectedExperience,
     });
 
     if (!mounted) return;
 
     if (result.success) {
-      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -99,7 +88,7 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
   Widget build(BuildContext context) {
     return AuthShell(
       title: 'Farmer Registration',
-      subtitle: 'Tell us about yourself and your farm',
+      subtitle: 'Create your account — you can add farms later from the dashboard',
       imagePath: 'assets/images/welcome.png',
       heroIcon: Icons.agriculture_rounded,
       child: SingleChildScrollView(
@@ -144,10 +133,11 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
               ),
               CustomTextField(
                 label: 'Phone Number',
-                hint: 'Enter your phone number',
+                hint: '912345678',
                 controller: _phoneController,
                 keyboardType: TextInputType.phone,
                 prefixIcon: Icons.phone_outlined,
+                validator: (v) => EthiopianPhone.validate(v),
               ),
               CustomTextField(
                 label: 'Password',
@@ -181,40 +171,6 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
                   setState(() => _selectedWoreda = value);
                 },
               ),
-              const SectionTitle(
-                title: 'Farm Information',
-                subtitle: 'Help us personalize recommendations',
-                icon: Icons.grass_rounded,
-              ),
-              CustomTextField(
-                label: 'Farm Location',
-                hint: 'Specific area or village',
-                controller: _farmLocationController,
-                prefixIcon: Icons.map_outlined,
-              ),
-              CustomTextField(
-                label: 'Farm Size (hectares)',
-                hint: 'e.g. 5.5',
-                controller: _farmSizeController,
-                keyboardType: TextInputType.number,
-                prefixIcon: Icons.square_foot_outlined,
-              ),
-              CustomTextField(
-                label: 'Crops You Plant',
-                hint: 'e.g. Teff, Wheat, Maize',
-                controller: _cropsController,
-                prefixIcon: Icons.eco_outlined,
-              ),
-              CustomDropdown<String>(
-                label: 'Farming Experience',
-                value: _selectedExperience,
-                items: _experienceLevels,
-                itemLabel: (item) => item,
-                onChanged: (value) {
-                  setState(() => _selectedExperience = value);
-                },
-                hint: 'Select your experience level',
-              ),
               const SizedBox(height: 8),
               CustomButton(
                 text: 'Register as Farmer',
@@ -235,9 +191,6 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
     _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
-    _farmLocationController.dispose();
-    _farmSizeController.dispose();
-    _cropsController.dispose();
     super.dispose();
   }
 }

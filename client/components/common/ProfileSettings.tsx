@@ -7,6 +7,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/app/context/UserContext";
 import { userApi } from "@/lib/api";
+import {
+  formatEthiopianPhoneForStorage,
+  isValidEthiopianPhone,
+  ETHIOPIAN_PHONE_MESSAGE,
+  normalizeEthiopianPhone,
+} from "@/lib/phone";
 import { User } from "@/types/auth-page";
 
 type Tab = "profile" | "password";
@@ -36,11 +42,11 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ role }) => {
   useEffect(() => {
     if (!user) return;
     setName(user.name || "");
-    setPhone(user.phone || "");
+    setPhone(user.phone ? normalizeEthiopianPhone(user.phone) : "");
     setRegion(user.region || "");
     setWoreda(user.woreda || "");
     setFarmSize(user.farmSize?.toString() || "");
-    setCrops(Array.isArray(user.crops) ? user.crops.join(", ") : user.crops?.toString() || "");
+    setCrops(Array.isArray(user.crops) ? user.crops.join(", ") : "");
     setExperience(user.experience || "");
   }, [user]);
 
@@ -51,12 +57,19 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ role }) => {
       return;
     }
 
+    if (phone.trim() && !isValidEthiopianPhone(phone)) {
+      setMessage({ text: ETHIOPIAN_PHONE_MESSAGE, type: "error" });
+      return;
+    }
+
     setLoading(true);
     setMessage(null);
 
     const payload: Record<string, string | number> = {
       name: name.trim(),
-      phone: phone.trim(),
+      ...(phone.trim() && {
+        phone: formatEthiopianPhoneForStorage(phone) ?? phone.trim(),
+      }),
       region: region.trim(),
       woreda: woreda.trim(),
     };
@@ -200,11 +213,15 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ role }) => {
             <Input
               id="phone"
               type="tel"
+              inputMode="numeric"
+              maxLength={9}
               value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 9))}
               disabled={loading}
+              placeholder="912345678"
               className="bg-black/5 border-gray-300"
             />
+            <p className="text-xs text-gray-500">9 digits, starting with 7 or 9</p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="region">Region</Label>

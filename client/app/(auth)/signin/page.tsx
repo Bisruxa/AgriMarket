@@ -11,6 +11,8 @@ import { Translations } from '@/lib/translations';
 import { authApi } from '@/lib/api';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/app/context/UserContext';
+import { getDashboardHref } from '@/lib/dashboard';
+import { safeRedirectPath } from '@/lib/route-access';
 
 export default function SignInPage() {
   const t = useTranslations() as Translations;
@@ -21,6 +23,7 @@ export default function SignInPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [infoMessage, setInfoMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [showResendVerification, setShowResendVerification] = useState(false);
@@ -43,7 +46,8 @@ export default function SignInPage() {
       if (registeredEmail) setEmail(registeredEmail);
     }
     if (searchParams.get('verified') === '1') {
-      setInfoMessage('Email verified successfully. You can now sign in.');
+      setInfoMessage('');
+      setSuccessMessage('Email verified successfully. You can now sign in.');
     }
   }, [searchParams]);
 
@@ -102,15 +106,8 @@ export default function SignInPage() {
         login(response.user, response.token);
 
         const userRole = response.user.role;
-        let redirectPath = '/';
-        
-        if (userRole === 'FARMER') {
-          redirectPath = '/farmer/dashboard';
-        } else if (userRole === 'TRADER') {
-          redirectPath = '/trader/dashboard';
-        } else if (userRole === 'ADMIN') {
-          redirectPath = '/admin/dashboard';
-        }
+        const returnTo = safeRedirectPath(searchParams.get('from'));
+        let redirectPath = returnTo ?? getDashboardHref(userRole);
         
         router.push(redirectPath);
       }
@@ -125,13 +122,8 @@ export default function SignInPage() {
     <AuthPage
       title={t.signin.title}
       subtitle={t.signin.subtitle}
-      errors={
-        error
-          ? [error]
-          : infoMessage
-            ? [infoMessage]
-            : []
-      }
+      errors={error ? [error] : infoMessage ? [infoMessage] : []}
+      successMessages={successMessage ? [successMessage] : []}
       step={1}
       totalSteps={1}
       isSignUp={false}

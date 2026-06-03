@@ -1,6 +1,7 @@
 const { prisma, ensureDbConnection } = require('../config/db');
 const { hashPassword, comparePassword } = require('../models/User.model');
 const notificationService = require('./notifications.service');
+const { formatEthiopianPhoneForStorage, isValidEthiopianPhone, ETHIOPIAN_PHONE_MESSAGE } = require('../utils/phone.util');
 
 const createError = (message, statusCode, code) => {
   const error = new Error(message);
@@ -14,8 +15,17 @@ const TOKEN_EXPIRE_MS = {
   verify: 24 * 60 * 60 * 1000,
 };
 
+const normalizeToken = (token) => {
+  if (!token || typeof token !== 'string') return '';
+  try {
+    return decodeURIComponent(token.trim());
+  } catch {
+    return token.trim();
+  }
+};
+
 const hashToken = (token) =>
-  require('crypto').createHash('sha256').update(token).digest('hex');
+  require('crypto').createHash('sha256').update(normalizeToken(token)).digest('hex');
 
 const issueEmailVerification = async (user) => {
   const crypto = require('crypto');
@@ -65,13 +75,21 @@ const registerUser = async (payload) => {
   const roleUpper = role ? role.toUpperCase() : 'TRADER';
   const isTrader = roleUpper === 'TRADER';
 
+  let normalizedPhone = null;
+  if (phone) {
+    if (!isValidEthiopianPhone(phone)) {
+      throw createError(ETHIOPIAN_PHONE_MESSAGE, 400);
+    }
+    normalizedPhone = formatEthiopianPhoneForStorage(phone);
+  }
+
   const user = await prisma.user.create({
     data: {
       name,
       email,
       password: hashedPassword,
       role: roleUpper,
-      phone: phone || null,
+      phone: normalizedPhone,
       region: region || null,
       woreda: woreda || null,
       farmSize: farmSize || null,
@@ -85,7 +103,7 @@ const registerUser = async (payload) => {
   try {
     await issueEmailVerification(user);
   } catch (e) {
-    console.warn('registerUser verification email:', e.message);
+    console.error('registerUser verification email failed:', e.message);
   }
 
   if (isTrader) {
@@ -253,36 +271,45 @@ const resetPassword = async (token, newPassword) => {
 };
 
 const verifyEmail = async (token) => {
-  if (!token) {
+  const cleanToken = normalizeToken(token);
+  if (!cleanToken) {
     throw createError('Verification token is required', 400);
   }
 
   await ensureDbConnection();
 
-  const hashedToken = hashToken(token);
+  const hashedToken = hashToken(cleanToken);
 
   const user = await prisma.user.findFirst({
     where: {
       emailVerifyToken: hashedToken,
-      emailVerifyExpire: { gt: new Date() },
       deletedAt: null,
     },
   });
 
   if (!user) {
-    throw createError('Invalid or expired verification link', 400);
+    throw createError(
+      'Invalid or expired verification link. Request a new verification email from the sign-in page.',
+      400
+    );
   }
 
   if (user.isVerified) {
-    return { alreadyVerified: true };
+    return { alreadyVerified: true, role: user.role, approvalStatus: user.approvalStatus };
+  }
+
+  if (!user.emailVerifyExpire || user.emailVerifyExpire <= new Date()) {
+    throw createError(
+      'Verification link has expired. Request a new verification email from the sign-in page.',
+      400
+    );
   }
 
   await prisma.user.update({
     where: { id: user.id },
     data: {
       isVerified: true,
-      emailVerifyToken: null,
-      emailVerifyExpire: null,
+      // Keep token until expiry so the same link can be opened again (idempotent)
     },
   });
 

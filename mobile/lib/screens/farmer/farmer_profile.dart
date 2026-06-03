@@ -9,6 +9,8 @@ import '../../widgets/custom_text_field.dart';
 import '../../widgets/profile_details_card.dart';
 import 'crop_recommendation.dart';
 import 'farms_screen.dart';
+import 'price_forecast_screen.dart';
+import '../../utils/ethiopian_phone.dart';
 
 class FarmerProfileScreen extends StatefulWidget {
   const FarmerProfileScreen({super.key});
@@ -63,7 +65,7 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
     });
     if (profile != null) {
       _nameController.text = profile.name;
-      _phoneController.text = profile.phone ?? '';
+      _phoneController.text = EthiopianPhone.displayLocal(profile.phone);
     }
   }
 
@@ -73,7 +75,8 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
     setState(() => _isSavingProfile = true);
     final result = await _api.updateProfile({
       'name': _nameController.text.trim(),
-      'phone': _phoneController.text.trim(),
+      'phone': EthiopianPhone.formatForStorage(_phoneController.text) ??
+          _phoneController.text.trim(),
     });
     if (!mounted) return;
     setState(() => _isSavingProfile = false);
@@ -273,10 +276,11 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
                 ),
                 CustomTextField(
                   label: 'Phone number',
-                  hint: 'e.g. 0912345678',
+                  hint: '912345678',
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
                   prefixIcon: Icons.phone_outlined,
+                  validator: (v) => EthiopianPhone.validate(v, required: false),
                 ),
                 const SizedBox(height: 8),
                 CustomButton(
@@ -412,6 +416,21 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => const CropRecommendation()),
+                  );
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.trending_up_rounded, color: AppColors.primary),
+                title: const Text('Price forecast'),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => PriceForecastScreen(
+                        defaultRegion: _profile?.region,
+                      ),
+                    ),
                   );
                 },
               ),
