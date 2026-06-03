@@ -1,4 +1,4 @@
-import { ChartNoAxesCombined, House,ReceiptText, Store,Clock,ShoppingCart } from 'lucide-react';
+import { ChartNoAxesCombined, House,ReceiptText, Store,Clock,ShoppingCart, SlidersHorizontal } from 'lucide-react';
 import React from 'react';
 import { useTranslations } from '@/components/hooks/useTranlations';
 
@@ -35,8 +35,11 @@ export const adminLinks = [
     icon: <Clock className='mr-2' size={20} />,
     to: "/admin/traderApproval"
   },
- 
- 
+  {
+    name: "System",
+    icon: <SlidersHorizontal className='mr-2' size={20} />,
+    to: "/admin/system"
+  },
 ];
 
 export const traderLinks = [

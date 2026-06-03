@@ -182,12 +182,14 @@ exports.verifyEmail = async (req, res, next) => {
 exports.resendVerification = async (req, res, next) => {
   try {
     const { email } = req.body;
-    await authService.resendVerificationEmail(email);
+    const { sent } = await authService.resendVerificationEmail(email);
 
     res.status(200).json({
       success: true,
-      message:
-        'If an account exists with that email and is not yet verified, a verification link has been sent.',
+      emailSent: sent,
+      message: sent
+        ? 'If an account exists with that email and is not yet verified, a verification link has been sent.'
+        : 'We could not send the verification email right now. Please try again in a moment.',
     });
   } catch (error) {
     next(error);
