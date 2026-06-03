@@ -3,8 +3,11 @@ import 'package:flutter/material.dart';
 
 import '../../models/price_model.dart';
 import '../../services/api_service.dart';
+import '../../l10n/app_localizations.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/crop_price_utils.dart';
+import '../../widgets/app_locale_scope.dart';
+import '../../widgets/language_toggle.dart';
 
 class FarmerTrendsScreen extends StatefulWidget {
   const FarmerTrendsScreen({super.key});
@@ -36,7 +39,6 @@ class _FarmerTrendsScreenState extends State<FarmerTrendsScreen> {
   Future<void> _load() async {
     setState(() {
       _loading = true;
-      _noPriceData = false;
     });
 
     final dbCrops = await _api.getPriceCrops();
@@ -251,11 +253,14 @@ class _FarmerTrendsScreenState extends State<FarmerTrendsScreen> {
                 ),
               )
             else ...[
-              if (_noPriceData)
+              if (_error != null)
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.all(20),
-                    child: Text(_error!, style: const TextStyle(color: AppColors.textSecondary)),
+                    child: Text(
+                      _error!,
+                      style: const TextStyle(color: AppColors.textSecondary),
+                    ),
                   ),
                 ),
               if (_salesTiming?.hasData == true &&
@@ -441,22 +446,12 @@ class _SalesTimingCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    '${l10n.bestMonth}: ${rec['bestSellMonthName'] ?? rec['bestSellMonth']}',
-                  ),
-                  Text(
-                    '${l10n.expectedGain}: ${rec['expectedGainPercent']?.toString() ?? '—'}%',
-                  ),
-                  Text(
-                    '${l10n.latestPrice}: ETB ${rec['latestKnownPrice']?.toString() ?? '—'}',
-                  ),
+                  Text('${l10n.bestMonth}: ${rec['bestSellMonthName'] ?? rec['bestSellMonth']}'),
+                  Text('${l10n.expectedGain}: ${rec['expectedGainPercent']?.toString() ?? '—'}%'),
+                  Text('${l10n.latestPrice}: ETB ${rec['latestKnownPrice']?.toString() ?? '—'}'),
                 ],
               ),
-              const SizedBox(height: 8),
-              Text('Best month: ${rec['bestSellMonthName'] ?? rec['bestSellMonth']}'),
-              Text('Expected gain: ${rec['expectedGainPercent']?.toString() ?? '—'}%'),
-              Text('Latest price: ETB ${rec['latestKnownPrice']?.toString() ?? '—'}'),
-            ],
+            ),
           ),
         );
       },
