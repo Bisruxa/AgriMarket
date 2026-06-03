@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
-import '../services/auth_session.dart';
 import '../theme/app_theme.dart';
 import '../widgets/common/auth_shell.dart';
 import '../widgets/common/section_title.dart';
@@ -75,12 +74,14 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
 
     if (!mounted) return;
 
-    if (result.success && result.raw != null) {
-      await AuthSession.saveFromLoginResponse(result.raw!);
+    if (result.success) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Registration successful!'),
+        SnackBar(
+          content: Text(
+            result.message ??
+                'Registration successful! Check your email to verify your account.',
+          ),
           backgroundColor: AppColors.primary,
         ),
       );

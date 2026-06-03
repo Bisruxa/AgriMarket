@@ -60,9 +60,10 @@ class _TraderSignupScreenState extends State<TraderSignupScreen> {
 
     if (result.success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'Registration submitted! Your account is pending admin approval.',
+            result.message ??
+                'Registration submitted! Verify your email, then wait for admin approval.',
           ),
           backgroundColor: AppColors.traderAccent,
         ),

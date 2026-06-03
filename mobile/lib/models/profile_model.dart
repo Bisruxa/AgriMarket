@@ -10,6 +10,7 @@ class UserProfile {
   final double? farmSize;
   final String? tinNumber;
   final String? avatarUrl;
+  final bool isVerified;
 
   const UserProfile({
     this.id = '',
@@ -23,6 +24,7 @@ class UserProfile {
     this.farmSize,
     this.tinNumber,
     this.avatarUrl,
+    this.isVerified = true,
   });
 
   bool get isTrader => role.toLowerCase() == 'trader';
@@ -50,6 +52,7 @@ class UserProfile {
       avatarUrl: json['avatarUrl']?.toString() ??
           json['avatar']?.toString() ??
           json['profileImage']?.toString(),
+      isVerified: json['isVerified'] == true,
     );
   }
 

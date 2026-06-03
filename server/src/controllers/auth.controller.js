@@ -8,23 +8,27 @@ exports.register = async (req, res, next) => {
   try {
     const user = await authService.registerUser(req.body);
 
-    // Traders must be approved by admin before they can sign in
+    let message =
+      'Registration successful. Please check your email to verify your account before signing in.';
+
     if (user.role === 'TRADER' && user.approvalStatus === 'PENDING') {
-      return res.status(201).json({
-        success: true,
-        message:
-          'Registration submitted. Your account is pending admin approval. You will be able to sign in once approved.',
-        user: {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          approvalStatus: user.approvalStatus,
-        },
-      });
+      message =
+        'Registration submitted. Verify your email first, then wait for admin approval before you can sign in.';
     }
 
-    sendTokenResponse(user, 201, res);
+    return res.status(201).json({
+      success: true,
+      message,
+      requiresEmailVerification: true,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        approvalStatus: user.approvalStatus,
+        isVerified: user.isVerified,
+      },
+    });
   } catch (error) {
     next(error);
   }
@@ -103,6 +107,85 @@ exports.checkEmail = async (req, res, next) => {
   }
 };
 
+// @desc    Request password reset email
+// @route   POST /api/auth/forgot-password
+// @access  Public
+exports.forgotPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    await authService.requestPasswordReset(email);
+
+    res.status(200).json({
+      success: true,
+      message:
+        'If an account exists with that email, a password reset link has been sent.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Reset password with token from email
+// @route   POST /api/auth/reset-password
+// @access  Public
+exports.resetPassword = async (req, res, next) => {
+  try {
+    const { token, newPassword } = req.body;
+    await authService.resetPassword(token, newPassword);
+
+    res.status(200).json({
+      success: true,
+      message: 'Password reset successfully. You can now sign in with your new password.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Verify email with token from verification link
+// @route   POST /api/auth/verify-email
+// @access  Public
+exports.verifyEmail = async (req, res, next) => {
+  try {
+    const token = req.body.token || req.query.token;
+    const result = await authService.verifyEmail(token);
+
+    let message = 'Email verified successfully. You can now sign in.';
+    if (result.alreadyVerified) {
+      message = 'Email is already verified. You can sign in.';
+    } else if (result.role === 'TRADER' && result.approvalStatus === 'PENDING') {
+      message =
+        'Email verified. Your trader account is still pending admin approval before you can sign in.';
+    }
+
+    res.status(200).json({
+      success: true,
+      message,
+      ...result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Resend email verification link
+// @route   POST /api/auth/resend-verification
+// @access  Public
+exports.resendVerification = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    await authService.resendVerificationEmail(email);
+
+    res.status(200).json({
+      success: true,
+      message:
+        'If an account exists with that email and is not yet verified, a verification link has been sent.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // Helper function to send token response with cookie
 const sendTokenResponse = (user, statusCode, res) => {
   const token = generateToken(user);
@@ -134,6 +217,7 @@ const sendTokenResponse = (user, statusCode, res) => {
         crops: user.crops || null,
         experience: user.experience || null,
         approvalStatus: user.approvalStatus || null,
+        isVerified: user.isVerified ?? true,
       },
     });
 };

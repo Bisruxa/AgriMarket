@@ -22,16 +22,51 @@ export default function SignInPage() {
   const [error, setError] = useState('');
   const [infoMessage, setInfoMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [showResendVerification, setShowResendVerification] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     if (searchParams.get('pending') === 'trader') {
       setRole('TRADER');
       setInfoMessage(
-        'Registration received. An admin must approve your trader account before you can sign in.',
+        'Registration received. Verify your email, then wait for admin approval before you can sign in.',
       );
     }
+    if (searchParams.get('verify') === 'sent') {
+      const registeredEmail = searchParams.get('email');
+      setInfoMessage(
+        registeredEmail
+          ? `We sent a verification link to ${registeredEmail}. Please verify your email before signing in.`
+          : 'We sent a verification link to your email. Please verify before signing in.',
+      );
+      if (registeredEmail) setEmail(registeredEmail);
+    }
+    if (searchParams.get('verified') === '1') {
+      setInfoMessage('Email verified successfully. You can now sign in.');
+    }
   }, [searchParams]);
+
+  const handleResendVerification = async () => {
+    if (!email.trim()) {
+      setError('Enter your email address first.');
+      return;
+    }
+    setResendLoading(true);
+    setError('');
+    try {
+      const response = await authApi.resendVerification({ email: email.trim() });
+      setInfoMessage(
+        response.message ||
+          'If an account exists and is not verified, a new link has been sent.',
+      );
+      setShowResendVerification(false);
+    } catch {
+      setError('Failed to resend verification email.');
+    } finally {
+      setResendLoading(false);
+    }
+  };
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -52,6 +87,9 @@ export default function SignInPage() {
     try {
       const response = await authApi.login({email,password});
       if(!response.success){
+        if (response.code === 'EMAIL_NOT_VERIFIED') {
+          setShowResendVerification(true);
+        }
         if(response.message){
           setError(response.message);
         }
@@ -148,6 +186,18 @@ export default function SignInPage() {
         >
           {isLoading ? t.signin.buttons.processing : t.signin.buttons.signin}
         </Button>
+
+        {showResendVerification && (
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full mt-2"
+            disabled={resendLoading}
+            onClick={handleResendVerification}
+          >
+            {resendLoading ? 'Sending...' : 'Resend verification email'}
+          </Button>
+        )}
       </form>
 
       <div className="text-center mt-3 sm:mt-4">

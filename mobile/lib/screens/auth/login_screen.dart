@@ -96,13 +96,7 @@ class _LoginScreenState extends State<LoginScreen> {
               Align(
                 alignment: Alignment.centerRight,
                 child: TextButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Forgot password feature coming soon'),
-                      ),
-                    );
-                  },
+                  onPressed: _showForgotPassword,
                   child: const Text('Forgot Password?'),
                 ),
               ),
@@ -136,6 +130,117 @@ class _LoginScreenState extends State<LoginScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Future<void> _showForgotPassword() async {
+    final emailController = TextEditingController(
+      text: _emailController.text.trim(),
+    );
+    final dialogFormKey = GlobalKey<FormState>();
+    var sending = false;
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Forgot password'),
+              content: Form(
+                key: dialogFormKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Enter your account email. We will send you a link to reset your password.',
+                      style: TextStyle(fontSize: 14, color: Colors.black54),
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: emailController,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: const InputDecoration(
+                        labelText: 'Email',
+                        prefixIcon: Icon(Icons.email_outlined),
+                      ),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Email is required';
+                        }
+                        if (!value.contains('@')) {
+                          return 'Enter a valid email';
+                        }
+                        return null;
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: sending ? null : () => Navigator.pop(ctx),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: sending
+                      ? null
+                      : () async {
+                          if (!dialogFormKey.currentState!.validate()) return;
+                          setDialogState(() => sending = true);
+                          final result = await _apiService.forgotPassword(
+                            emailController.text.trim(),
+                          );
+                          if (!mounted) return;
+                          Navigator.pop(ctx);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                result.success
+                                    ? (result.message ??
+                                        'If an account exists, a reset link was sent to your email.')
+                                    : (result.message ??
+                                        'Failed to send reset email'),
+                              ),
+                              backgroundColor: result.success
+                                  ? AppColors.primary
+                                  : AppColors.error,
+                            ),
+                          );
+                        },
+                  child: sending
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Send link'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    emailController.dispose();
+  }
+
+  Future<void> _showResendVerificationDialog() async {
+    final email = _emailController.text.trim();
+    if (email.isEmpty) return;
+
+    final result = await _apiService.resendVerification(email);
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          result.success
+              ? (result.message ?? 'Verification email sent.')
+              : (result.message ?? 'Could not resend verification email'),
+        ),
+        backgroundColor: result.success ? AppColors.primary : AppColors.error,
       ),
     );
   }
@@ -211,11 +316,14 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       } else {
         String message = 'Invalid email or password';
+        var needsVerification = false;
         try {
           final responseData = response.data;
-          if (responseData is Map<String, dynamic> &&
-              responseData['message'] is String) {
-            message = responseData['message'];
+          if (responseData is Map<String, dynamic>) {
+            if (responseData['message'] is String) {
+              message = responseData['message'];
+            }
+            needsVerification = responseData['code'] == 'EMAIL_NOT_VERIFIED';
           }
         } catch (_) {}
 
@@ -223,6 +331,10 @@ class _LoginScreenState extends State<LoginScreen> {
           _errorMessage = message;
           _isLoading = false;
         });
+
+        if (needsVerification && mounted) {
+          _showResendVerificationDialog();
+        }
       }
     } on DioException catch (e) {
       String message = 'Cannot reach the API server. Start it with: cd server && npm run dev';

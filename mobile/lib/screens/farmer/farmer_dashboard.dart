@@ -120,6 +120,7 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
             farmSize: profile.farmSize,
             tinNumber: profile.tinNumber,
             avatarUrl: profile.avatarUrl,
+            isVerified: profile.isVerified,
           );
         } else if (storedName != null && storedName.isNotEmpty) {
           _profile = UserProfile(
@@ -409,7 +410,10 @@ class _FarmerDashboardState extends State<FarmerDashboard> {
                       },
                     ),
                     const SizedBox(height: 16),
-                    const FarmerVerificationBanner(),
+                    FarmerVerificationBanner(
+                      isVerified: _profile?.isVerified ?? true,
+                      email: _profile?.email,
+                    ),
                     const SizedBox(height: 16),
                     MarketplaceAnalyticsCard(
                       activeListings: _activeListingsCount,

@@ -10,7 +10,7 @@
  import { NextResponse } from 'next/server';
  import type { NextRequest } from 'next/server';
  
- const publicRoutes = ['/signin', '/signup', '/forgot-password', '/'];
+ const publicRoutes = ['/signin', '/signup', '/forgot-password', '/reset-password', '/verify-email', '/'];
  // Define role-based route access
  const roleBasedRoutes = {
    ADMIN: ['/admin', '/admin/dashboard', '/admin/users', '/admin/products', '/admin/analytics'],

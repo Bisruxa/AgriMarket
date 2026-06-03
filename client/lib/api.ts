@@ -8,6 +8,7 @@ export type ApiResponse<T> = {
   success: boolean;
   data?: T;
   message?: string;
+  code?: string;
   user?: {
     id: string;
     name: string;
@@ -72,6 +73,7 @@ class ApiClient {
         return {
           success: false,
           message: data.message || 'Something went wrong',
+          code: data.code,
           errors: data.errors,
         };
       }
@@ -134,6 +136,18 @@ export const authApi = {
 
   login: (data: { email: string; password: string }) =>
     api.post('/auth/login', data),
+
+  forgotPassword: (data: { email: string }) =>
+    api.post('/auth/forgot-password', data),
+
+  resetPassword: (data: { token: string; newPassword: string }) =>
+    api.post('/auth/reset-password', data),
+
+  verifyEmail: (token: string) =>
+    api.post('/auth/verify-email', { token }),
+
+  resendVerification: (data: { email: string }) =>
+    api.post('/auth/resend-verification', data),
 
   getMe: () => api.get('/auth/me'),
 

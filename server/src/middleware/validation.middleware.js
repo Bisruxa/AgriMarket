@@ -56,6 +56,46 @@ exports.loginValidation = [
     .withMessage('Password is required')
 ];
 
+exports.forgotPasswordValidation = [
+  body('email')
+    .trim()
+    .notEmpty()
+    .withMessage('Email is required')
+    .isEmail()
+    .withMessage('Please provide a valid email')
+    .normalizeEmail(),
+];
+
+exports.resetPasswordValidation = [
+  body('token')
+    .trim()
+    .notEmpty()
+    .withMessage('Reset token is required'),
+  body('newPassword')
+    .notEmpty()
+    .withMessage('New password is required')
+    .isLength({ min: 6 })
+    .withMessage('Password must be at least 6 characters'),
+];
+
+exports.verifyEmailValidation = [
+  body('token')
+    .optional()
+    .trim()
+    .notEmpty()
+    .withMessage('Verification token is required'),
+];
+
+exports.resendVerificationValidation = [
+  body('email')
+    .trim()
+    .notEmpty()
+    .withMessage('Email is required')
+    .isEmail()
+    .withMessage('Please provide a valid email')
+    .normalizeEmail(),
+];
+
 // Product validation rules
 exports.productValidation = [
   body('name')

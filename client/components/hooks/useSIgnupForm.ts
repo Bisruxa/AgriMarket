@@ -166,23 +166,17 @@ export const useSignupForm = () => {
         return;
       }
 
-      const isPendingTrader =
-        role === 'TRADER' &&
-        (response.user?.approvalStatus === 'PENDING' || !response.token);
+      const registeredEmail = formData.email?.trim() || '';
+      const verifyQuery = registeredEmail
+        ? `?verify=sent&email=${encodeURIComponent(registeredEmail)}`
+        : '?verify=sent';
 
-      if (isPendingTrader) {
-        router.push('/signin?pending=trader');
+      if (role === 'TRADER' && response.user?.approvalStatus === 'PENDING') {
+        router.push(`/signin${verifyQuery}&pending=trader`);
         return;
       }
 
-      if (response.user && response.token) {
-        login(response.user, response.token);
-      } else if (response.user) {
-        login(response.user);
-      }
-
-      const redirectPath = role === 'FARMER' ? '/farmer/dashboard' : '/trader/dashboard';
-      router.push(redirectPath);
+      router.push(`/signin${verifyQuery}`);
       
     } catch (error) {
       const apiError = error as ApiError;
