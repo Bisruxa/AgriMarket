@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -59,53 +59,3 @@ class CropRecommendation(BaseModel):
 
 class CropRecommendationResponse(BaseModel):
     recommendations: List[CropRecommendation]
-
-
-# ── Shared ────────────────────────────────────────────────────────────────
-
-
-class MetadataResponse(BaseModel):
-    model_type: str
-    model_version: str
-    crops: List[str]
-
-
-class ChatRequest(BaseModel):
-    message: str = Field(..., description="User's message")
-    conversation_history: Optional[List[Dict[str, str]]] = Field(default=[], description="Previous conversation messages")
-    user_id: Optional[str] = Field(default=None, description="User identifier for context")
-    language: str = Field(default="en", description="User's preferred language code (en, am, om, ti)")
-    user_context: Optional[Dict[str, Any]] = Field(default=None, description="User profile and farm context")
-
-
-class FunctionCallInfo(BaseModel):
-    name: str
-    args: Dict[str, Any]
-    result: Optional[Dict[str, Any]] = None
-
-
-class ChatResponse(BaseModel):
-    text: str
-    functionCalls: Optional[List[FunctionCallInfo]] = Field(default=[])
-
-
-# ── Tool Execution ───────────────────────────────────────────────────────
-
-
-class ToolExecutionRequest(BaseModel):
-    name: str = Field(..., description="Tool/function name to execute")
-    args: Dict[str, Any] = Field(default_factory=dict, description="Arguments to pass to the tool")
-
-
-class ToolExecutionResponse(BaseModel):
-    result: Dict[str, Any]
-
-
-class ToolDefinition(BaseModel):
-    name: str
-    description: str
-    parameters: Dict[str, Any]
-
-
-class ToolDefinitionsResponse(BaseModel):
-    tools: List[ToolDefinition]

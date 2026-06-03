@@ -6,6 +6,8 @@ import '../widgets/common/section_title.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/location_picker.dart';
+import '../widgets/registration_location_capture.dart';
+import '../widgets/app_locale_scope.dart';
 import '../utils/ethiopian_phone.dart';
 
 class FarmerSignupScreen extends StatefulWidget {
@@ -29,10 +31,11 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
   String? _errorMessage;
 
   Future<void> _register() async {
+    final l10n = AppLocaleScope.l10nOf(context);
     if (!_formKey.currentState!.validate()) return;
 
     if (_passwordController.text != _confirmPasswordController.text) {
-      setState(() => _errorMessage = 'Passwords do not match');
+      setState(() => _errorMessage = l10n.passwordsDoNotMatch);
       return;
     }
 
@@ -80,12 +83,14 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
 
     setState(() {
       _isLoading = false;
-      _errorMessage = result.message ?? 'Registration failed';
+      _errorMessage = result.message ?? l10n.registrationFailed;
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocaleScope.l10nOf(context);
+
     return AuthShell(
       title: 'Farmer Registration',
       subtitle: 'Create your account — you can add farms later from the dashboard',
@@ -113,20 +118,20 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
                 ),
                 const SizedBox(height: 16),
               ],
-              const SectionTitle(
-                title: 'Personal Information',
-                subtitle: 'Your account details',
+              SectionTitle(
+                title: l10n.personalInformation,
+                subtitle: l10n.accountDetails,
                 icon: Icons.person_outline,
               ),
               CustomTextField(
-                label: 'Full Name',
-                hint: 'Enter your full name',
+                label: l10n.fullName,
+                hint: l10n.enterFullName,
                 controller: _nameController,
                 prefixIcon: Icons.person_outline,
               ),
               CustomTextField(
-                label: 'Email Address',
-                hint: 'Enter your email',
+                label: l10n.emailAddress,
+                hint: l10n.enterEmailAddress,
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 prefixIcon: Icons.email_outlined,
@@ -140,22 +145,22 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
                 validator: (v) => EthiopianPhone.validate(v),
               ),
               CustomTextField(
-                label: 'Password',
-                hint: 'Create a password',
+                label: l10n.password,
+                hint: l10n.createPassword,
                 controller: _passwordController,
                 obscureText: true,
                 prefixIcon: Icons.lock_outline,
               ),
               CustomTextField(
-                label: 'Confirm Password',
-                hint: 'Confirm your password',
+                label: l10n.confirmPassword,
+                hint: l10n.confirmYourPassword,
                 controller: _confirmPasswordController,
                 obscureText: true,
                 prefixIcon: Icons.lock_outline,
               ),
-              const SectionTitle(
-                title: 'Your Location',
-                subtitle: 'Region and woreda',
+              SectionTitle(
+                title: l10n.yourLocation,
+                subtitle: l10n.regionWoreda,
                 icon: Icons.location_on_outlined,
               ),
               LocationPicker(
@@ -173,7 +178,7 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
               ),
               const SizedBox(height: 8),
               CustomButton(
-                text: 'Register as Farmer',
+                text: l10n.registerAsFarmer,
                 isLoading: _isLoading,
                 onPressed: _register,
               ),

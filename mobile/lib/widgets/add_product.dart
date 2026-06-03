@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../models/product_model.dart';
 import '../theme/app_theme.dart';
 import 'custom_button.dart';
+import 'app_locale_scope.dart';
+import '../l10n/app_localizations.dart';
 
 class AddProductDialog extends StatefulWidget {
   final Product? product;
@@ -79,20 +81,23 @@ class _AddProductDialogState extends State<AddProductDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocaleScope.l10nOf(context);
+
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
         constraints: BoxConstraints(
           maxHeight: MediaQuery.of(context).size.height * 0.85,
+          maxWidth: 520,
         ),
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(20),
         child: SingleChildScrollView(
           child: Form(
             key: _formKey,
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Row(
                   children: [
@@ -112,7 +117,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        widget.isEditing ? 'Edit Product' : 'Add New Product',
+                        widget.isEditing ? l10n.editProduct : l10n.addNewProduct,
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
@@ -126,24 +131,26 @@ class _AddProductDialogState extends State<AddProductDialog> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                _buildTextField(_nameController, 'Product Name', true),
+                _buildTextField(_nameController, l10n.productName, true, l10n),
                 _buildTextField(
                   _descriptionController,
-                  'Description',
+                  l10n.description,
                   false,
+                  l10n,
                   maxLines: 2,
                 ),
-                _buildPriceUnitRow(),
-                _buildCategoryStockRow(),
-                _buildTextField(_locationController, 'Location', true),
-                _buildDateField(_harvestDateController, 'Harvest Date', true),
+                _buildPriceUnitRow(l10n),
+                _buildCategoryStockRow(l10n),
+                _buildTextField(_locationController, l10n.location, true, l10n),
+                _buildDateField(_harvestDateController, l10n.harvestDate, true, l10n),
                 _buildDateField(
                   _expiryDateController,
-                  'Expiry Date (optional)',
+                  l10n.expiryDateOptional,
                   false,
+                  l10n,
                 ),
                 SwitchListTile(
-                  title: const Text('Organic product'),
+                  title: Text(l10n.organicProduct),
                   value: _isOrganic,
                   onChanged: (v) => setState(() => _isOrganic = v),
                   activeThumbColor: AppColors.primary,
@@ -151,7 +158,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
                 ),
                 const SizedBox(height: 8),
                 CustomButton(
-                  text: widget.isEditing ? 'Save Changes' : 'Add Product',
+                  text: widget.isEditing ? l10n.saveChanges : l10n.addProduct,
                   isLoading: _isLoading,
                   onPressed: _submitForm,
                 ),
@@ -166,7 +173,8 @@ class _AddProductDialogState extends State<AddProductDialog> {
   Widget _buildTextField(
     TextEditingController controller,
     String label,
-    bool required, {
+    bool required,
+    AppLocalizations l10n, {
     int maxLines = 1,
   }) {
     return Padding(
@@ -176,7 +184,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
         maxLines: maxLines,
         decoration: InputDecoration(labelText: label),
         validator: required
-            ? (v) => v?.isEmpty == true ? '$label is required' : null
+            ? (v) => v?.isEmpty == true ? l10n.fieldIsRequired(label) : null
             : null,
       ),
     );
@@ -186,6 +194,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
     TextEditingController controller,
     String label,
     bool required,
+    AppLocalizations l10n,
   ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -199,7 +208,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
         readOnly: true,
         onTap: () => _selectDate(controller),
         validator: required
-            ? (v) => v?.isEmpty == true ? '$label is required' : null
+            ? (v) => v?.isEmpty == true ? l10n.fieldIsRequired(label) : null
             : null,
       ),
     );
@@ -227,71 +236,107 @@ class _AddProductDialogState extends State<AddProductDialog> {
     }
   }
 
-  Widget _buildPriceUnitRow() {
+  Widget _buildPriceUnitRow(AppLocalizations l10n) {
+    final priceField = TextFormField(
+      controller: _priceController,
+      decoration: InputDecoration(
+        labelText: l10n.price,
+        prefixText: 'ETB ',
+      ),
+      keyboardType: TextInputType.number,
+      validator: (v) {
+        if (v?.isEmpty == true) return l10n.priceRequired;
+        if (double.tryParse(v!) == null) return l10n.invalidPrice;
+        return null;
+      },
+    );
+    final unitField = DropdownButtonFormField(
+      isExpanded: true,
+      value: _unit,
+      decoration: InputDecoration(labelText: l10n.unit),
+      items: _units
+          .map(
+            (u) => DropdownMenuItem(
+              value: u,
+              child: Text(u, overflow: TextOverflow.ellipsis),
+            ),
+          )
+          .toList(),
+      onChanged: (v) => setState(() => _unit = v!),
+    );
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextFormField(
-              controller: _priceController,
-              decoration: const InputDecoration(
-                labelText: 'Price',
-                prefixText: 'ETB ',
-              ),
-              keyboardType: TextInputType.number,
-              validator: (v) {
-                if (v?.isEmpty == true) return 'Price required';
-                if (double.tryParse(v!) == null) return 'Invalid price';
-                return null;
-              },
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: DropdownButtonFormField(
-              value: _unit,
-              decoration: const InputDecoration(labelText: 'Unit'),
-              items: _units
-                  .map((u) => DropdownMenuItem(value: u, child: Text(u)))
-                  .toList(),
-              onChanged: (v) => setState(() => _unit = v!),
-            ),
-          ),
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth < 340) {
+            return Column(
+              children: [
+                priceField,
+                const SizedBox(height: 12),
+                unitField,
+              ],
+            );
+          }
+          return Row(
+            children: [
+              Expanded(child: priceField),
+              const SizedBox(width: 12),
+              Expanded(child: unitField),
+            ],
+          );
+        },
       ),
     );
   }
 
-  Widget _buildCategoryStockRow() {
+  Widget _buildCategoryStockRow(AppLocalizations l10n) {
+    final categoryField = DropdownButtonFormField(
+      isExpanded: true,
+      value: _categories.contains(_category) ? _category : 'VEGETABLES',
+      decoration: InputDecoration(labelText: l10n.category),
+      items: _categories
+          .map(
+            (c) => DropdownMenuItem(
+              value: c,
+              child: Text(c, overflow: TextOverflow.ellipsis),
+            ),
+          )
+          .toList(),
+      onChanged: (v) => setState(() => _category = v!),
+    );
+    final stockField = TextFormField(
+      controller: _stockController,
+      decoration: InputDecoration(labelText: l10n.stock),
+      keyboardType: TextInputType.number,
+      validator: (v) {
+        if (v?.isEmpty == true) return l10n.stockRequired;
+        if (int.tryParse(v!) == null) return l10n.invalidStock;
+        return null;
+      },
+    );
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        children: [
-          Expanded(
-            child: DropdownButtonFormField(
-              value: _categories.contains(_category) ? _category : 'VEGETABLES',
-              decoration: const InputDecoration(labelText: 'Category'),
-              items: _categories
-                  .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                  .toList(),
-              onChanged: (v) => setState(() => _category = v!),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: TextFormField(
-              controller: _stockController,
-              decoration: const InputDecoration(labelText: 'Stock'),
-              keyboardType: TextInputType.number,
-              validator: (v) {
-                if (v?.isEmpty == true) return 'Stock required';
-                if (int.tryParse(v!) == null) return 'Invalid stock';
-                return null;
-              },
-            ),
-          ),
-        ],
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth < 340) {
+            return Column(
+              children: [
+                categoryField,
+                const SizedBox(height: 12),
+                stockField,
+              ],
+            );
+          }
+          return Row(
+            children: [
+              Expanded(child: categoryField),
+              const SizedBox(width: 12),
+              Expanded(child: stockField),
+            ],
+          );
+        },
       ),
     );
   }

@@ -9,6 +9,7 @@ import 'package:agrimatketapp/screens/auth/signup_screen.dart';
 import 'package:agrimatketapp/theme/app_theme.dart';
 import 'package:agrimatketapp/widgets/common/auth_shell.dart';
 import 'package:agrimatketapp/widgets/custom_button.dart';
+import 'package:agrimatketapp/widgets/app_locale_scope.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -28,9 +29,11 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocaleScope.l10nOf(context);
+
     return AuthShell(
-      title: 'Welcome Back',
-      subtitle: 'Sign in to your AgriMarket account',
+      title: l10n.welcomeBack,
+      subtitle: l10n.signInSubtitle,
       showBackButton: false,
       imagePath: 'assets/images/welcome.png',
       heroIcon: Icons.agriculture_rounded,
@@ -50,9 +53,9 @@ class _LoginScreenState extends State<LoginScreen> {
               TextFormField(
                 controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  prefixIcon: Icon(Icons.email_outlined),
+                decoration: InputDecoration(
+                  labelText: l10n.email,
+                  prefixIcon: const Icon(Icons.email_outlined),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -69,7 +72,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 controller: _passwordController,
                 obscureText: _obscurePassword,
                 decoration: InputDecoration(
-                  labelText: 'Password',
+                  labelText: l10n.password,
                   prefixIcon: const Icon(Icons.lock_outline),
                   suffixIcon: IconButton(
                     icon: Icon(
@@ -102,7 +105,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 8),
               CustomButton(
-                text: 'Login',
+                text: l10n.login,
                 isLoading: _isLoading,
                 onPressed: () => _handleLogin(context),
               ),
@@ -111,14 +114,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    "Don't have an account? ",
+                    l10n.noAccount,
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   GestureDetector(
                     onTap: () => _navigateToSignUp(context),
-                    child: const Text(
-                      'Sign Up',
-                      style: TextStyle(
+                    child: Text(
+                      l10n.signUp,
+                      style: const TextStyle(
                         fontWeight: FontWeight.w600,
                         color: AppColors.primary,
                         fontSize: 15,
@@ -299,13 +302,14 @@ class _LoginScreenState extends State<LoginScreen> {
                 (user?['role'] ?? responseData['role'] ?? '').toString();
             final role = roleRaw.toLowerCase().trim();
             final isTrader = role == 'trader' || role.contains('trader');
-            Navigator.pushReplacement(
+            Navigator.pushAndRemoveUntil(
               context,
               MaterialPageRoute(
                 builder: (context) => isTrader
                     ? const TraderDashboard()
                     : const FarmerDashboard(),
               ),
+              (route) => false,
             );
           }
         } else {

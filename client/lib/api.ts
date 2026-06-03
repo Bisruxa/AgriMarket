@@ -313,8 +313,8 @@ export const chatApi = {
   getChat: (id: string) => api.get(`/chat/${id}`),
   createChat: (title?: string) => api.post('/chat', { title: title || 'New Chat' }),
   deleteChat: (id: string) => api.delete(`/chat/${id}`),
-  sendMessage: (chatId: string, content: string) =>
-    api.post(`/chat/${chatId}/messages`, { content }),
+  sendMessage: (chatId: string, content: string, language?: string) =>
+    api.post(`/chat/${chatId}/messages`, { content, language }),
   appendMessage: (chatId: string, role: string, content: string) =>
     api.post(`/chat/${chatId}/messages/append`, { role, content }),
 };

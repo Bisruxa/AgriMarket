@@ -6,6 +6,9 @@ import '../../services/api_service.dart';
 import '../../theme/app_theme.dart';
 import '../../utils/notification_labels.dart';
 import '../../widgets/common/app_bottom_nav.dart';
+import '../../widgets/app_locale_scope.dart';
+import '../../widgets/language_toggle.dart';
+import '../../widgets/profile_details_card.dart';
 import '../../widgets/welcome_card.dart';
 import '../../widgets/farmer_info_popup.dart';
 import 'trader_products_screen.dart';
@@ -158,13 +161,15 @@ class _TraderDashboardState extends State<TraderDashboard> {
       bottomNavigationBar: AppBottomNav(
         currentIndex: _safeSelectedIndex,
         onTap: (index) => setState(() => _selectedIndex = index),
-        items: _navItems,
+        items: _navItems(context),
         selectedColor: AppColors.traderAccent,
       ),
     );
   }
 
   Widget _buildHomeTab() {
+    final l10n = AppLocaleScope.l10nOf(context);
+
     return SafeArea(
       child: CustomScrollView(
         slivers: [
@@ -172,14 +177,19 @@ class _TraderDashboardState extends State<TraderDashboard> {
             child: Padding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'Trader Hub',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          fontSize: 26,
-                        ),
+                  Expanded(
+                    child: Text(
+                      l10n.traderHub,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                            fontSize: 26,
+                          ),
+                    ),
                   ),
+                  const LanguageToggle(),
+                  const SizedBox(width: 8),
                   IconButton(
                     onPressed: _showNotifications,
                     style: IconButton.styleFrom(

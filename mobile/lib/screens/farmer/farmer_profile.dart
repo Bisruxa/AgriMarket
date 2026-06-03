@@ -7,6 +7,8 @@ import '../../utils/logout_helper.dart';
 import '../../widgets/custom_button.dart';
 import '../../widgets/custom_text_field.dart';
 import '../../widgets/profile_details_card.dart';
+import '../../widgets/app_locale_scope.dart';
+import '../../widgets/language_toggle.dart';
 import 'crop_recommendation.dart';
 import 'farms_screen.dart';
 import 'price_forecast_screen.dart';
@@ -135,21 +137,30 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocaleScope.l10nOf(context);
+
     return Scaffold(
       backgroundColor: AppColors.surface,
       appBar: AppBar(
-        title: const Text('Profile'),
+        automaticallyImplyLeading: false,
+        title: Text(l10n.profile),
         backgroundColor: AppColors.surface,
         elevation: 0,
         foregroundColor: AppColors.textPrimary,
+        actions: const [
+          Padding(
+            padding: EdgeInsets.only(right: 8),
+            child: LanguageToggle(),
+          ),
+        ],
         bottom: TabBar(
           controller: _tabController,
           labelColor: AppColors.primary,
           unselectedLabelColor: AppColors.textSecondary,
           indicatorColor: AppColors.primary,
-          tabs: const [
-            Tab(text: 'Account'),
-            Tab(text: 'Password'),
+          tabs: [
+            Tab(text: l10n.account),
+            Tab(text: l10n.password),
           ],
         ),
       ),
@@ -170,6 +181,8 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
   }
 
   Widget _buildErrorState() {
+    final l10n = AppLocaleScope.l10nOf(context);
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -179,13 +192,13 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
             const Icon(Icons.error_outline_rounded, size: 48, color: AppColors.textSecondary),
             const SizedBox(height: 16),
             Text(
-              'Could not load your profile',
+              l10n.couldNotLoadProfile,
               style: Theme.of(context).textTheme.titleMedium,
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
             CustomButton(
-              text: 'Try Again',
+              text: l10n.tryAgain,
               onPressed: _loadProfile,
             ),
           ],
@@ -195,6 +208,7 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
   }
 
   Widget _buildAccountTab() {
+    final l10n = AppLocaleScope.l10nOf(context);
     final profile = _profile!;
 
     return RefreshIndicator(
@@ -254,7 +268,7 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
           ProfileDetailsCard(profile: profile),
           const SizedBox(height: 24),
           Text(
-            'Edit details',
+            l10n.editDetails,
             style: Theme.of(context).textTheme.titleMedium,
           ),
           const SizedBox(height: 12),
@@ -263,8 +277,8 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
             child: Column(
               children: [
                 CustomTextField(
-                  label: 'Full name',
-                  hint: 'Your name',
+                  label: l10n.fullName,
+                  hint: l10n.fullName,
                   controller: _nameController,
                   prefixIcon: Icons.person_outline_rounded,
                   validator: (v) {
@@ -284,7 +298,7 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
                 ),
                 const SizedBox(height: 8),
                 CustomButton(
-                  text: 'Save changes',
+                  text: l10n.saveChanges,
                   isLoading: _isSavingProfile,
                   onPressed: _saveProfile,
                 ),
@@ -297,6 +311,8 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
   }
 
   Widget _buildPasswordTab() {
+    final l10n = AppLocaleScope.l10nOf(context);
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       children: [
@@ -323,7 +339,7 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Password',
+                      l10n.password,
                       style: Theme.of(context).textTheme.titleSmall,
                     ),
                     const SizedBox(height: 2),
@@ -341,7 +357,7 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
         ),
         const SizedBox(height: 8),
         Text(
-          'Update your password to keep your account secure.',
+          l10n.updatePasswordHint,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: AppColors.textSecondary,
               ),
@@ -352,8 +368,8 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
           child: Column(
             children: [
               CustomTextField(
-                label: 'Current password',
-                hint: 'Enter current password',
+                label: l10n.currentPassword,
+                hint: l10n.currentPassword,
                 controller: _currentPasswordController,
                 obscureText: true,
                 prefixIcon: Icons.lock_outline_rounded,
@@ -365,8 +381,8 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
                 },
               ),
               CustomTextField(
-                label: 'New password',
-                hint: 'At least 6 characters',
+                label: l10n.newPassword,
+                hint: l10n.newPassword,
                 controller: _newPasswordController,
                 obscureText: true,
                 prefixIcon: Icons.lock_rounded,
@@ -378,8 +394,8 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
                 },
               ),
               CustomTextField(
-                label: 'Confirm new password',
-                hint: 'Re-enter new password',
+                label: l10n.confirmNewPassword,
+                hint: l10n.confirmNewPassword,
                 controller: _confirmPasswordController,
                 obscureText: true,
                 prefixIcon: Icons.lock_rounded,
@@ -392,14 +408,14 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
               ),
               const SizedBox(height: 8),
               CustomButton(
-                text: 'Update password',
+                text: l10n.updatePassword,
                 isLoading: _isSavingPassword,
                 onPressed: _changePassword,
               ),
               const SizedBox(height: 24),
               ListTile(
                 leading: const Icon(Icons.agriculture_rounded, color: AppColors.primary),
-                title: const Text('My Farms'),
+                title: Text(l10n.myFarms),
                 trailing: const Icon(Icons.chevron_right_rounded),
                 onTap: () {
                   Navigator.push(
@@ -410,7 +426,7 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
               ),
               ListTile(
                 leading: const Icon(Icons.eco_rounded, color: AppColors.primary),
-                title: const Text('Crop recommendation'),
+                title: Text(l10n.cropRecommendation),
                 trailing: const Icon(Icons.chevron_right_rounded),
                 onTap: () {
                   Navigator.push(
@@ -437,7 +453,7 @@ class _FarmerProfileScreenState extends State<FarmerProfileScreen>
               const Divider(),
               ListTile(
                 leading: const Icon(Icons.delete_forever_rounded, color: Colors.red),
-                title: const Text('Delete account', style: TextStyle(color: Colors.red)),
+                title: Text(l10n.deleteAccount, style: const TextStyle(color: Colors.red)),
                 onTap: _confirmDeleteAccount,
               ),
             ],

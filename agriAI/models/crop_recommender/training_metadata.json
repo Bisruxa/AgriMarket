@@ -1,6 +1,6 @@
 {
   "model_type": "xgboost_pipeline",
-  "data_path": "agriAI/data/processed/crop_recommendation_dataset.csv",
+  "data_path": "data/processed/crop_recommendation_dataset.csv",
   "features": [
     "nitrogen",
     "phosphorus",
