@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/location_model.dart';
+import '../widgets/app_locale_scope.dart';
 
 class LocationPicker extends StatelessWidget {
   final String? selectedRegion;
@@ -26,41 +27,48 @@ class LocationPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocaleScope.l10nOf(context);
+
     return Column(
       children: [
-        // Region Dropdown
         DropdownButtonFormField<String>(
-          initialValue: selectedRegion,
-          hint: const Text('Select Region'),
+          isExpanded: true,
+          value: selectedRegion,
+          hint: Text(l10n.selectRegion),
           items: ethiopianRegions.map((region) {
             return DropdownMenuItem(
               value: region.name,
-              child: Text(region.name),
+              child: Text(
+                region.name,
+                overflow: TextOverflow.ellipsis,
+              ),
             );
           }).toList(),
           onChanged: onRegionChanged,
           decoration: InputDecoration(
-            labelText: 'Region',
+            labelText: l10n.region,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
             ),
           ),
         ),
         const SizedBox(height: 12),
-        
-        // Woreda Dropdown
         DropdownButtonFormField<String>(
-          initialValue: selectedWoreda,
-          hint: const Text('Select Woreda'),
+          isExpanded: true,
+          value: selectedWoreda,
+          hint: Text(l10n.selectWoreda),
           items: woredasForSelectedRegion.map((woreda) {
             return DropdownMenuItem(
               value: woreda,
-              child: Text(woreda),
+              child: Text(
+                woreda,
+                overflow: TextOverflow.ellipsis,
+              ),
             );
           }).toList(),
           onChanged: selectedRegion != null ? onWoredaChanged : null,
           decoration: InputDecoration(
-            labelText: 'Woreda',
+            labelText: l10n.woreda,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
             ),

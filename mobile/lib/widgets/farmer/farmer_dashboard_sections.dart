@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 
 import '../../constants/app_assets.dart';
 import '../../theme/app_theme.dart';
+import '../app_locale_scope.dart';
 
 class FarmerVerificationBanner extends StatelessWidget {
   const FarmerVerificationBanner({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocaleScope.l10nOf(context);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
@@ -17,8 +20,11 @@ class FarmerVerificationBanner extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
+            flex: 2,
             child: Text(
-              'Account Verification Status',
+              l10n.accountVerificationStatus,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: Colors.white.withValues(alpha: 0.95),
                 fontSize: 13,
@@ -26,19 +32,32 @@ class FarmerVerificationBanner extends StatelessWidget {
               ),
             ),
           ),
-          const Text(
-            'Status: Verified Account',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
+          const SizedBox(width: 8),
+          Flexible(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Text(
+                    l10n.verifiedAccount,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.end,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Icon(
+                  Icons.verified_rounded,
+                  color: Colors.lightGreenAccent.shade400,
+                  size: 20,
+                ),
+              ],
             ),
-          ),
-          const SizedBox(width: 6),
-          Icon(
-            Icons.verified_rounded,
-            color: Colors.lightGreenAccent.shade400,
-            size: 20,
           ),
         ],
       ),
@@ -60,6 +79,8 @@ class MarketplaceAnalyticsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocaleScope.l10nOf(context);
+
     return _DashboardCard(
       title: 'Marketplace Analytics',
       subtitle: 'My listings',
@@ -71,14 +92,14 @@ class MarketplaceAnalyticsCard extends StatelessWidget {
               Expanded(
                 child: _AnalyticsTile(
                   value: '$totalProducts',
-                  label: 'Total products',
+                  label: l10n.totalProducts,
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: _AnalyticsTile(
                   value: '$soldOut',
-                  label: 'Sold out',
+                  label: l10n.soldOut,
                 ),
               ),
             ],
@@ -89,7 +110,7 @@ class MarketplaceAnalyticsCard extends StatelessWidget {
               Expanded(
                 child: _AnalyticsTile(
                   value: '$activeListings',
-                  label: 'Active listings',
+                  label: l10n.activeListings,
                 ),
               ),
               const SizedBox(width: 10),
@@ -97,7 +118,7 @@ class MarketplaceAnalyticsCard extends StatelessWidget {
                 child: _AnalyticsTile(
                   value:
                       '${(totalProducts - activeListings - soldOut).clamp(0, 999)}',
-                  label: 'Other',
+                  label: l10n.other,
                 ),
               ),
             ],
@@ -135,6 +156,7 @@ class CommodityTickerCard extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
+    final l10n = AppLocaleScope.l10nOf(context);
     final tickerItems = items
         .map(
           (e) => _Commodity(
@@ -148,10 +170,12 @@ class CommodityTickerCard extends StatelessWidget {
         .toList();
 
     return _DashboardCard(
-      title: 'Commodity Ticker',
-      trailing: const Text(
-        '(market avg)',
-        style: TextStyle(
+      title: l10n.commodityTicker,
+      trailing: Text(
+        l10n.marketAvg,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(
           fontSize: 12,
           color: AppColors.textSecondary,
           fontWeight: FontWeight.w500,
@@ -198,6 +222,8 @@ class AiCropRecommendationsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocaleScope.l10nOf(context);
+
     return _DashboardCard(
       title: 'AI Crop Recommendations',
       subtitle: 'Top for $region',
@@ -222,14 +248,15 @@ class AiCropRecommendationsCard extends StatelessWidget {
                   height: 1.45,
                 ),
                 children: [
-                  const TextSpan(text: 'Featured crop: '),
+                  TextSpan(text: l10n.featuredCrop),
                   TextSpan(
                     text: cropName,
                     style: const TextStyle(fontWeight: FontWeight.w700),
                   ),
                   if (score != null)
                     TextSpan(
-                      text: ' (profitability score ${score!.toStringAsFixed(0)})',
+                      text:
+                          ' (${l10n.profitabilityScore} ${score!.toStringAsFixed(0)})',
                     ),
                 ],
               ),
@@ -269,18 +296,27 @@ class ActiveListingsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocaleScope.l10nOf(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              'My Active Listings',
-              style: Theme.of(context).textTheme.titleLarge,
+            Expanded(
+              child: Text(
+                l10n.myActiveListings,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
             ),
             if (onViewAll != null)
-              TextButton(onPressed: onViewAll, child: const Text('View All')),
+              TextButton(
+                onPressed: onViewAll,
+                child: Text(l10n.viewAll),
+              ),
           ],
         ),
         const SizedBox(height: 12),
@@ -289,11 +325,11 @@ class ActiveListingsSection extends StatelessWidget {
             const gap = 12.0;
             final count = listings.length;
             if (count == 0) {
-              return const Padding(
-                padding: EdgeInsets.symmetric(vertical: 8),
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
                 child: Text(
-                  'No active listings. Add products in Market.',
-                  style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                  l10n.noActiveListings,
+                  style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
                 ),
               );
             }
@@ -375,7 +411,7 @@ class _DashboardCard extends StatelessWidget {
                   ],
                 ),
               ),
-              if (trailing != null) trailing!,
+              if (trailing != null) Flexible(child: trailing!),
             ],
           ),
           if (headerImage != null) ...[
@@ -430,6 +466,8 @@ class _AnalyticsTile extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontSize: 12,
               color: AppColors.textSecondary,

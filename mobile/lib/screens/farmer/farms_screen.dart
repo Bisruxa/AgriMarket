@@ -162,7 +162,7 @@ class _FarmsScreenState extends State<FarmsScreen> {
                 hasScrollBody: false,
                 child: _EmptyState(
                   icon: Icons.error_outline_rounded,
-                  message: _error!,
+                  title: _error!,
                   actionLabel: 'Retry',
                   onAction: _loadFarms,
                 ),
@@ -172,7 +172,9 @@ class _FarmsScreenState extends State<FarmsScreen> {
                 hasScrollBody: false,
                 child: _EmptyState(
                   icon: Icons.agriculture_outlined,
-                  message: 'No farms have been registered.',
+                  title: 'No farms registered yet',
+                  subtitle:
+                      'Add your first farm to manage land details and get crop recommendations.',
                   actionLabel: 'Add Farm',
                   onAction: _openAddFarm,
                 ),
@@ -202,13 +204,15 @@ class _FarmsScreenState extends State<FarmsScreen> {
 
 class _EmptyState extends StatelessWidget {
   final IconData icon;
-  final String message;
+  final String title;
+  final String? subtitle;
   final String actionLabel;
   final VoidCallback onAction;
 
   const _EmptyState({
     required this.icon,
-    required this.message,
+    required this.title,
+    this.subtitle,
     required this.actionLabel,
     required this.onAction,
   });
@@ -217,24 +221,32 @@ class _EmptyState extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.symmetric(horizontal: 40),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 48, color: AppColors.textSecondary.withValues(alpha: 0.5)),
+            Icon(
+              icon,
+              size: 72,
+              color: AppColors.textSecondary.withValues(alpha: 0.5),
+            ),
             const SizedBox(height: 16),
             Text(
-              message,
+              title,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.textSecondary),
+              style: Theme.of(context).textTheme.titleLarge,
             ),
-            const SizedBox(height: 20),
-            OutlinedButton(
-              onPressed: onAction,
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.primary,
-                side: const BorderSide(color: AppColors.primary),
+            if (subtitle != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                subtitle!,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium,
               ),
+            ],
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: onAction,
               child: Text(actionLabel),
             ),
           ],

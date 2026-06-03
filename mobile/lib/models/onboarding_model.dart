@@ -1,3 +1,5 @@
+import '../l10n/app_localizations.dart';
+
 class OnboardingPageData {
   final String title;
   final String description;
@@ -13,26 +15,24 @@ class OnboardingPageData {
     this.isLottie = false,
   });
 }
- List<OnboardingPageData> onboardingPages = [
+
+List<OnboardingPageData> onboardingPages(AppLocalizations l10n) => [
   OnboardingPageData(
-    title: 'Welcome to AgriMarket',
-    description: 'Your smart farming assistant for better yields and profits',
+    title: l10n.onboardingWelcomeTitle,
+    description: l10n.onboardingWelcomeDescription,
     imagePath: 'assets/lotties/welcome.json',
-    isLastPage: false,
     isLottie: true,
   ),
   OnboardingPageData(
-    title: 'AI-Powered Insights',
-    description: 'Get personalized crop recommendations and market forecasts',
+    title: l10n.onboardingAiTitle,
+    description: l10n.onboardingAiDescription,
     imagePath: 'assets/lotties/Farmers.json',
-    isLastPage: false,
     isLottie: true,
   ),
   OnboardingPageData(
-    title: 'Connect & Grow',
-    description: 'Directly connect with verified traders and maximize your profits',
+    title: l10n.onboardingConnectTitle,
+    description: l10n.onboardingConnectDescription,
     imagePath: 'assets/images/connect.png',
     isLastPage: true,
-    isLottie: false,
   ),
 ];

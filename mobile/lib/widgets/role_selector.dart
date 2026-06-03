@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/user_model.dart';
 import '../theme/app_theme.dart';
+import 'app_locale_scope.dart';
 
 class RoleSelector extends StatelessWidget {
   final UserRole selectedRole;
@@ -14,6 +15,8 @@ class RoleSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocaleScope.l10nOf(context);
+
     return Column(
       children: [
         _RoleCard(
@@ -21,8 +24,8 @@ class RoleSelector extends StatelessWidget {
           selectedRole: selectedRole,
           onTap: onRoleSelected,
           icon: Icons.agriculture_rounded,
-          label: 'Farmer',
-          description: 'Sell crops, get AI recommendations',
+          label: l10n.farmerRoleTitle,
+          description: l10n.farmerRoleDesc,
           gradient: AppColors.primaryGradient,
         ),
         const SizedBox(height: 14),
@@ -31,8 +34,8 @@ class RoleSelector extends StatelessWidget {
           selectedRole: selectedRole,
           onTap: onRoleSelected,
           icon: Icons.storefront_rounded,
-          label: 'Trader',
-          description: 'Buy from farmers, manage orders',
+          label: l10n.traderRoleTitle,
+          description: l10n.traderRoleDesc,
           gradient: AppColors.traderGradient,
         ),
       ],

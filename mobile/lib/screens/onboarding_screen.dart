@@ -4,6 +4,8 @@ import '../models/onboarding_model.dart';
 import '../widgets/onboarding_page.dart';
 import '../widgets/page_indicator.dart';
 import '../widgets/custom_button.dart';
+import '../widgets/app_locale_scope.dart';
+import '../widgets/language_toggle.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -18,23 +20,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final localeService = AppLocaleScope.serviceOf(context);
+    final l10n = localeService.l10n;
+    final pages = onboardingPages(l10n);
+
     return Scaffold(
       body: SafeArea(
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              padding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  if (_currentPage < onboardingPages.length - 1)
+                  const LanguageToggle(),
+                  if (_currentPage < pages.length - 1)
                     TextButton(
                       onPressed: () {
-                        _pageController.jumpToPage(onboardingPages.length - 1);
+                        _pageController.jumpToPage(pages.length - 1);
                       },
-                      child: const Text(
-                        'Skip',
-                        style: TextStyle(
+                      child: Text(
+                        l10n.skip,
+                        style: const TextStyle(
                           color: Color(0xFF2A5A2A),
                           fontWeight: FontWeight.w600,
                         ),
@@ -51,9 +58,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     _currentPage = page;
                   });
                 },
-                itemCount: onboardingPages.length,
+                itemCount: pages.length,
                 itemBuilder: (context, index) {
-                  final page = onboardingPages[index];
+                  final page = pages[index];
                   return OnboardingPage(
                     title: page.title,
                     description: page.description,
@@ -66,23 +73,30 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
             PageIndicator(
               currentPage: _currentPage,
-              totalPages: onboardingPages.length,
+              totalPages: pages.length,
             ),
-            const SizedBox(height: 30),
-            if (_currentPage == onboardingPages.length - 1)
+            const SizedBox(height: 16),
+            if (_currentPage == pages.length - 1)
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
                   children: [
                     CustomButton(
-                      text: 'Get Started',
+                      text: l10n.getStarted,
+                      textColor: Colors.black,
                       onPressed: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context)=>const LoginScreen()));
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const LoginScreen(),
+                          ),
+                        );
                       },
                     ),
                     const SizedBox(height: 12),
                     CustomButton(
-                      text: 'Create Account',
+                      text: l10n.createAccount,
+                      textColor: Colors.black,
                       onPressed: () {
                         Navigator.pushNamed(context, '/signup');
                       },
@@ -90,13 +104,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                   ],
                 ),
-              )
-            else
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),       
               ),
-
-            const SizedBox(height: 40),
+            const SizedBox(height: 24),
           ],
         ),
       ),

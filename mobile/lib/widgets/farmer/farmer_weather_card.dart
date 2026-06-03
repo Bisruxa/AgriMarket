@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../constants/app_assets.dart';
 import '../../models/weather_model.dart';
+import '../../l10n/app_localizations.dart';
+import '../app_locale_scope.dart';
 
 String _formatCurrentDate(DateTime date) {
   const weekdays = [
@@ -30,10 +32,10 @@ String _formatCurrentDate(DateTime date) {
   return '${weekdays[date.weekday - 1]}, ${months[date.month - 1]} ${date.day}, ${date.year}';
 }
 
-List<String> _forecastDayLabels(DateTime today) {
+List<String> _forecastDayLabels(DateTime today, AppLocalizations l10n) {
   const shortDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   return [
-    'Today',
+    l10n.today,
     shortDays[today.add(const Duration(days: 1)).weekday - 1],
     shortDays[today.add(const Duration(days: 2)).weekday - 1],
   ];
@@ -69,7 +71,8 @@ class FarmerWeatherCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dayLabels = _forecastDayLabels(DateTime.now());
+    final l10n = AppLocaleScope.l10nOf(context);
+    final dayLabels = _forecastDayLabels(DateTime.now(), l10n);
     final daily = forecast?.daily ?? [];
     final currentTemp = forecast?.currentTempC;
 
@@ -89,13 +92,13 @@ class FarmerWeatherCard extends StatelessWidget {
       );
     }
 
-    String seasonalAlert = 'Check field conditions for the week ahead.';
+    String seasonalAlert = l10n.checkFieldConditions;
     if (daily.isNotEmpty) {
       final maxRain = daily
           .map((d) => (d['precipitationSumMm'] as num?)?.toDouble() ?? 0)
           .fold<double>(0, (a, b) => a > b ? a : b);
       if (maxRain >= 40) {
-        seasonalAlert = 'Heavy rain expected — plan field work accordingly.';
+        seasonalAlert = l10n.heavyRainExpected;
       }
     }
     if (forecast?.farmName != null) {
@@ -148,7 +151,9 @@ class FarmerWeatherCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Hello, $greetingName!',
+            '${l10n.hello}, $greetingName!',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               color: Colors.white,
               fontSize: 20,
@@ -262,6 +267,8 @@ class _ForecastDay extends StatelessWidget {
         ),
         Text(
           detail,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
           style: TextStyle(
             color: Colors.white.withValues(alpha: 0.85),
             fontSize: 11,

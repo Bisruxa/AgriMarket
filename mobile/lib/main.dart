@@ -12,8 +12,12 @@ import 'screens/onboarding_screen.dart';
 import 'screens/auth/signup_screen.dart';
 import 'screens/farmer_signup_screen.dart';
 import 'screens/trader_signup_screen.dart';
+import 'services/locale_service.dart';
+import 'widgets/app_locale_scope.dart';
 
-void main() {
+late final LocaleService localeService;
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   FlutterError.onError = (details) {
     FlutterError.presentError(details);
@@ -21,6 +25,8 @@ void main() {
       debugPrint('FlutterError: ${details.exceptionAsString()}');
     }
   };
+  localeService = LocaleService();
+  await localeService.load();
   runApp(const MyApp());
 }
 
@@ -29,24 +35,32 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'AgriMarket',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
-      routes: {
-        '/onboarding': (context) => const OnboardingScreen(),
-        '/signup': (context) => const SignupScreen(),
-        '/farmer-signup': (context) => const FarmerSignupScreen(),
-        '/trader-signup': (context) => const TraderSignupScreen(),
-        '/login': (context) => const LoginScreen(),
-        '/farmer-dashboard': (context) => const FarmerDashboard(),
-        '/farmer-chat': (context) => const AgriChatScreen(),
-        '/farmer-farms': (context) => const FarmsScreen(),
-        '/farmer-crops': (context) => const CropRecommendation(),
-        '/farmer-profile': (context) => const FarmerProfileScreen(),
-        '/trader-dashboard': (context) => const TraderDashboard(),
-      },
-      home: const OnboardingScreen(),
+    return AppLocaleScope(
+      localeService: localeService,
+      child: ListenableBuilder(
+        listenable: localeService,
+        builder: (context, _) {
+          return MaterialApp(
+            title: 'AgriMarket',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.light,
+            routes: {
+              '/onboarding': (context) => const OnboardingScreen(),
+              '/signup': (context) => const SignupScreen(),
+              '/farmer-signup': (context) => const FarmerSignupScreen(),
+              '/trader-signup': (context) => const TraderSignupScreen(),
+              '/login': (context) => const LoginScreen(),
+              '/farmer-dashboard': (context) => const FarmerDashboard(),
+              '/farmer-chat': (context) => const AgriChatScreen(),
+              '/farmer-farms': (context) => const FarmsScreen(),
+              '/farmer-crops': (context) => const CropRecommendation(),
+              '/farmer-profile': (context) => const FarmerProfileScreen(),
+              '/trader-dashboard': (context) => const TraderDashboard(),
+            },
+            home: const OnboardingScreen(),
+          );
+        },
+      ),
     );
   }
 }
