@@ -1,0 +1,9 @@
+{
+  "maintenanceMode": true,
+  "allowTraderSelfRegistration": true,
+  "emailNotificationsEnabled": true,
+  "aiForecastEnabled": true,
+  "maxProductsPerFarmer": 100,
+  "defaultMarketRegion": "Oromia",
+  "updatedAt": "2026-06-03T22:23:43.530Z"
+}

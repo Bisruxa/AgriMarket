@@ -1,5 +1,6 @@
 const { prisma } = require('../config/db');
 const notificationService = require('./notifications.service');
+const adminConfigService = require('./adminConfig.service');
 
 const createError = (message, statusCode) => {
   const error = new Error(message);
@@ -321,11 +322,84 @@ const getTraderDetails = async (userId) => {
   return trader;
 };
 
+const getSystemHealth = async () => {
+  const started = Date.now();
+  let dbConnected = false;
+  let dbLatencyMs = null;
+
+  try {
+    const t0 = Date.now();
+    await prisma.$queryRaw`SELECT 1`;
+    dbConnected = true;
+    dbLatencyMs = Date.now() - t0;
+  } catch {
+    dbConnected = false;
+  }
+
+  const [pendingTraders, totalUsers, totalProducts] = await Promise.all([
+    prisma.user.count({
+      where: { role: 'TRADER', approvalStatus: 'PENDING', deletedAt: null },
+    }),
+    prisma.user.count({ where: { deletedAt: null } }),
+    prisma.product.count({ where: { isAvailable: true } }),
+  ]);
+
+  const memory = process.memoryUsage();
+  const heapUsedMb = Number((memory.heapUsed / 1024 / 1024).toFixed(1));
+  const heapTotalMb = Number((memory.heapTotal / 1024 / 1024).toFixed(1));
+  const rssMb = Number((memory.rss / 1024 / 1024).toFixed(1));
+
+  const healthChecks = [
+    { name: 'database', ok: dbConnected, detail: dbConnected ? 'Connected' : 'Unavailable' },
+    { name: 'memory', ok: heapUsedMb < 900, detail: `${heapUsedMb} MB used` },
+  ];
+  const healthyCount = healthChecks.filter((c) => c.ok).length;
+  const healthScore = Math.round((healthyCount / healthChecks.length) * 100);
+
+  return {
+    status: healthScore >= 80 ? 'healthy' : 'degraded',
+    healthScore,
+    generatedAt: new Date().toISOString(),
+    process: {
+      uptimeSeconds: Math.round(process.uptime()),
+      nodeVersion: process.version,
+      pid: process.pid,
+      memory: {
+        heapUsedMb,
+        heapTotalMb,
+        rssMb,
+      },
+    },
+    database: {
+      connected: dbConnected,
+      latencyMs: dbLatencyMs,
+    },
+    operational: {
+      pendingTraders,
+      activeUsers: totalUsers,
+      activeProducts: totalProducts,
+    },
+    checks: healthChecks,
+    requestDurationMs: Date.now() - started,
+  };
+};
+
+const getSystemSettings = async () => {
+  return adminConfigService.getSettings();
+};
+
+const updateSystemSettings = async (payload) => {
+  return adminConfigService.updateSettings(payload);
+};
+
 module.exports = {
   getAllUsers,
   getPendingTraders,
   approveTrader,
   rejectTrader,
   getStatistics,
-  getTraderDetails
+  getTraderDetails,
+  getSystemHealth,
+  getSystemSettings,
+  updateSystemSettings,
 };
