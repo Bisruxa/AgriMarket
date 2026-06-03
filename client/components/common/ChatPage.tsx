@@ -291,7 +291,7 @@ export default function ChatPage() {
     setIsLoading(true);
 
     try {
-      const json = await chatApi.sendMessage(chatId, content);
+      const json = await chatApi.sendMessage(chatId, content, language);
 
       setIsLoading(false);
 

@@ -188,21 +188,27 @@ async function sendMessage({ message, conversationHistory = [], language = 'en',
   } catch (err) {
     console.error('[Gemini Service Error]', err.message);
 
-    const client2 = getClient();
-    try {
-      const fallback = await client2.models.generateContent({
-        model: FALLBACK_MODEL,
-        contents: `The user asked: '${message}'. Respond helpfully as an Ethiopian agricultural assistant. Be concise and warm.`,
-        config: {
-          systemInstruction: 'You are an expert Ethiopian agricultural assistant. Answer helpfully and simply.',
-        },
-      });
-      const fallbackText = fallback.text || '';
-      if (fallbackText) return { text: fallbackText, functionCalls: [] };
-    } catch (_) {}
+    const isQuota = err.message && (err.message.includes('429') || err.message.includes('quota') || err.message.includes('RESOURCE_EXHAUSTED'));
+
+    if (!isQuota) {
+      try {
+        const client2 = getClient();
+        const fallback = await client2.models.generateContent({
+          model: FALLBACK_MODEL,
+          contents: `The user asked: '${message}'. Respond helpfully as an Ethiopian agricultural assistant. Be concise and warm.`,
+          config: {
+            systemInstruction: 'You are an expert Ethiopian agricultural assistant. Answer helpfully and simply.',
+          },
+        });
+        const fallbackText = fallback.text || '';
+        if (fallbackText) return { text: fallbackText, functionCalls: [] };
+      } catch (_) {}
+    }
 
     return {
-      text: "I'm sorry, I'm having trouble processing your request right now. Could you please try rephrasing your question or ask something else?",
+      text: isQuota
+        ? "I'm currently experiencing high demand. Please try your question again in a minute."
+        : "I'm sorry, I'm having trouble processing your request right now. Could you please try rephrasing your question or ask something else?",
       functionCalls: [],
     };
   }

@@ -6,11 +6,8 @@ from typing import Any, Dict
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
 
 from .schemas import (
-    ChatRequest,
-    ChatResponse,
     CropRecommendationRequest,
     CropRecommendationResponse,
     PriceForecastRequest,
@@ -18,7 +15,6 @@ from .schemas import (
     PriceForecasterMetadataResponse,
 )
 from .services.service_factory import service_factory
-from .services.function_executor import get_tool_definitions, execute_function
 
 load_dotenv()
 
@@ -130,80 +126,3 @@ def recommend_crop(request: CropRecommendationRequest) -> Dict[str, Any]:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {exc}") from exc
-
-
-# ── Gemini AI Chat (with language + user_context support) ──
-
-@app.post("/chat", response_model=ChatResponse)
-def chat(request: ChatRequest) -> Dict[str, Any]:
-    try:
-        from .services.gemini_service import send_message as gemini_send_message
-
-        result = gemini_send_message(
-            message=request.message,
-            conversation_history=request.conversation_history,
-            user_id=request.user_id,
-            language=request.language,
-            user_context=request.user_context,
-        )
-        return {
-            "text": result.get("text", ""),
-            "functionCalls": result.get("functionCalls", []),
-        }
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Chat error: {exc}") from exc
-
-
-@app.post("/chat/stream")
-def chat_stream(request: ChatRequest):
-    from .services.gemini_service import send_message_stream
-
-    async def event_stream():
-        for event in send_message_stream(
-            message=request.message,
-            conversation_history=request.conversation_history,
-            language=request.language,
-            user_context=request.user_context,
-        ):
-            yield event
-        yield "event: close\ndata: \n\n"
-    return StreamingResponse(
-        event_stream(),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-            "X-Accel-Buffering": "no",
-        },
-    )
-
-
-@app.get("/chat/models")
-def chat_models() -> Dict[str, Any]:
-    return {
-        "text_model": os.getenv("GEMINI_MODEL_NAME", "gemini-2.0-flash"),
-        "live_model": os.getenv("GEMINI_LIVE_MODEL", "gemini-2.0-flash-live-001"),
-        "notes": {
-            "text_model_usage": "Use for /chat generateContent function-calling flow",
-            "live_model_usage": "Use with Gemini Live API WebSocket for real-time audio/voice",
-        },
-    }
-
-
-# ── Tool Definitions & Execution (for Gemini function calling) ──
-
-@app.get("/tools/definitions")
-def get_tool_definitions_endpoint() -> Dict[str, Any]:
-    tools = get_tool_definitions()
-    return {"tools": tools}
-
-
-@app.post("/tools/execute")
-def execute_tool_endpoint(request: dict) -> Dict[str, Any]:
-    try:
-        name = request.get("name")
-        args = request.get("args", {})
-        result = execute_function(name, args)
-        return {"result": result}
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=str(exc)) from exc
