@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState, useEffect } from 'react';
+import { Suspense, useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { PasswordInput } from '@/components/ui/password-input';
@@ -14,6 +14,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/app/context/UserContext';
 import { getDashboardHref } from '@/lib/dashboard';
 import { safeRedirectPath } from '@/lib/route-access';
+import { toast } from 'sonner';
 
 function SignInContent() {
   const t = useTranslations() as Translations;
@@ -29,6 +30,15 @@ function SignInContent() {
   const [resendLoading, setResendLoading] = useState(false);
   const [showResendVerification, setShowResendVerification] = useState(false);
   const router = useRouter();
+  const verificationToastShownRef = useRef(false);
+
+  const showVerificationToast = (message: string) => {
+    const isMobile = typeof window !== 'undefined' && window.matchMedia('(max-width: 768px)').matches;
+    toast.success(message, {
+      position: isMobile ? 'top-center' : 'top-right',
+      duration: 5500,
+    });
+  };
 
   useEffect(() => {
     if (searchParams.get('pending') === 'trader') {
@@ -39,11 +49,16 @@ function SignInContent() {
     }
     if (searchParams.get('verify') === 'sent') {
       const registeredEmail = searchParams.get('email');
-      setInfoMessage(
+      const verificationMessage =
         registeredEmail
           ? `We sent a verification link to ${registeredEmail}. Please verify your email before signing in.`
-          : 'We sent a verification link to your email. Please verify before signing in.',
-      );
+          : 'We sent a verification link to your email. Please verify before signing in.';
+
+      if (!verificationToastShownRef.current) {
+        showVerificationToast(verificationMessage);
+        verificationToastShownRef.current = true;
+      }
+      setInfoMessage(verificationMessage);
       if (registeredEmail) setEmail(registeredEmail);
     }
     if (searchParams.get('verified') === '1') {
@@ -61,10 +76,11 @@ function SignInContent() {
     setError('');
     try {
       const response = await authApi.resendVerification({ email: email.trim() });
-      setInfoMessage(
+      const resendMessage =
         response.message ||
-          'If an account exists and is not verified, a new link has been sent.',
-      );
+          'If an account exists and is not verified, a new link has been sent.';
+      showVerificationToast(resendMessage);
+      setInfoMessage(resendMessage);
       setShowResendVerification(false);
     } catch {
       setError('Failed to resend verification email.');
