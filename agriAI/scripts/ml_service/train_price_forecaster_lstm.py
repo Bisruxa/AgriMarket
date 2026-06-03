@@ -130,7 +130,7 @@ def main() -> int:
     best_loss = float("inf")
     best_state = None
     patience_counter = 0
-    early_stop_patience = 15
+    early_stop_patience = 500
 
     for epoch in range(1, args.epochs + 1):
         model.train()

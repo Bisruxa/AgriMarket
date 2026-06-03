@@ -5,6 +5,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../../services/api_service.dart';
 import '../../services/voice_chat_service.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/app_locale_scope.dart';
 import 'crop_recommendation.dart';
 import 'price_forecast_screen.dart';
 
@@ -134,7 +135,8 @@ class _AgriChatScreenState extends State<AgriChatScreen> {
     _scrollToBottom();
 
     try {
-      final result = await _apiService.sendMessage(_currentChatId!, text.trim());
+      final localeService = AppLocaleScope.serviceOf(context);
+      final result = await _apiService.sendMessage(_currentChatId!, text.trim(), language: localeService.language.name);
       if (!mounted) return;
       if (result['success'] == true && result['data'] != null) {
         final data = result['data'] as Map<String, dynamic>;
@@ -270,7 +272,8 @@ class _AgriChatScreenState extends State<AgriChatScreen> {
         }
       }
 
-      final result = await _apiService.sendMessage(chatId, text);
+      final localeService = AppLocaleScope.serviceOf(context);
+      final result = await _apiService.sendMessage(chatId, text, language: localeService.language.name);
       if (!mounted) return;
       if (result['success'] == true && result['data'] != null) {
         final data = result['data'] as Map<String, dynamic>;
