@@ -279,6 +279,8 @@ def save_lstm_model(
         "crop_to_idx": bundle.crop_to_idx,
         "region_to_idx": bundle.region_to_idx,
         "seq_len": bundle.seq_len,
+        "lstm_hidden": model.lstm.hidden_size,
+        "lstm_layers": model.lstm.num_layers,
         "metrics": metrics,
         "train_end_date": train_end_date,
         "training": {
@@ -308,13 +310,27 @@ def load_lstm_model(
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
     checkpoint = torch.load(weights_path, map_location=device, weights_only=True)
 
+    sd = checkpoint["model_state_dict"]
+    lstm_hidden = sd["lstm.weight_hh_l0"].shape[1]
+    n_layers = sum(1 for k in sd if k.startswith("lstm.weight_ih_l"))
+    lstm_layers = n_layers if n_layers > 0 else 2
+
     model = PriceForecasterLSTM(
         num_crops=len(metadata["crops"]),
         num_regions=len(metadata["regions"]),
+        lstm_hidden=lstm_hidden,
+        lstm_layers=lstm_layers,
     )
-    model.load_state_dict(checkpoint["model_state_dict"])
+    model.load_state_dict(sd)
     model.to(device)
     model.eval()
+
+    metadata["lstm_hidden"] = lstm_hidden
+    metadata["lstm_layers"] = lstm_layers
+    metadata["price_scaler_mean"] = checkpoint.get("price_scaler_mean", [0.0])
+    metadata["price_scaler_scale"] = checkpoint.get("price_scaler_scale", [1.0])
+    metadata["inflation_scaler_mean"] = checkpoint.get("inflation_scaler_mean", [0.0])
+    metadata["inflation_scaler_scale"] = checkpoint.get("inflation_scaler_scale", [1.0])
 
     return model, metadata
 
@@ -373,10 +389,7 @@ def predict_single(
         seq_len, device,
     )
     with torch.no_grad():
-        pred_scaled = model(x_t, c_t, r_t).item()
-    mean = price_scaler.mean_[0]
-    scale = price_scaler.scale_[0]
-    return float(pred_scaled * scale + mean)
+        return float(model(x_t, c_t, r_t).item())
 
 
 def calculate_trend(
