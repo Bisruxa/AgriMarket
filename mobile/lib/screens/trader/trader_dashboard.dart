@@ -161,7 +161,7 @@ class _TraderDashboardState extends State<TraderDashboard> {
       bottomNavigationBar: AppBottomNav(
         currentIndex: _safeSelectedIndex,
         onTap: (index) => setState(() => _selectedIndex = index),
-        items: _navItems(context),
+        items: _navItems,
         selectedColor: AppColors.traderAccent,
       ),
     );
