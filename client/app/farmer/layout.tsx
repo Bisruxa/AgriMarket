@@ -67,7 +67,7 @@ const Framerlayout = ({ children }: NodeProp) => {
 
             <FixedTopBar isMobile={isMobile} />
 
-            <div className="flex-1 -mt-1">
+            <div className="farmer-portal flex-1">
               {children}
             </div>
             
