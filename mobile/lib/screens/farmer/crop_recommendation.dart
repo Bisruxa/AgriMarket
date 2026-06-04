@@ -19,7 +19,6 @@ class _CropRecommendationState extends State<CropRecommendation> {
 
   List<Farm> _farms = [];
   bool _loadingFarms = true;
-  bool _showInputs = false;
   bool _isLoading = false;
   Farm? _selectedFarm;
   List<CropRecommendationItem> _recommendations = [];
@@ -46,17 +45,9 @@ class _CropRecommendationState extends State<CropRecommendation> {
 
   bool get _hasValidInput => _selectedFarm != null;
 
-  bool get _canPressButton {
-    if (_isLoading || _loadingFarms) return false;
-    if (!_showInputs) return true;
-    return _hasValidInput;
-  }
+  bool get _canPressButton => !_isLoading && !_loadingFarms && _hasValidInput;
 
   void _onGetRecommendation() {
-    if (!_showInputs) {
-      setState(() => _showInputs = true);
-      return;
-    }
     if (!_hasValidInput) return;
     _fetchRecommendations();
   }
@@ -98,80 +89,70 @@ class _CropRecommendationState extends State<CropRecommendation> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.surface,
+      appBar: AppBar(
+        title: const Text('Crop Insights'),
+      ),
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
-                child: Text(
-                  'Crop Insights',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                        fontSize: 26,
-                      ),
-                ),
-              ),
-            ),
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    if (_showInputs) ...[
-                      if (_loadingFarms)
-                        const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 16),
-                          child: Center(
-                            child: CircularProgressIndicator(color: AppColors.primary),
-                          ),
-                        )
-                      else if (_farms.isEmpty)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          child: Column(
-                            children: [
-                              Icon(
-                                Icons.agriculture_outlined,
-                                size: 48,
-                                color: AppColors.textSecondary.withValues(alpha: 0.5),
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                'No farms registered yet',
-                                textAlign: TextAlign.center,
-                                style: Theme.of(context).textTheme.titleLarge,
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Add a farm under My Farms first to get recommendations.',
-                                textAlign: TextAlign.center,
-                                style: Theme.of(context).textTheme.bodyMedium,
-                              ),
-                            ],
-                          ),
-                        )
-                      else
-                        CustomDropdown<Farm>(
-                          label: 'Select your farm',
-                          hint: 'Choose a registered farm',
-                          value: _selectedFarm,
-                          items: _farms,
-                          itemLabel: (f) => f.name,
-                          onChanged: (farm) {
-                            setState(() {
-                              _selectedFarm = farm;
-                              _recommendations = [];
-                              _error = null;
-                            });
-                          },
+                    if (_loadingFarms)
+                      const Padding(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                        child: Center(
+                          child: CircularProgressIndicator(color: AppColors.primary),
                         ),
-                      if (_selectedFarm != null) ...[
-                        const SizedBox(height: 12),
-                        _FarmSummaryCard(farm: _selectedFarm!),
-                      ],
-                      const SizedBox(height: 20),
+                      )
+                    else if (_farms.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.agriculture_outlined,
+                              size: 48,
+                              color: AppColors.textSecondary.withValues(alpha: 0.5),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'No farms registered yet',
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.titleLarge,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Add a farm under My Farms first to get recommendations.',
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      CustomDropdown<Farm>(
+                        label: 'Select your farm',
+                        hint: 'Choose a registered farm',
+                        value: _selectedFarm,
+                        items: _farms,
+                        itemLabel: (f) => f.name,
+                        onChanged: (farm) {
+                          setState(() {
+                            _selectedFarm = farm;
+                            _recommendations = [];
+                            _error = null;
+                          });
+                        },
+                      ),
+                    if (_selectedFarm != null) ...[
+                      const SizedBox(height: 12),
+                      _FarmSummaryCard(farm: _selectedFarm!),
                     ],
+                    const SizedBox(height: 20),
                     CustomButton(
                       text: _isLoading ? 'Analyzing...' : 'Get Recommendation',
                       isLoading: _isLoading,
@@ -194,7 +175,7 @@ class _CropRecommendationState extends State<CropRecommendation> {
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
                 sliver: SliverList.separated(
                   itemCount: _recommendations.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
+                  separatorBuilder: (_, _) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     return _RecommendationResultCard(
                       recommendation: _recommendations[index],
