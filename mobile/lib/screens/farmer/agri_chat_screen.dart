@@ -715,6 +715,7 @@ class _AgriChatScreenState extends State<AgriChatScreen> {
   Widget _buildLiveInputRow() {
     final isConnected = _liveVoice.state == LiveConnectionState.connected;
     final isConnecting = _liveVoice.state == LiveConnectionState.connecting;
+    final muted = _liveVoice.isMuted;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
@@ -729,7 +730,7 @@ class _AgriChatScreenState extends State<AgriChatScreen> {
       child: Row(
         children: [
           Icon(
-            isConnecting ? Icons.hourglass_top_rounded : Icons.mic_rounded,
+            isConnecting ? Icons.hourglass_top_rounded : (muted ? Icons.mic_off_rounded : Icons.mic_rounded),
             color: isConnected ? AppColors.primary : AppColors.error,
             size: 20,
           ),
@@ -760,6 +761,16 @@ class _AgriChatScreenState extends State<AgriChatScreen> {
               ],
             ),
           ),
+          if (isConnected)
+            IconButton(
+              onPressed: () {
+                _liveVoice.toggleMute();
+                setState(() {});
+              },
+              icon: Icon(muted ? Icons.mic_rounded : Icons.mic_off_rounded, size: 20),
+              color: muted ? AppColors.primary : AppColors.error,
+              tooltip: muted ? 'Unmute' : 'Mute',
+            ),
           if (isConnecting)
             const Padding(
               padding: EdgeInsets.all(4),

@@ -28,6 +28,7 @@ class GeminiLiveService {
   String? _errorMessage;
   String _userTranscript = '';
   String _modelTranscript = '';
+  bool _muted = false;
 
   LiveTranscriptCallback? onTranscript;
   LiveTranscriptCallback? onPartialTranscript;
@@ -39,6 +40,11 @@ class GeminiLiveService {
   String? get errorMessage => _errorMessage;
   String get userTranscript => _userTranscript;
   String get modelTranscript => _modelTranscript;
+  bool get isMuted => _muted;
+
+  void toggleMute() {
+    _muted = !_muted;
+  }
 
   String get _wsUrl {
     final base = ApiConfig.baseUrl.replaceFirst('https://', 'wss://').replaceFirst('http://', 'ws://');
@@ -243,7 +249,7 @@ class GeminiLiveService {
 
       _audioStreamSub = stream.listen(
         (data) {
-          if (_channel != null && data.isNotEmpty) {
+          if (!_muted && _channel != null && data.isNotEmpty) {
             final base64 = base64Encode(data);
             _sendJson({'type': 'audio', 'data': base64});
           }
