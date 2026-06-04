@@ -6,12 +6,18 @@ const authService = require('../services/auth.service');
 // @access  Public
 exports.register = async (req, res, next) => {
   try {
-    const { user, emailSent } = await authService.registerUser(req.body);
+    const { user, emailSent, existingUnverified } = await authService.registerUser(req.body);
 
     let message =
       'Registration successful. Please check your email to verify your account before signing in.';
 
-    if (!emailSent) {
+    if (existingUnverified) {
+      message = emailSent
+        ? 'Account already exists but is not verified. We sent a new verification email. Please verify and sign in.'
+        : 'Account already exists but is not verified. We could not send the verification email right now. Use "Resend verification" on the sign-in screen.';
+    }
+
+    if (!existingUnverified && !emailSent) {
       message =
         'Account created, but we could not send the verification email. Use "Resend verification" on the sign-in screen.';
     }
@@ -22,10 +28,11 @@ exports.register = async (req, res, next) => {
         : 'Registration submitted. We could not send the verification email — use Resend verification on sign-in, then wait for admin approval.';
     }
 
-    return res.status(201).json({
+    return res.status(existingUnverified ? 200 : 201).json({
       success: true,
       message,
       emailSent,
+      existingUnverified,
       requiresEmailVerification: true,
       user: {
         id: user.id,

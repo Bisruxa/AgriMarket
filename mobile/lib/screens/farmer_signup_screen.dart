@@ -30,7 +30,37 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
   String? _selectedRegion;
   String? _selectedWoreda;
   bool _isLoading = false;
+  bool _isResending = false;
   String? _errorMessage;
+
+  Future<void> _resendVerificationEmail() async {
+    final email = _emailController.text.trim();
+    if (!email.contains('@')) {
+      setState(() => _errorMessage = 'Enter your email, then tap resend verification.');
+      return;
+    }
+
+    setState(() => _isResending = true);
+    final result = await ApiService().resendVerification(email);
+    if (!mounted) return;
+    setState(() => _isResending = false);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          result.message ??
+              (result.success
+                  ? 'Verification email sent. Please check your inbox.'
+                  : 'Unable to resend verification email right now.'),
+        ),
+        backgroundColor: result.success ? AppColors.primary : AppColors.error,
+      ),
+    );
+
+    if (result.success) {
+      Navigator.pushReplacementNamed(context, '/login');
+    }
+  }
 
   Future<void> _register() async {
     final l10n = AppLocaleScope.l10nOf(context);
@@ -122,6 +152,22 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
                   child: Text(
                     _errorMessage!,
                     style: const TextStyle(color: AppColors.error, fontSize: 13),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: TextButton.icon(
+                    onPressed: (_isLoading || _isResending)
+                        ? null
+                        : _resendVerificationEmail,
+                    icon: _isResending
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.mark_email_unread_outlined, size: 18),
+                    label: const Text('Resend verification email'),
                   ),
                 ),
                 const SizedBox(height: 16),
