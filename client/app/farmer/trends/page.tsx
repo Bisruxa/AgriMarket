@@ -89,6 +89,7 @@ function TrendsPageContent() {
   const [timingLoading, setTimingLoading] = React.useState(false);
   const [multiCrop, setMultiCrop] = React.useState<MultiCropProfitabilityResult | null>(null);
   const [planLoading, setPlanLoading] = React.useState(false);
+  const [timeRange, setTimeRange] = React.useState('12m');
 
   React.useEffect(() => {
     const cropParam = searchParams.get('crop');
@@ -186,17 +187,34 @@ function TrendsPageContent() {
 
   const activeCropLabel = CROP_LABELS[selectedCrop]?.[language] ?? selectedCrop;
 
-  const chartData = React.useMemo(() => {
+  const now = new Date();
+  const curYear = now.getFullYear();
+  const curMonth = now.getMonth() + 1;
+
+  const filteredRecords = React.useMemo(() => {
     if (priceRecords.length === 0) return [];
-    const sorted = [...priceRecords].sort((a, b) => {
-      if (a.year !== b.year) return a.year - b.year;
-      return a.month - b.month;
-    });
-    return sorted.slice(-24).map((r) => ({
+    const monthsMap: Record<string, { months: number; label: string }> = {
+      '3m': { months: 3, label: '3 months' },
+      '6m': { months: 6, label: '6 months' },
+      '12m': { months: 12, label: '12 months' },
+      '2y': { months: 24, label: '2 years' },
+      '5y': { months: 60, label: '5 years' },
+      all: { months: 9999, label: 'All' },
+    };
+    const range = monthsMap[timeRange] || monthsMap['12m'];
+    const totalMonths = curYear * 12 + curMonth - range.months;
+    const cutoffYear = Math.floor(totalMonths / 12);
+    const cutoffMonth = totalMonths % 12 || 12;
+    return priceRecords.filter((r) => r.year > cutoffYear || (r.year === cutoffYear && r.month >= cutoffMonth));
+  }, [priceRecords, timeRange, curYear, curMonth]);
+
+  const chartData = React.useMemo(() => {
+    if (filteredRecords.length === 0) return [];
+    return filteredRecords.map((r) => ({
       label: `${MONTH_NAMES[r.month - 1]} ${r.year}`,
       value: Math.round(r.avgPrice),
     }));
-  }, [priceRecords]);
+  }, [filteredRecords]);
 
   const currentPrice = chartData.length > 0 ? chartData[chartData.length - 1].value : null;
   const prevPrice = chartData.length > 1 ? chartData[chartData.length - 2].value : null;
@@ -226,6 +244,15 @@ function TrendsPageContent() {
     }));
   }, [chartData]);
 
+  const TIME_OPTIONS = [
+    { value: '3m', label: '3 months' },
+    { value: '6m', label: '6 months' },
+    { value: '12m', label: '12 months' },
+    { value: '2y', label: '2 years' },
+    { value: '5y', label: '5 years' },
+    { value: 'all', label: 'All' },
+  ];
+
   const barTrend =
     monthlyBarData.length >= 2
       ? (
@@ -237,18 +264,18 @@ function TrendsPageContent() {
       : null;
 
   const marketData = React.useMemo(() => {
-    return priceRecords.slice(-12).map((r) => {
-      const samePeriod = priceRecords.find(
+    return filteredRecords.slice(-12).map((r) => {
+      const samePeriod = filteredRecords.find(
         (p) => p.month === r.month && p.year === r.year - 1
       );
       const pct = samePeriod
         ? ((r.avgPrice - samePeriod.avgPrice) / samePeriod.avgPrice) * 100
         : null;
       const trendLabel =
-        pct != null ? `${pct >= 0 ? '+' : ''}${pct.toFixed(1)}%` : '—';
+        pct != null ? `${pct >= 0 ? '+' : ''}${pct.toFixed(1)}%` : '-';
       return {
         market: `${MONTH_NAMES[r.month - 1]} ${r.year}`,
-        demand: '—',
+        demand: '-',
         trend: {
           label: trendLabel,
           up: pct != null && pct >= 0,
@@ -257,7 +284,7 @@ function TrendsPageContent() {
         price: `ETB ${Math.round(r.avgPrice).toLocaleString()}/kg`,
       };
     });
-  }, [priceRecords]);
+  }, [filteredRecords]);
 
   return (
     <div className={`mx-auto w-full max-w-6xl px-4 sm:px-5 pb-6 ${language === 'am' ? 'amharic' : ''}`}>
@@ -288,7 +315,7 @@ function TrendsPageContent() {
       </div>
 
       <div className="mb-6 flex flex-col gap-3 border-b border-[#5B8C51]/15 pb-5 sm:flex-row sm:items-center">
-        <label className="flex flex-col gap-1 text-sm sm:w-48">
+        <label className="flex flex-col gap-1 text-sm sm:w-44">
           <span className="text-xs font-medium text-black/50">{tr.selectRegion}</span>
           <select
             value={selectedRegion}
@@ -298,6 +325,20 @@ function TrendsPageContent() {
             {REGIONS.map((r) => (
               <option key={r} value={r}>
                 {r}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-1 text-sm sm:w-36">
+          <span className="text-xs font-medium text-black/50">Time range</span>
+          <select
+            value={timeRange}
+            onChange={(e) => setTimeRange(e.target.value)}
+            className="rounded-lg border border-[#5B8C51]/20 bg-white px-3 py-2 text-sm outline-none focus:border-[#5B8C51]/50"
+          >
+            {TIME_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
               </option>
             ))}
           </select>
@@ -473,7 +514,7 @@ function TrendsPageContent() {
             <div className="min-w-0">
               <LineGraph
                 data={chartData}
-                title={`${activeCropLabel} — ${tr.priceHistory}`}
+                title={`${activeCropLabel} - ${tr.priceHistory}`}
                 badge={
                   priceChange
                     ? `${priceTrend === 'up' ? '↑' : '↓'} ${Math.abs(parseFloat(priceChange))}%`
@@ -494,7 +535,7 @@ function TrendsPageContent() {
             <div className="min-w-0">
               <BarGraph
                 data={monthlyBarData}
-                title={`${activeCropLabel} — ${tr.monthlyPrices}`}
+                title={`${activeCropLabel} - ${tr.monthlyPrices}`}
                 badge={
                   barTrend
                     ? `${parseFloat(barTrend) >= 0 ? '+' : ''}${barTrend}%`
@@ -543,7 +584,7 @@ function TrendsPageContent() {
         </>
       )}
 
-      <footer className="mt-8 flex flex-col gap-1 border-t border-dashed border-[#5B8C51]/20 pt-4 text-xs text-gray-400 sm:flex-row sm:justify-between">
+      <footer className="mt-8 flex flex-col gap-1 border-t border-[#5B8C51]/20 pt-4 text-xs text-gray-400 sm:flex-row sm:justify-between">
         <span>
           {tr.priceData}
           {lastUpdated ? ` · ${lastUpdated}` : ''}

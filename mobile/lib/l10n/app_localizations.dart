@@ -269,8 +269,8 @@ class AppLocalizations {
       ? 'ለሳምንቱ የእርሻ ሁኔታ ይመልከቱ።'
       : 'Check field conditions for the week ahead.';
   String get heavyRainExpected => isAmharic
-      ? 'ከባድ ዝናብ ይጠበቃል — የእርሻ ስራዎን ይቅዱ።'
-      : 'Heavy rain expected — plan field work accordingly.';
+      ? 'ከባድ ዝናብ ይጠበቃል - የእርሻ ስራዎን ይቅዱ።'
+      : 'Heavy rain expected - plan field work accordingly.';
   String get today => isAmharic ? 'ዛሬ' : 'Today';
 
   // Market insights

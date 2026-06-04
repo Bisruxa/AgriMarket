@@ -56,9 +56,8 @@ const Framerlayout = ({ children }: NodeProp) => {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center mt-4 space-x-1">
-          <img className="w-5 h-5" src="/corn.avif" alt="cornImage" />
-          <p className="text-black/70 text-xs">
+        <div className="flex justify-center text-center mt-4 py-3 border-t border-black/6">
+          <p className="text-black/50 text-xs">
             {layoutT.footerTagline}
             <br />
             {layoutT.copyright}

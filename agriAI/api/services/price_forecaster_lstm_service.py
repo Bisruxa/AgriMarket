@@ -200,7 +200,7 @@ class PriceForecasterLSTMService(InferenceService):
     def _project_inflation(
         self, target_year: int, target_month: int
     ) -> float:
-        """Simple inflation projection — average monthly rate from last 3 years."""
+        """Simple inflation projection - average monthly rate from last 3 years."""
         df = self.price_data.sort_values(["year", "month"])
         last = df.iloc[-1]
         last_date = pd.Timestamp(

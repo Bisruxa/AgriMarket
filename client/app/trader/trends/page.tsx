@@ -72,6 +72,29 @@ export default function FarmsteadDashboard() {
   const [demandLoading, setDemandLoading] = React.useState(false)
   const [opportunities, setOpportunities] = React.useState<BuyingOpportunityItem[]>([])
   const [opportunitiesLoading, setOpportunitiesLoading] = React.useState(false)
+  const [timeRange, setTimeRange] = React.useState("12m")
+
+  const now2 = new Date()
+  const curYear = now2.getFullYear()
+  const curMonth = now2.getMonth() + 1
+
+  const filteredRecords = React.useMemo(() => {
+    if (priceRecords.length === 0) return []
+    const monthsMap: Record<string, number> = { "3m": 3, "6m": 6, "12m": 12, "2y": 24, "5y": 60, all: 9999 }
+    const totalMonths = curYear * 12 + curMonth - (monthsMap[timeRange] || 12)
+    const cutoffYear = Math.floor(totalMonths / 12)
+    const cutoffMonth = totalMonths % 12 || 12
+    return priceRecords.filter((r) => r.year > cutoffYear || (r.year === cutoffYear && r.month >= cutoffMonth))
+  }, [priceRecords, timeRange, curYear, curMonth])
+
+  const TIME_OPTIONS = [
+    { value: "3m", label: "3 months" },
+    { value: "6m", label: "6 months" },
+    { value: "12m", label: "12 months" },
+    { value: "2y", label: "2 years" },
+    { value: "5y", label: "5 years" },
+    { value: "all", label: "All" },
+  ]
 
   const availableRegions = [
     "Addis Ababa","Oromia","Amhara","Tigray","SNNP","Somali",
@@ -195,17 +218,12 @@ export default function FarmsteadDashboard() {
   const activeCropLabel = CROP_LABELS[selectedCrop]?.[language] ?? selectedCrop
 
   const chartData = React.useMemo(() => {
-    if (priceRecords.length === 0) return []
-    const sorted = [...priceRecords].sort((a, b) => {
-      if (a.year !== b.year) return a.year - b.year
-      return a.month - b.month
-    })
-    const last24 = sorted.slice(-24)
-    return last24.map(r => ({
+    if (filteredRecords.length === 0) return []
+    return filteredRecords.map(r => ({
       label: `${MONTH_NAMES[r.month - 1]} ${r.year}`,
       value: Math.round(r.avgPrice),
     }))
-  }, [priceRecords])
+  }, [filteredRecords])
 
   const currentPrice = chartData.length > 0 ? chartData[chartData.length - 1].value : null
   const prevPrice = chartData.length > 1 ? chartData[chartData.length - 2].value : null
@@ -245,24 +263,15 @@ export default function FarmsteadDashboard() {
     },
   ]
 
-  const marketData = priceRecords.length > 0
-    ? priceRecords.slice(-12).map(r => {
-        const idx = priceRecords.indexOf(r)
-        const prev = idx > 0 ? priceRecords[idx - 1] : null
-        const trend = prev && prev.year !== r.year || (prev && prev.month !== r.month)
-          ? (() => {
-              const samePeriod = priceRecords.filter(p => p.month === r.month && p.year === r.year - 1)[0]
-              if (samePeriod) {
-                const pct = ((r.avgPrice - samePeriod.avgPrice) / samePeriod.avgPrice * 100).toFixed(1)
-                return { label: `${parseFloat(pct) >= 0 ? "+" : ""}${pct}%`, up: parseFloat(pct) >= 0, value: pct }
-              }
-              return null
-            })()
-          : null
+  const marketData = filteredRecords.length > 0
+    ? filteredRecords.slice(-12).map(r => {
+        const samePeriod = filteredRecords.find(p => p.month === r.month && p.year === r.year - 1)
+        const pct = samePeriod ? ((r.avgPrice - samePeriod.avgPrice) / samePeriod.avgPrice * 100).toFixed(1) : null
+        const trend = pct ? { label: `${parseFloat(pct) >= 0 ? "+" : ""}${pct}%`, up: parseFloat(pct) >= 0, value: pct } : null
         return {
           market: `${MONTH_NAMES[r.month - 1]} ${r.year}`,
-          demand: "—",
-          trend: trend || { label: "—", up: false, value: "0" },
+          demand: "-",
+          trend: trend || { label: "-", up: false, value: "0" },
           price: `ETB ${Math.round(r.avgPrice).toLocaleString()}/kg`,
         }
       })
@@ -297,6 +306,15 @@ export default function FarmsteadDashboard() {
           >
             {availableRegions.map(r => (
               <option key={r} value={r}>{r}</option>
+            ))}
+          </select>
+          <select
+            value={timeRange}
+            onChange={e => setTimeRange(e.target.value)}
+            className="rounded-md border border-[#bfdfce] bg-white px-3 py-2 text-sm outline-none"
+          >
+            {TIME_OPTIONS.map(opt => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
           </select>
           <form onSubmit={handleSearchSubmit} className="flex flex-1 gap-2">
@@ -461,7 +479,7 @@ export default function FarmsteadDashboard() {
         </>
       )}
 
-      <div className="mt-8 flex flex-col gap-2 border-t border-dashed border-[#bcdbcc] pt-4 text-xs text-[#57886c] sm:flex-row sm:justify-between">
+      <div className="mt-8 flex flex-col gap-2 border-t border-[#bcdbcc] pt-4 text-xs text-[#57886c] sm:flex-row sm:justify-between">
         <span className="flex items-center gap-1">
           <Cloud className="h-3 w-3" />
           {language === "am" ? "የዋጋ መረጃ" : "price data"} · {lastUpdated || "—"}

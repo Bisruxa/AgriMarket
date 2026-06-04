@@ -25,9 +25,9 @@ export function passwordStrengthLabel(strength: PasswordStrength): string {
     case 'none':
       return '';
     case 'weak':
-      return 'Weak — add letters, numbers, and symbols';
+      return 'Weak - add letters, numbers, and symbols';
     case 'medium':
-      return 'Fair — add a missing character type';
+      return 'Fair - add a missing character type';
     case 'strong':
       return 'Strong password';
   }

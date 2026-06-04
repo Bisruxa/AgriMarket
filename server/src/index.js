@@ -17,11 +17,11 @@ const emailLinkBase = getClientUrl();
 const isProduction = (process.env.NODE_ENV || '').trim().toLowerCase() === 'production';
 if (/^null|undefined/i.test(emailLinkBase) || emailLinkBase.includes('://null')) {
   console.error(
-    '[config] CLIENT_URL is invalid — verification emails will have broken links. Set CLIENT_URL to your live web app URL (e.g. https://your-app.vercel.app).',
+    '[config] CLIENT_URL is invalid - verification emails will have broken links. Set CLIENT_URL to your live web app URL (e.g. https://your-app.vercel.app).',
   );
 } else if (isProduction && /^https?:\/\/(localhost|127\.0\.0\.1)/i.test(emailLinkBase)) {
   console.warn(
-    `[config] Email links use ${emailLinkBase} — set CLIENT_URL to your public site URL on Render/production.`,
+    `[config] Email links use ${emailLinkBase} - set CLIENT_URL to your public site URL on Render/production.`,
   );
 } else {
   console.log(`[config] Email links base URL: ${emailLinkBase}`);

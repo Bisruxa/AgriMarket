@@ -116,7 +116,7 @@ const sendMailSafe = async (options) => {
 
 const sendPasswordResetEmail = async ({ to, name, resetToken }) => {
   const resetUrl = `${getClientUrl()}/reset-password?token=${encodeURIComponent(resetToken)}`;
-  const subject = 'AgriMarket — Reset your password';
+  const subject = 'AgriMarket - Reset your password';
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto;">
       <h2 style="color: #2A5A2A;">Password reset</h2>
@@ -147,7 +147,7 @@ const sendPasswordResetEmail = async ({ to, name, resetToken }) => {
 
 const sendVerificationEmail = async ({ to, name, verifyToken }) => {
   const verifyUrl = `${getClientUrl()}/verify-email?token=${encodeURIComponent(verifyToken)}`;
-  const subject = 'AgriMarket — Verify your email';
+  const subject = 'AgriMarket - Verify your email';
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 520px; margin: 0 auto;">
       <h2 style="color: #2A5A2A;">Verify your email</h2>

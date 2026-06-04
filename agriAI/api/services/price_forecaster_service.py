@@ -252,7 +252,7 @@ class PriceForecasterService(InferenceService):
         """Walk forward month-by-month from *start_date* to *target_date*,
         feeding predictions back as lags.
 
-        Returns the last ``(date, price)`` pair reached — normally the target
+        Returns the last ``(date, price)`` pair reached - normally the target
         month.
         """
         predicted_prices: dict[pd.Timestamp, float] = {}

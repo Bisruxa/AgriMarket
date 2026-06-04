@@ -197,7 +197,7 @@ const PriceForecastPage = () => {
                   <div className="flex items-center justify-between mb-4">
                     <div>
                       <h3 className="text-lg font-bold text-[#2A5A2A]">{result.crop_name}</h3>
-                      <p className="text-sm text-black/50">{result.region} — {months[result.month - 1].label} {result.year}</p>
+                      <p className="text-sm text-black/50">{result.region} - {months[result.month - 1].label} {result.year}</p>
                     </div>
                     <TrendBadge
                       trend={result.trend}

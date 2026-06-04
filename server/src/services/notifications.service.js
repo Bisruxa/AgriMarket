@@ -227,7 +227,7 @@ async function buildDesiredNotifications(user) {
 async function syncNotificationsForUser(user) {
   if (!prisma.notification) {
     throw new Error(
-      'Notification model missing — run: npx prisma generate && npx prisma migrate deploy',
+      'Notification model missing - run: npx prisma generate && npx prisma migrate deploy',
     );
   }
 

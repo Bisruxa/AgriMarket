@@ -593,7 +593,7 @@ const en: Translations = {
   },
   sidebar: {
     dashboard: "Dashboard",
-    market: "Companies/Market",
+    market: "Market Place",
     trends: "Trends",
     portfolio: "My Portfolio",
     chats: "Chats",
@@ -638,7 +638,7 @@ const en: Translations = {
 },
 notFound: {
   title: "Page not found",
-  subtitle: "This field hasn't been planted yet — the page you're looking for doesn't exist or was moved.",
+  subtitle: "This field hasn't been planted yet - the page you're looking for doesn't exist or was moved.",
   goHome: "Back to home",
   goDashboard: "Go to dashboard",
 },
@@ -1016,7 +1016,7 @@ common: {
 },
 notFound: {
   title: "ገጽ አልተገኘም",
-  subtitle: "የሚፈልጉት ገጽ የለም ወይም ተዛውሯል — እንደገና ይሞክሩ ወይም ወደ መነሻ ገጽ ይመለሱ።",
+  subtitle: "የሚፈልጉት ገጽ የለም ወይም ተዛውሯል - እንደገና ይሞክሩ ወይም ወደ መነሻ ገጽ ይመለሱ።",
   goHome: "ወደ መነሻ ገጽ",
   goDashboard: "ወደ ዳሽቦርድ",
 },

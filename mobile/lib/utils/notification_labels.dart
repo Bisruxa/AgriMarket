@@ -41,7 +41,7 @@ class NotificationLabels {
         return (
           title: 'Price falling',
           body: count != null
-              ? 'Prices dropped about $count% — review your listings.'
+              ? 'Prices dropped about $count% - review your listings.'
               : 'Market prices for your crops are falling.',
         );
       case 'farmer-sell-window':
@@ -59,7 +59,7 @@ class NotificationLabels {
       case 'farmer-weather-heat':
         return (
           title: 'Heat advisory',
-          body: 'High temperatures expected — protect crops and workers.',
+          body: 'High temperatures expected - protect crops and workers.',
         );
       case 'trader-pending':
         return (

@@ -250,7 +250,7 @@ export type DashboardTranslations = {
 
 export const dashboardEn: DashboardTranslations = {
   layout: {
-    footerTagline: "Ready to farm smarter? Grow with AgriMarket.",
+    footerTagline: "Smart farming, better profits.",
     copyright: "©2026 AgriMarket",
   },
   language: {
@@ -261,7 +261,7 @@ export const dashboardEn: DashboardTranslations = {
   },
   notifications: {
     title: "Notifications",
-    empty: "You're all caught up — no new alerts.",
+    empty: "You're all caught up - no new alerts.",
     ariaLabel: "Notifications",
     markAllRead: "Dismiss all",
     dismiss: "Dismiss",
@@ -282,7 +282,7 @@ export const dashboardEn: DashboardTranslations = {
       },
       "farmer-crop-tip": {
         title: "New crop insights",
-        message: "Your farms are ready — run an AI crop recommendation for this season.",
+        message: "Your farms are ready - run an AI crop recommendation for this season.",
       },
       "farmer-price-up": {
         title: "Price surge detected",
@@ -331,7 +331,7 @@ export const dashboardEn: DashboardTranslations = {
     noFarmTitle: "Your market pulse is warming up",
     noFarmBody: "Register a farm to unlock personalized crop prices, demand signals, and profitability scores tailored to your land.",
     addFarmCta: "Register your first farm",
-    farmReadyTitle: "Farm registered — next step",
+    farmReadyTitle: "Farm registered - next step",
     farmReadyBody: "Get AI crop suggestions for your soil and region, or browse regional prices below while you set up listings.",
     cropRecommendationsCta: "Get crop recommendations",
     regionalSnapshot: "Regional market snapshot",
@@ -349,12 +349,12 @@ export const dashboardEn: DashboardTranslations = {
   farmFacts: {
     badge: "Did you know?",
     facts: [
-      "Ethiopia is the birthplace of coffee and a global leader in teff production — a staple for injera and millions of households.",
+      "Ethiopia is the birthplace of coffee and a global leader in teff production - a staple for injera and millions of households.",
       "More than 80% of Ethiopians depend on agriculture; smallholder farms grow most of the nation's food.",
-      "AgriMarket uses your farm's soil and climate data to suggest crops that fit your land — not generic advice.",
+      "AgriMarket uses your farm's soil and climate data to suggest crops that fit your land - not generic advice.",
       "Rainfall and altitude vary sharply across regions; planting at the right time can protect yields from drought or frost.",
       "On AgriMarket, list produce, track demand trends, and connect with traders who buy directly from farmers.",
-      "AI price forecasts on AgriMarket help you decide when to sell — plan harvests around market signals, not guesswork.",
+      "AI price forecasts on AgriMarket help you decide when to sell -  plan harvests around market signals, not guesswork.",
     ],
   },
   cropDetail: {
@@ -543,7 +543,7 @@ export const dashboardEn: DashboardTranslations = {
     title: "Manage Your Farms",
     dashboardCardTitle: "My Farms",
     dashboardCardSubtitle: "Register your farm land and manage locations.",
-    dashboardCardSubtitleWithCount: "{{count}} farm(s) registered — tap to manage.",
+    dashboardCardSubtitleWithCount: "{{count}} farm(s) registered - tap to manage.",
     viewFarms: "View Farms",
     addFarm: "Add Farm",
     empty: 'No farms yet. Click "Add Farm" to register your land.',
@@ -608,7 +608,7 @@ export const dashboardEn: DashboardTranslations = {
 
 export const dashboardAm: DashboardTranslations = {
   layout: {
-    footerTagline: "ብልህ እርሻ ለመስራት ዝግጁ ነዎት? ከአግሪማርኬት ጋር ይበለጽጉ።",
+    footerTagline: "ብልህ እርሻ፣ የተሻለ ትርፍ።",
     copyright: "©2026 አግሪማርኬት",
   },
   language: {
@@ -619,7 +619,7 @@ export const dashboardAm: DashboardTranslations = {
   },
   notifications: {
     title: "ማሳወቂያዎች",
-    empty: "አዲስ ማሳወቂያ የለም — ሁሉ ተከታትሏል።",
+    empty: "አዲስ ማሳወቂያ የለም - ሁሉ ተከታትሏል።",
     ariaLabel: "ማሳወቂያዎች",
     markAllRead: "ሁሉን አጥፋ",
     dismiss: "አጥፋ",
@@ -640,7 +640,7 @@ export const dashboardAm: DashboardTranslations = {
       },
       "farmer-crop-tip": {
         title: "አዲስ የሰብል ምክር",
-        message: "እርሻዎች ዝግጁ ናቸው — ለዚህ ወቅት የአይአይ የሰብል ምክር ያሂዱ።",
+        message: "እርሻዎች ዝግጁ ናቸው - ለዚህ ወቅት የአይአይ የሰብል ምክር ያሂዱ።",
       },
       "farmer-price-up": {
         title: "የዋጋ ግስጋሴ ተገኘ",
@@ -689,7 +689,7 @@ export const dashboardAm: DashboardTranslations = {
     noFarmTitle: "የገበያ ምልክትዎ እየተዘጋጀ ነው",
     noFarmBody: "ለመሬትዎ የተስማሙ የሰብል ዋጋዎች፣ የፍላጎት ምልክቶች እና የትርፍ ውጤት ለማግኘት እርሻ ይመዝግቡ።",
     addFarmCta: "የመጀመሪያ እርሻዎን ይመዝግቡ",
-    farmReadyTitle: "እርሻ ተመዝግቧል — ቀጣይ እርምጃ",
+    farmReadyTitle: "እርሻ ተመዝግቧል - ቀጣይ እርምጃ",
     farmReadyBody: "ለአፈርዎ እና ክልልዎ በሰው ሰራሽ ብልህነት የሰብል ምክር ያግኙ፣ ወይም ዝርዝሮችን እስከሚያጠናቅቁ ድረስ ከታች የክልል ዋጋዎችን ይመልከቱ።",
     cropRecommendationsCta: "የሰብል ምክር ያግኙ",
     regionalSnapshot: "የክልል የገበያ ማጠቃለያ",
@@ -712,7 +712,7 @@ export const dashboardAm: DashboardTranslations = {
       "አግሪማርኬት የእርሻዎን አፈር እና የአየር ሁኔታ መረጃ በመጠቀም ለመሬትዎ የሚስማሙ ሰብሎችን ይመክራል።",
       "ዝናብና ቁመት በክልሎች ይለያያሉ፤ በትክክለኛው ጊዜ መዝራት ምርትን ከድርቅ ወይም ከብርድ ሊጠብቅ ይችላል።",
       "በአግሪማርኬት ምርት ይዘርዙ፣ የፍላጎት አዝማሚያ ይከታተሉ እና ከገበሬዎች በቀጥታ ከሚገዙ ነጋዴዎች ጋር ይገናኙ።",
-      "የአይአይ የዋጋ ትንበያ በአግሪማርኬት መቼ ለመሸጥ እንዳለብዎ ይረዳዎታል — በዕጥበት ሳይሆን በመረጃ ይቅዱ።",
+      "የአይአይ የዋጋ ትንበያ በአግሪማርኬት መቼ ለመሸጥ እንዳለብዎ ይረዳዎታል - በዕጥበት ሳይሆን በመረጃ ይቅዱ።",
     ],
   },
   cropDetail: {
@@ -900,7 +900,7 @@ export const dashboardAm: DashboardTranslations = {
     title: "እርሻዎችዎን ያስተዳድሩ",
     dashboardCardTitle: "የእኔ እርሻዎች",
     dashboardCardSubtitle: "የእርሻ መሬትዎን ይመዝግቡ እና ቦታዎችን ያስተዳድሩ።",
-    dashboardCardSubtitleWithCount: "{{count}} እርሻ(ዎች) ተመዝግበዋል — ለማስተዳደር ይጫኑ።",
+    dashboardCardSubtitleWithCount: "{{count}} እርሻ(ዎች) ተመዝግበዋል - ለማስተዳደር ይጫኑ።",
     viewFarms: "እርሻዎችን ይመልከቱ",
     addFarm: "እርሻ ጨምር",
     empty: 'እስካሁን እርሻ የለም። መሬትዎን ለመመዝገብ «እርሻ ጨምር» ይጫኑ።',

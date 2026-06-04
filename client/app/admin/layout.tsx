@@ -25,10 +25,9 @@ const AdminLayout = ({ children }: NodeProp) => {
         <main className="box-border flex min-h-screen min-w-0 flex-1 flex-col overflow-x-hidden px-3 py-2 pt-16 md:pt-2">
           <div className="min-w-0 flex-1">{children}</div>
 
-          <footer className="mt-4 flex shrink-0 items-center space-x-1 pb-2">
-            <img className="h-5 w-5" src="/corn.avif" alt="cornImage" />
-            <p className="text-xs text-black/70">
-              Ready to farm smarter? Grow with AgriMarket.
+          <footer className="mt-4 flex shrink-0 justify-center text-center py-3 border-t border-black/6">
+            <p className="text-xs text-black/50">
+              Smart farming, better profits.
               <br />
               &copy;2026 AgriMarket
             </p>

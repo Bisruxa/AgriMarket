@@ -25,9 +25,9 @@ class PasswordStrengthEvaluator {
       case PasswordStrength.none:
         return '';
       case PasswordStrength.weak:
-        return 'Weak — add letters, numbers, and symbols';
+        return 'Weak - add letters, numbers, and symbols';
       case PasswordStrength.medium:
-        return 'Fair — add a missing character type';
+        return 'Fair - add a missing character type';
       case PasswordStrength.strong:
         return 'Strong password';
     }

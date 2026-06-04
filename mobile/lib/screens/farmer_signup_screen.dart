@@ -131,7 +131,7 @@ class _FarmerSignupScreenState extends State<FarmerSignupScreen> {
 
     return AuthShell(
       title: 'Farmer Registration',
-      subtitle: 'Create your account — you can add farms later from the dashboard',
+      subtitle: 'Create your account - you can add farms later from the dashboard',
       imagePath: 'assets/images/welcome.png',
       heroIcon: Icons.agriculture_rounded,
       child: SingleChildScrollView(

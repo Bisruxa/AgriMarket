@@ -25,7 +25,7 @@ exports.register = async (req, res, next) => {
     if (user.role === 'TRADER' && user.approvalStatus === 'PENDING') {
       message = emailSent
         ? 'Registration submitted. Verify your email first, then wait for admin approval before you can sign in.'
-        : 'Registration submitted. We could not send the verification email — use Resend verification on sign-in, then wait for admin approval.';
+        : 'Registration submitted. We could not send the verification email - use Resend verification on sign-in, then wait for admin approval.';
     }
 
     return res.status(existingUnverified ? 200 : 201).json({
