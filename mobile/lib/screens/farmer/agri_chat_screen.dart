@@ -45,15 +45,21 @@ class _AgriChatScreenState extends State<AgriChatScreen> {
   void initState() {
     super.initState();
     _loadChats();
+    _inputController.addListener(_onInputChanged);
   }
 
   @override
   void dispose() {
     _liveVoice.dispose();
+    _inputController.removeListener(_onInputChanged);
     _inputController.dispose();
     _scrollController.dispose();
     _focusNode.dispose();
     super.dispose();
+  }
+
+  void _onInputChanged() {
+    setState(() {});
   }
 
   Future<void> _toggleLiveVoice() async {
@@ -371,18 +377,6 @@ class _AgriChatScreenState extends State<AgriChatScreen> {
       appBar: AppBar(
         title: const Text('Agri Chat'),
         actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.tune_rounded),
-            tooltip: 'Tools',
-            onSelected: (value) {
-              if (value == 'crop') _navigateToCropRecommendation();
-              if (value == 'price') _navigateToPriceForecast();
-            },
-            itemBuilder: (_) => [
-              const PopupMenuItem(value: 'crop', child: ListTile(leading: Icon(Icons.eco_rounded, color: AppColors.primary), title: Text('Crop recommendation'), contentPadding: EdgeInsets.zero)),
-              const PopupMenuItem(value: 'price', child: ListTile(leading: Icon(Icons.trending_up_rounded, color: AppColors.primary), title: Text('Price forecast'), contentPadding: EdgeInsets.zero)),
-            ],
-          ),
           IconButton(
             icon: const Icon(Icons.add_comment_rounded),
             onPressed: _createNewChat,
@@ -649,20 +643,29 @@ class _AgriChatScreenState extends State<AgriChatScreen> {
   }
 
   Widget _buildTextInputRow() {
+    final hasText = _inputController.text.trim().isNotEmpty;
     return Row(
       children: [
-        IconButton(
-          icon: Icon(_liveMode ? Icons.mic_rounded : Icons.mic_none_rounded),
-          color: AppColors.primary,
-          onPressed: _toggleLiveVoice,
-          tooltip: 'Live voice',
+        PopupMenuButton<String>(
+          icon: const Icon(Icons.menu_rounded),
+          tooltip: 'Tools',
+          onSelected: (value) {
+            if (value == 'crop') _navigateToCropRecommendation();
+            if (value == 'price') _navigateToPriceForecast();
+          },
+          itemBuilder: (_) => [
+            const PopupMenuItem(value: 'crop', child: ListTile(leading: Icon(Icons.eco_rounded, color: AppColors.primary), title: Text('Crop recommendation'), contentPadding: EdgeInsets.zero)),
+            const PopupMenuItem(value: 'price', child: ListTile(leading: Icon(Icons.trending_up_rounded, color: AppColors.primary), title: Text('Price forecast'), contentPadding: EdgeInsets.zero)),
+          ],
         ),
         Expanded(
           child: TextField(
             controller: _inputController,
             focusNode: _focusNode,
             textInputAction: TextInputAction.send,
-            onSubmitted: (_) => _sendMessage(),
+            onSubmitted: (v) {
+              if (v.trim().isNotEmpty) _sendMessage();
+            },
             decoration: InputDecoration(
               hintText: 'Ask about crops, prices...',
               filled: true,
@@ -677,27 +680,34 @@ class _AgriChatScreenState extends State<AgriChatScreen> {
           ),
         ),
         const SizedBox(width: 8),
-        Material(
-          color: AppColors.primary,
-          borderRadius: BorderRadius.circular(24),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(24),
-            onTap: _isSending ? null : _sendMessage,
-            child: SizedBox(
-              width: 48,
-              height: 48,
-              child: _isSending
-                  ? const Padding(
-                      padding: EdgeInsets.all(14),
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : const Icon(Icons.send_rounded, color: Colors.white, size: 20),
-            ),
-          ),
-        ),
+        hasText || _isSending
+            ? Material(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.circular(24),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(24),
+                  onTap: _isSending ? null : _sendMessage,
+                  child: SizedBox(
+                    width: 48,
+                    height: 48,
+                    child: _isSending
+                        ? const Padding(
+                            padding: EdgeInsets.all(14),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                  ),
+                ),
+              )
+            : IconButton(
+                icon: const Icon(Icons.mic_rounded),
+                color: AppColors.primary,
+                onPressed: _toggleLiveVoice,
+                tooltip: 'Live voice',
+              ),
       ],
     );
   }
