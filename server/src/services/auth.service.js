@@ -68,7 +68,19 @@ const registerUser = async (payload) => {
   });
 
   if (existingUser) {
-    throw createError('User with this email already exists', 400);
+    if (!existingUser.deletedAt && !existingUser.isVerified) {
+      let emailSent = false;
+      try {
+        const emailResult = await issueEmailVerification(existingUser);
+        emailSent = emailResult?.delivered === true;
+      } catch (e) {
+        console.error('registerUser resend verification failed:', e.message);
+      }
+
+      return { user: existingUser, emailSent, existingUnverified: true };
+    }
+
+    throw createError('User with this email already exists', 400, 'EMAIL_ALREADY_EXISTS');
   }
 
   const hashedPassword = await hashPassword(password);
@@ -120,7 +132,7 @@ const registerUser = async (payload) => {
     }
   }
 
-  return { user, emailSent };
+  return { user, emailSent, existingUnverified: false };
 };
 
 const loginUser = async (email, password) => {
