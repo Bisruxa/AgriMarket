@@ -265,7 +265,7 @@ export default function FarmsteadDashboard() {
 
   const marketData = filteredRecords.length > 0
     ? filteredRecords.slice(-12).map(r => {
-        const samePeriod = filteredRecords.find(p => p.month === r.month && p.year === r.year - 1)
+        const samePeriod = priceRecords.find(p => p.month === r.month && p.year === r.year - 1)
         const pct = samePeriod ? ((r.avgPrice - samePeriod.avgPrice) / samePeriod.avgPrice * 100).toFixed(1) : null
         const trend = pct ? { label: `${parseFloat(pct) >= 0 ? "+" : ""}${pct}%`, up: parseFloat(pct) >= 0, value: pct } : null
         return {

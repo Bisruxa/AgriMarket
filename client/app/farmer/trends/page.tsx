@@ -265,7 +265,7 @@ function TrendsPageContent() {
 
   const marketData = React.useMemo(() => {
     return filteredRecords.slice(-12).map((r) => {
-      const samePeriod = filteredRecords.find(
+      const samePeriod = priceRecords.find(
         (p) => p.month === r.month && p.year === r.year - 1
       );
       const pct = samePeriod
@@ -284,7 +284,7 @@ function TrendsPageContent() {
         price: `ETB ${Math.round(r.avgPrice).toLocaleString()}/kg`,
       };
     });
-  }, [filteredRecords]);
+  }, [filteredRecords, priceRecords]);
 
   return (
     <div className={`mx-auto w-full max-w-6xl px-4 sm:px-5 pb-6 ${language === 'am' ? 'amharic' : ''}`}>
@@ -445,17 +445,7 @@ function TrendsPageContent() {
                     </dd>
                   </div>
                   <div className="flex justify-between gap-4">
-                    <dt className="text-black/50">{tr.expectedGain}</dt>
-                    <dd
-                      className={`font-medium ${
-                        salesTiming.recommendation.expectedGainPercent >= 0
-                          ? 'text-emerald-700'
-                          : 'text-rose-700'
-                      }`}
-                    >
-                      {salesTiming.recommendation.expectedGainPercent >= 0 ? '+' : ''}
-                      {salesTiming.recommendation.expectedGainPercent.toFixed(1)}%
-                    </dd>
+                    
                   </div>
                 </dl>
               ) : (
@@ -463,6 +453,7 @@ function TrendsPageContent() {
               )}
             </section>
 
+            {multiCrop?.summary && (
             <section>
               <div className="mb-3 flex items-center gap-2 text-[#2A5A2A]">
                 <PieChart className="h-4 w-4" />
@@ -470,7 +461,7 @@ function TrendsPageContent() {
               </div>
               {planLoading ? (
                 <p className="text-sm text-gray-500">{tr.loadingPlan}</p>
-              ) : multiCrop?.summary ? (
+              ) : (
                 <dl className="space-y-2 text-sm text-gray-700">
                   <div className="flex justify-between gap-4">
                     <dt className="text-black/50">{tr.topCrop}</dt>
@@ -504,10 +495,9 @@ function TrendsPageContent() {
                     </div>
                   )}
                 </dl>
-              ) : (
-                <p className="text-sm text-gray-500">{tr.noPlanData}</p>
               )}
             </section>
+            )}
           </div>
 
           <div className="mb-8 grid min-w-0 grid-cols-1 gap-5 lg:grid-cols-2">
