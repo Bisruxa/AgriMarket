@@ -41,7 +41,7 @@ const issueEmailVerification = async (user) => {
   });
 
   const emailService = require('./email.service');
-  await emailService.sendVerificationEmail({
+  return emailService.sendVerificationEmail({
     to: user.email,
     name: user.name,
     verifyToken,
@@ -327,8 +327,12 @@ const resendVerificationEmail = async (email) => {
     return { sent: false };
   }
 
-  await issueEmailVerification(user);
-  return { sent: true };
+  try {
+    const emailResult = await issueEmailVerification(user);
+    return { sent: emailResult?.delivered === true };
+  } catch {
+    return { sent: false };
+  }
 };
 
 module.exports = {

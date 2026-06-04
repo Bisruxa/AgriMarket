@@ -14,14 +14,12 @@ connectDB();
 
 const { getClientUrl } = require('./services/email.service');
 const emailLinkBase = getClientUrl();
+const isProduction = (process.env.NODE_ENV || '').trim().toLowerCase() === 'production';
 if (/^null|undefined/i.test(emailLinkBase) || emailLinkBase.includes('://null')) {
   console.error(
     '[config] CLIENT_URL is invalid — verification emails will have broken links. Set CLIENT_URL to your live web app URL (e.g. https://your-app.vercel.app).',
   );
-} else if (
-  process.env.NODE_ENV === 'production' &&
-  /^https?:\/\/(localhost|127\.0\.0\.1)/i.test(emailLinkBase)
-) {
+} else if (isProduction && /^https?:\/\/(localhost|127\.0\.0\.1)/i.test(emailLinkBase)) {
   console.warn(
     `[config] Email links use ${emailLinkBase} — set CLIENT_URL to your public site URL on Render/production.`,
   );

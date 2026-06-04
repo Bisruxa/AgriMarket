@@ -37,14 +37,16 @@ const getClientUrl = () => {
     .map((part) => parseClientUrlCandidate(part))
     .filter(Boolean);
 
-  const isProduction = process.env.NODE_ENV === 'production';
+  const nodeEnv = (process.env.NODE_ENV || '').trim().toLowerCase();
+  const isProduction = nodeEnv === 'production';
+
+  // Always prefer a public HTTPS URL when one is configured.
+  const publicHttps = candidates.find(
+    (url) => url.startsWith('https://') && !LOCALHOST_ORIGIN.test(url),
+  );
+  if (publicHttps) return publicHttps;
 
   if (isProduction && candidates.length > 0) {
-    const publicHttps = candidates.find(
-      (url) => url.startsWith('https://') && !LOCALHOST_ORIGIN.test(url),
-    );
-    if (publicHttps) return publicHttps;
-
     const anyPublic = candidates.find((url) => !LOCALHOST_ORIGIN.test(url));
     if (anyPublic) return anyPublic;
   }

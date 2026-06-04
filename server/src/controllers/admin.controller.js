@@ -110,3 +110,49 @@ exports.getTraderDetails = async (req, res, next) => {
     next(error);
   }
 };
+
+// @desc    Get system health snapshot
+// @route   GET /api/admin/system/health
+// @access  Private/Admin
+exports.getSystemHealth = async (req, res, next) => {
+  try {
+    const data = await adminService.getSystemHealth();
+    res.status(200).json({
+      success: true,
+      data,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Get admin system settings
+// @route   GET /api/admin/system/settings
+// @access  Private/Admin
+exports.getSystemSettings = async (req, res, next) => {
+  try {
+    const data = await adminService.getSystemSettings();
+    res.status(200).json({
+      success: true,
+      data,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Update admin system settings
+// @route   PUT /api/admin/system/settings
+// @access  Private/Admin
+exports.updateSystemSettings = async (req, res, next) => {
+  try {
+    const data = await adminService.updateSystemSettings(req.body || {});
+    res.status(200).json({
+      success: true,
+      message: 'System settings updated',
+      data,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
